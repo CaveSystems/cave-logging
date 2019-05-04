@@ -1,10 +1,10 @@
-﻿using Cave.Console;
-using System;
+﻿using System;
+using Cave.Console;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides an immutable log message
+    /// Provides an immutable log message.
     /// </summary>
     public class LogMessage
     {
@@ -38,22 +38,22 @@ namespace Cave.Logging
             m_Arguments = arguments;
         }
 
-        /// <summary>The date time</summary>
+        /// <summary>The date time.</summary>
         public DateTime DateTime { get; }
 
-        /// <summary>The level</summary>
+        /// <summary>The level.</summary>
         public LogLevel Level { get; }
 
-        /// <summary>The source</summary>
+        /// <summary>The source.</summary>
         public string Source { get; }
 
-        /// <summary>The content</summary>
+        /// <summary>The content.</summary>
         XT m_Content;
 
-        /// <summary>The arguments</summary>
+        /// <summary>The arguments.</summary>
         object[] m_Arguments;
 
-        /// <summary>The exception</summary>
+        /// <summary>The exception.</summary>
         public Exception Exception { get; }
 
         XT m_CompleteContent = null;

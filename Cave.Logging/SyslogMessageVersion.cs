@@ -1,7 +1,7 @@
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides available syslog message versions
+    /// Provides available syslog message versions.
     /// </summary>
     public enum SyslogMessageVersion : int
     {

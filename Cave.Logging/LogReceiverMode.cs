@@ -1,7 +1,7 @@
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides available modes for <see cref="ILogReceiver"/>
+    /// Provides available modes for <see cref="ILogReceiver"/>.
     /// </summary>
     public enum LogReceiverMode
     {

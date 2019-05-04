@@ -3,7 +3,7 @@
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides exception logging modes
+    /// Provides exception logging modes.
     /// </summary>
     [Flags]
     public enum LogExceptionMode

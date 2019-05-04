@@ -1,6 +1,6 @@
-﻿using Cave.Console;
-using System;
+﻿using System;
 using System.IO;
+using Cave.Console;
 using res = Cave.Logging.Properties.Resources;
 
 namespace Cave.Logging
@@ -13,12 +13,12 @@ namespace Cave.Logging
     {
         #region default log files
         /// <summary>
-        /// Gets/sets the used file extension for the html logs
+        /// Gets/sets the used file extension for the html logs.
         /// </summary>
         public static string FileExtension = ".html";
 
         /// <summary>
-        /// Returns a <see cref="LogHtmlFile"/> instance for the local machine
+        /// Returns a <see cref="LogHtmlFile"/> instance for the local machine.
         /// </summary>
         public static LogHtmlFile CreateLocalMachineLogFile(LogFileFlags flags, string additionalPath = null)
         {
@@ -26,7 +26,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns a <see cref="LogHtmlFile"/> instance for the local user
+        /// Returns a <see cref="LogHtmlFile"/> instance for the local user.
         /// </summary>
         public static LogHtmlFile CreateLocalUserLogFile(LogFileFlags flags, string additionalPath = null)
         {
@@ -34,7 +34,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns a <see cref="LogHtmlFile"/> instance for the current (roaming) user
+        /// Returns a <see cref="LogHtmlFile"/> instance for the current (roaming) user.
         /// </summary>
         public static LogHtmlFile CreateUserLogFile(LogFileFlags flags, string additionalPath = null)
         {
@@ -44,7 +44,7 @@ namespace Cave.Logging
         /// <summary>
         /// Returns a <see cref="LogHtmlFile"/> instance for the current running program in the programs startup directory.
         /// This should only be used for administration processes.
-        /// Attention do nut use this for service processes!
+        /// Attention do nut use this for service processes!.
         /// </summary>
         /// <returns></returns>
         public static LogHtmlFile CreateProgramLogFile(LogFileFlags flags, string additionalPath = null)
@@ -129,7 +129,7 @@ namespace Cave.Logging
             m_Writer.Flush();
         }
 
-        /// <summary>Closes the <see cref="LogReceiver" /></summary>
+        /// <summary>Closes the <see cref="LogReceiver" />.</summary>
         public override void Close()
         {
             lock (this)
@@ -143,7 +143,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>Obtains the name of the log</summary>
+        /// <summary>Obtains the name of the log.</summary>
         public override string LogSourceName => "LogHtmlFile <" + FileName + ">";
     }
 }

@@ -1,10 +1,10 @@
-using Cave.Console;
 using System;
+using Cave.Console;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides logging to an <see cref="ILogTarget"/> object
+    /// Provides logging to an <see cref="ILogTarget"/> object.
     /// </summary>
     public class LogConsole : LogReceiver
     {
@@ -13,12 +13,12 @@ namespace Cave.Logging
         #region public members
 
         /// <summary>
-        /// The datetime format used to print the messages creation datetime
+        /// The datetime format used to print the messages creation datetime.
         /// </summary>
         public string DateTimeFormat = StringExtensions.ShortTimeFormat;
 
         /// <summary>
-        /// Clears the terminal
+        /// Clears the terminal.
         /// </summary>
         public void Clear()
         {
@@ -30,7 +30,7 @@ namespace Cave.Logging
         public ILogTarget Target { get; private set; }
 
         /// <summary>
-        /// Sets the title of the logconsole
+        /// Sets the title of the logconsole.
         /// </summary>
         public string Title
         {
@@ -45,15 +45,15 @@ namespace Cave.Logging
         #endregion
 
         /// <summary>
-        /// Creates a new <see cref="LogConsole"/> using a loglevel of debug (debug library build) or information (release library build)
+        /// Creates a new <see cref="LogConsole"/> using a loglevel of debug (debug library build) or information (release library build).
         /// </summary>
         public static LogConsole Create(LogLevel level = LogLevel.Information, LogConsoleFlags flags = LogConsoleFlags.Default)
         {
             return Create(flags, level);
         }
 
-        /// <summary>Creates a new logconsole object</summary>
-        /// <param name="flags">Flags</param>
+        /// <summary>Creates a new logconsole object.</summary>
+        /// <param name="flags">Flags.</param>
         /// <param name="level">The log level.</param>
         public static LogConsole Create(LogConsoleFlags flags, LogLevel level = LogLevel.Information)
         {
@@ -64,8 +64,8 @@ namespace Cave.Logging
             };
         }
 
-        /// <summary>Creates a new logconsole object</summary>
-        /// <param name="target">The target to log to</param>
+        /// <summary>Creates a new logconsole object.</summary>
+        /// <param name="target">The target to log to.</param>
         public LogConsole(ILogTarget target)
         {
             if (target == null)
@@ -147,7 +147,7 @@ namespace Cave.Logging
         public LogConsoleFlags Flags = LogConsoleFlags.Default;
 
         /// <summary>
-        /// Returns LogConsole[Level]
+        /// Returns LogConsole[Level].
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -156,7 +156,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the string "LogConsole"
+        /// Obtains the string "LogConsole".
         /// </summary>
         public override string LogSourceName => "LogConsole";
     }

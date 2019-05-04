@@ -1,13 +1,13 @@
-using Cave.Collections.Generic;
-using Cave.Logging;
 using System;
 using System.Net.Sockets;
 using System.Text;
+using Cave.Collections.Generic;
+using Cave.Logging;
 
 namespace Cave.Syslog
 {
     /// <summary>
-    /// Provides a tcp and udp syslog sender for RFC5424, RFC3164 and RSYSLOG format
+    /// Provides a tcp and udp syslog sender for RFC5424, RFC3164 and RSYSLOG format.
     /// </summary>
     public class SyslogSender : IDisposable
     {
@@ -26,7 +26,7 @@ namespace Cave.Syslog
         /// <summary>
         /// Creates a new syslog sender with the specified syslog message version.
         /// </summary>
-        /// <param name="version">The <see cref="SyslogMessageVersion"/> to use for all outgoing messages</param>
+        /// <param name="version">The <see cref="SyslogMessageVersion"/> to use for all outgoing messages.</param>
         public SyslogSender(SyslogMessageVersion version)
         {
             m_Version = version;
@@ -38,9 +38,9 @@ namespace Cave.Syslog
         /// </summary>
         /// <example>
         /// tcp://server.tld
-        /// udp://1.2.3.4:512?version=RFC3164
+        /// udp://1.2.3.4:512?version=RFC3164.
         /// </example>
-        /// <param name="connectionString">Destination and syslog message version (optional, if not set at constructor already)</param>
+        /// <param name="connectionString">Destination and syslog message version (optional, if not set at constructor already).</param>
         public void Connect(ConnectionString connectionString)
         {
             OptionCollection options = OptionCollection.FromStrings(connectionString.Options.Split('&'));
@@ -74,7 +74,7 @@ namespace Cave.Syslog
         }
 
         /// <summary>
-        /// Sends a syslog message to the connected destination
+        /// Sends a syslog message to the connected destination.
         /// </summary>
         /// <param name="msg"></param>
         public void Send(SyslogMessage msg)
@@ -123,7 +123,7 @@ namespace Cave.Syslog
         }
 
         /// <summary>
-        /// Releases all resources used by the this instance
+        /// Releases all resources used by the this instance.
         /// </summary>
         public void Dispose()
         {

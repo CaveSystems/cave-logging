@@ -1,7 +1,7 @@
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides flags for log file creation
+    /// Provides flags for log file creation.
     /// </summary>
     public enum LogFileFlags
     {
@@ -14,7 +14,7 @@ namespace Cave.Logging
         UseRotation = 1,
 
         /// <summary>
-        /// Use a fileName based on the date and time. 
+        /// Use a fileName based on the date and time.
         /// (This disables UseRotation)
         /// </summary>
         UseDateTimeFileName = 2,

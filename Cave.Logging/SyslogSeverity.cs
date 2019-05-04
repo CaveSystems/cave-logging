@@ -1,7 +1,7 @@
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides syslog severity constants
+    /// Provides syslog severity constants.
     /// </summary>
     public enum SyslogSeverity : int
     {

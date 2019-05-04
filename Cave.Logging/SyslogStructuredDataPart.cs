@@ -1,27 +1,27 @@
-using Cave.Collections;
-using Cave.Console;
 using System;
 using System.IO;
 using System.Text;
+using Cave.Collections;
+using Cave.Console;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides structured data encoding / decoding for syslog messages according to RFC 5424
+    /// Provides structured data encoding / decoding for syslog messages according to RFC 5424.
     /// </summary>
     public class SyslogStructuredDataPart
     {
         Option[] m_Items;
 
         /// <summary>
-        /// Invalid characters that have to be escaped
+        /// Invalid characters that have to be escaped.
         /// </summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         public static char[] InvalidChars => new char[] { '"', '\\', ']' };
 
         /// <summary>
         /// Parses a structured data string and returns a new SyslogStructuredData instance.
-        /// (This function does not parse an array of multiple structured data instances!)
+        /// (This function does not parse an array of multiple structured data instances!).
         /// </summary>
         /// <param name="text">A string containing structured data.</param>
         /// <returns></returns>
@@ -39,10 +39,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new SyslogStructuredDataPart with the specified name and elements
+        /// Creates a new SyslogStructuredDataPart with the specified name and elements.
         /// </summary>
-        /// <param name="name">The name of the structured data part</param>
-        /// <param name="items">The items of the data</param>
+        /// <param name="name">The name of the structured data part.</param>
+        /// <param name="items">The items of the data.</param>
         public SyslogStructuredDataPart(string name, params Option[] items)
         {
             if (string.IsNullOrEmpty(name))
@@ -55,12 +55,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Provides access to the name of the instance
+        /// Provides access to the name of the instance.
         /// </summary>
         public readonly string Name;
 
         /// <summary>
-        /// Provides access to all options
+        /// Provides access to all options.
         /// </summary>
         public Option[] Items => (Option[])m_Items.Clone();
 

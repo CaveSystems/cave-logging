@@ -1,14 +1,14 @@
-using Cave.Data;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using Cave.Data;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a syslog entry. RFC 3164, RFC 3195, RFC 5424
+    /// Provides a syslog entry. RFC 3164, RFC 3195, RFC 5424.
     /// </summary>
     public struct SyslogMessage : IComparable
     {
@@ -67,12 +67,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Provides the chars valid for names and ids at structured data
+        /// Provides the chars valid for names and ids at structured data.
         /// </summary>
         public const string ValidNameChars = "!\"#$%&'()*+,-./0123456789:;<>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
         /// <summary>
-        /// Gets the maximum message length
+        /// Gets the maximum message length.
         /// </summary>
         public static int GetMaximumMessageLength(SyslogMessageVersion version)
         {
@@ -87,9 +87,9 @@ namespace Cave.Logging
 
         /// <summary>
         /// Parses a RFC3164 formatted syslog message.
-        /// http://www.ietf.org/rfc/rfc3164.txt
+        /// http://www.ietf.org/rfc/rfc3164.txt.
         /// </summary>
-        /// <param name="data">BSD syslog data</param>
+        /// <param name="data">BSD syslog data.</param>
         /// <returns></returns>
         public static SyslogMessage ParseRFC3164(string data)
         {
@@ -170,9 +170,9 @@ namespace Cave.Logging
 
         /// <summary>
         /// Parses a RFC5424 formatted syslog message.
-        /// http://www.ietf.org/rfc/rfc5424.txt
+        /// http://www.ietf.org/rfc/rfc5424.txt.
         /// </summary>
-        /// <param name="data">Syslog Protocol Data</param>
+        /// <param name="data">Syslog Protocol Data.</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="InvalidDataException"></exception>
@@ -299,9 +299,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Parses proprietary RSYSLOG protocol messages
+        /// Parses proprietary RSYSLOG protocol messages.
         /// </summary>
-        /// <param name="data">RSYSLOG message data</param>
+        /// <param name="data">RSYSLOG message data.</param>
         /// <returns></returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1303:Literale nicht als lokalisierte Parameter übergeben", MessageId = "Cave.Logging.SyslogStructuredDataPart.Parse(System.String)")]
         public static SyslogMessage ParseRSYSLOG(string data)
@@ -431,7 +431,7 @@ namespace Cave.Logging
         /// <summary>
         /// Creates a syslog item from specified encoded syslog data.
         /// </summary>
-        /// <param name="data">The data to be parsed</param>
+        /// <param name="data">The data to be parsed.</param>
         public static SyslogMessage Parse(string data)
         {
             if (data == null)
@@ -471,23 +471,23 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Gets / sets the maximum message length used
+        /// Gets / sets the maximum message length used.
         /// </summary>
         public int MaximumMessageLength => GetMaximumMessageLength(Version);
 
         /// <summary>
-        /// Creates a new syslog item
+        /// Creates a new syslog item.
         /// </summary>
-        /// <param name="version">Used SyslogVersion (used at ToString() methods)</param>
-        /// <param name="facility"><see cref="SyslogFacility"/></param>
-        /// <param name="severity"><see cref="SyslogSeverity"/></param>
-        /// <param name="timeStamp">The time stamp this message was created</param>
-        /// <param name="hostName">The server the message belongs to</param>
-        /// <param name="processName">The process name the message belongs to</param>
-        /// <param name="processID">The process ID the message belongs to</param>
-        /// <param name="messageID">The message ID</param>
-        /// <param name="content">The content of the message</param>
-        /// <param name="data">The structured syslog data</param>
+        /// <param name="version">Used SyslogVersion (used at ToString() methods).</param>
+        /// <param name="facility"><see cref="SyslogFacility"/>.</param>
+        /// <param name="severity"><see cref="SyslogSeverity"/>.</param>
+        /// <param name="timeStamp">The time stamp this message was created.</param>
+        /// <param name="hostName">The server the message belongs to.</param>
+        /// <param name="processName">The process name the message belongs to.</param>
+        /// <param name="processID">The process ID the message belongs to.</param>
+        /// <param name="messageID">The message ID.</param>
+        /// <param name="content">The content of the message.</param>
+        /// <param name="data">The structured syslog data.</param>
         public SyslogMessage(SyslogMessageVersion version, SyslogFacility facility, SyslogSeverity severity, SyslogMessageDateTime timeStamp, string hostName,
             string processName, uint processID, string messageID, string content, SyslogStructuredData data)
         {
@@ -530,79 +530,79 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// ID of the message
+        /// ID of the message.
         /// </summary>
         [Field(Flags = FieldFlags.ID)]
         public long ID;
 
         /// <summary>
-        /// Syslog protocol version
+        /// Syslog protocol version.
         /// </summary>
         [Field]
         public SyslogMessageVersion Version;
 
         /// <summary>
-        /// The syslog facility
+        /// The syslog facility.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public SyslogFacility Facility;
 
         /// <summary>
-        /// The syslog severity
+        /// The syslog severity.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public SyslogSeverity Severity;
 
         /// <summary>
-        /// Provides access to the time stamp
+        /// Provides access to the time stamp.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public SyslogMessageDateTime TimeStamp;
 
         /// <summary>
-        /// The server this message belongs to
+        /// The server this message belongs to.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public string HostName;
 
         /// <summary>
-        /// The process this messages belongs to
+        /// The process this messages belongs to.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public string ProcessName;
 
         /// <summary>
-        /// The process id this messages belongs to
+        /// The process id this messages belongs to.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public uint ProcessID;
 
         /// <summary>
-        /// The structured syslog data
+        /// The structured syslog data.
         /// </summary>
         [Field]
         public SyslogStructuredData StructuredData;
 
         /// <summary>
-        /// The content of the message
+        /// The content of the message.
         /// </summary>
         [Field]
         public string Content;
 
         /// <summary>
-        /// Senders ID of the message (do not use this as uuid!), this is only present for SyslogMessageVersion.RFC5424
+        /// Senders ID of the message (do not use this as uuid!), this is only present for SyslogMessageVersion.RFC5424.
         /// </summary>
         [Field]
         public string MessageID;
 
-        /// <summary>Retrieves the syslog items encoded syslog string</summary>
+        /// <summary>Retrieves the syslog items encoded syslog string.</summary>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">
         /// ProcessName
         /// or
         /// Hostname
         /// or
-        /// Content
+        /// Content.
         /// </exception>
         /// <exception cref="NotSupportedException">
         /// </exception>
@@ -682,7 +682,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Retrieves the syslog items encoded syslog string
+        /// Retrieves the syslog items encoded syslog string.
         /// </summary>
         /// <returns></returns>
         public string ToStringRFC5424()
@@ -764,7 +764,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Retrieves the syslog items encoded syslog string
+        /// Retrieves the syslog items encoded syslog string.
         /// </summary>
         /// <returns></returns>
         public string ToStringRSYSLOG()
@@ -831,7 +831,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Retrieves the syslog items encoded syslog string
+        /// Retrieves the syslog items encoded syslog string.
         /// </summary>
         public override string ToString()
         {
@@ -873,7 +873,7 @@ namespace Cave.Logging
         #region IEquatable Member
 
         /// <summary>
-        /// Determines whether the specified Object is equal to the SyslogItem
+        /// Determines whether the specified Object is equal to the SyslogItem.
         /// </summary>
         public override bool Equals(object obj)
         {
@@ -894,7 +894,7 @@ namespace Cave.Logging
         #endregion
 
         /// <summary>
-        /// Obtains the hash code for this item
+        /// Obtains the hash code for this item.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

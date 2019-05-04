@@ -1,4 +1,3 @@
-using Cave.Console;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Cave.Console;
 using res = Cave.Logging.Properties.Resources;
 
 namespace Cave.Logging
@@ -13,7 +13,7 @@ namespace Cave.Logging
     /// <summary>
     /// This is a full featured asynchronous logging facility for general statusmonitoring and logging for end users
     /// in production products. Messages logged are queued and then distributed by a background thread to provide full
-    /// speed even with slow loggers (file, database, network)
+    /// speed even with slow loggers (file, database, network).
     /// </summary>
     public class Logger : ILogSource
     {
@@ -63,7 +63,7 @@ namespace Cave.Logging
             ILogReceiver m_Receiver;
             object m_SyncRoot = new object();
             LinkedList<LogMessage> m_Queue = new LinkedList<LogMessage>();
-            /// <summary>The current position in the static queue, this is relative to queue and is decreased/reseted during cleanup</summary>
+            /// <summary>The current position in the static queue, this is relative to queue and is decreased/reseted during cleanup.</summary>
             int m_CurrentDelayMilliSeconds;
             bool m_Idle;
 
@@ -244,7 +244,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Adds the debugreceiver if a debugger is attached
+        /// Adds the debugreceiver if a debugger is attached.
         /// </summary>
         static Logger()
         {
@@ -267,9 +267,9 @@ namespace Cave.Logging
         public static LogDebugReceiver DebugReceiver { get; private set; }
 
         /// <summary>
-        /// Registers an <see cref="ILogReceiver"/>
+        /// Registers an <see cref="ILogReceiver"/>.
         /// </summary>
-        /// <param name="logReceiver">The <see cref="ILogReceiver"/> to register</param>
+        /// <param name="logReceiver">The <see cref="ILogReceiver"/> to register.</param>
         public static void Register(ILogReceiver logReceiver)
         {
             if (logReceiver == null)
@@ -294,7 +294,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Unregisters a receiver
+        /// Unregisters a receiver.
         /// </summary>
         public static void Unregister(ILogReceiver logReceiver)
         {
@@ -319,7 +319,7 @@ namespace Cave.Logging
         /// </summary>
         public static bool LogToDebug { get => DebugReceiver.LogToDebug; set => DebugReceiver.LogToDebug = value; }
 
-        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system</summary>
+        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
         /// <param name="msg"></param>
         [MethodImpl((MethodImplOptions)0x0100)]
         public static void Send(LogMessage msg)
@@ -334,7 +334,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system</summary>
+        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
         /// <param name="messages"></param>
         [MethodImpl((MethodImplOptions)0x0100)]
         public static void Send(params LogMessage[] messages)
@@ -353,7 +353,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system</summary>
+        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
         /// <param name="source">The source.</param>
         /// <param name="level">The level.</param>
         /// <param name="ex">The ex.</param>
@@ -366,7 +366,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Waits until all notifications are sent
+        /// Waits until all notifications are sent.
         /// </summary>
         public static void Flush()
         {
@@ -406,7 +406,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Closes all receivers, does not flush or wait
+        /// Closes all receivers, does not flush or wait.
         /// </summary>
         public static void CloseAll()
         {
@@ -423,9 +423,9 @@ namespace Cave.Logging
         }
 
         #region static string logging methods
-        /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message</summary>
+        /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogVerbose(string source, XT msg, params object[] args)
         {
@@ -433,10 +433,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogDebug(string source, XT msg, params object[] args)
         {
@@ -444,10 +444,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogInfo(string source, XT msg, params object[] args)
         {
@@ -455,10 +455,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogNotice(string source, XT msg, params object[] args)
         {
@@ -466,10 +466,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogWarning(string source, XT msg, params object[] args)
         {
@@ -477,10 +477,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogError(string source, XT msg, params object[] args)
         {
@@ -488,10 +488,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogCritical(string source, XT msg, params object[] args)
         {
@@ -499,10 +499,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (1) Transmits a <see cref="LogLevel.Alert"/> message
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogAlert(string source, XT msg, params object[] args)
         {
@@ -510,10 +510,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogEmergency(string source, XT msg, params object[] args)
         {
@@ -521,11 +521,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogDebug(string source, Exception ex, XT msg, params object[] args)
         {
@@ -533,11 +533,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message
+        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogVerbose(string source, Exception ex, XT msg, params object[] args)
         {
@@ -545,11 +545,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogInfo(string source, Exception ex, XT msg, params object[] args)
         {
@@ -557,11 +557,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogNotice(string source, Exception ex, XT msg, params object[] args)
         {
@@ -569,11 +569,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogWarning(string source, Exception ex, XT msg, params object[] args)
         {
@@ -581,11 +581,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogError(string source, Exception ex, XT msg, params object[] args)
         {
@@ -593,11 +593,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogCritical(string source, Exception ex, XT msg, params object[] args)
         {
@@ -605,11 +605,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (1) Transmits a <see cref="LogLevel.Alert"/> message
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogAlert(string source, Exception ex, XT msg, params object[] args)
         {
@@ -617,11 +617,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
         /// </summary>
         /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public static void LogEmergency(string source, Exception ex, XT msg, params object[] args)
         {
@@ -633,7 +633,7 @@ namespace Cave.Logging
         #region logger class
         /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
         /// <param name="name">Name of the log source.</param>cd \\jenni
-        /// 
+        ///
         public Logger(string name)
         {
             LogSourceName = name;
@@ -663,8 +663,8 @@ namespace Cave.Logging
             Send(LogSourceName, level, ex, msg, args);
         }
 
-        /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message</summary>
-        /// <param name="msg">The message to be logged</param>
+        /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public void LogVerbose(XT msg, params object[] args)
         {
@@ -672,9 +672,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
         /// </summary>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public void LogDebug(XT msg, params object[] args)
         {
@@ -682,9 +682,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
         /// </summary>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public void LogInfo(XT msg, params object[] args)
         {
@@ -692,9 +692,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
         /// </summary>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public void LogNotice(XT msg, params object[] args)
         {
@@ -702,9 +702,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
         /// </summary>
-        /// <param name="msg">The message to be logged</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
         public void LogWarning(XT msg, params object[] args)
         {
@@ -712,9 +712,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogError(XT msg, params object[] args)
         {
@@ -722,9 +722,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogCritical(XT msg, params object[] args)
         {
@@ -732,9 +732,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (1) Transmits a <see cref="LogLevel.Alert"/> message
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogAlert(XT msg, params object[] args)
         {
@@ -742,9 +742,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
+        /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogEmergency(XT msg, params object[] args)
         {
@@ -752,10 +752,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogDebug(Exception ex, XT msg, params object[] args)
         {
@@ -763,10 +763,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message
+        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogVerbose(Exception ex, XT msg, params object[] args)
         {
@@ -774,10 +774,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogInfo(Exception ex, XT msg, params object[] args)
         {
@@ -785,10 +785,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogNotice(Exception ex, XT msg, params object[] args)
         {
@@ -796,10 +796,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogWarning(Exception ex, XT msg, params object[] args)
         {
@@ -807,10 +807,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogError(Exception ex, XT msg, params object[] args)
         {
@@ -818,10 +818,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogCritical(Exception ex, XT msg, params object[] args)
         {
@@ -829,10 +829,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (1) Transmits a <see cref="LogLevel.Alert"/> message
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogAlert(Exception ex, XT msg, params object[] args)
         {
@@ -840,10 +840,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
         /// </summary>
-        /// <param name="msg">Message to write</param>
-        /// <param name="ex">Exception to write</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
         public void LogEmergency(Exception ex, XT msg, params object[] args)
         {

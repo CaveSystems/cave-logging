@@ -1,12 +1,12 @@
-using Cave.Console;
-using Cave.Data;
 using System;
 using System.Threading;
+using Cave.Console;
+using Cave.Data;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a log receiver for logging to database
+    /// Provides a log receiver for logging to database.
     /// </summary>
     public class LogTableReceiver : LogReceiver
     {
@@ -17,14 +17,14 @@ namespace Cave.Logging
         public TableWriter<LogEntry> Writer { get; private set; }
 
         /// <summary>
-        /// Gets/sets whether style and color information is written to the database or not
+        /// Gets/sets whether style and color information is written to the database or not.
         /// </summary>
         public bool WriteContentStyle;
 
-        /// <summary>Connects to the specified database and table</summary>
-        /// <param name="database">The database to use</param>
+        /// <summary>Connects to the specified database and table.</summary>
+        /// <param name="database">The database to use.</param>
         /// <param name="tableFlags">The table flags.</param>
-        /// <exception cref="ArgumentNullException">Database</exception>
+        /// <exception cref="ArgumentNullException">Database.</exception>
         public void Connect(IDatabase database, TableFlags tableFlags = TableFlags.None)
         {
             if (database == null)
@@ -36,9 +36,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Connects to the specified table instance
+        /// Connects to the specified table instance.
         /// </summary>
-        /// <param name="table">Table to use</param>
+        /// <param name="table">Table to use.</param>
         public void Connect(ITable<LogEntry> table)
         {
             if (table == null)
@@ -66,7 +66,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new LogTableReceiver instance
+        /// Creates a new LogTableReceiver instance.
         /// </summary>
         public LogTableReceiver()
         {
@@ -117,12 +117,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// LogTableReceiver
+        /// LogTableReceiver.
         /// </summary>
         public override string LogSourceName => "LogTableReceiver";
 
-        /// <summary>Closes the <see cref="LogReceiver" /> and disposes the tablewriter</summary>
-        /// <exception cref="ObjectDisposedException">LogTableReceiver</exception>
+        /// <summary>Closes the <see cref="LogReceiver" /> and disposes the tablewriter.</summary>
+        /// <exception cref="ObjectDisposedException">LogTableReceiver.</exception>
         public override void Close()
         {
             TableWriter writer = Writer;

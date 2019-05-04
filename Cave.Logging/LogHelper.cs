@@ -8,13 +8,13 @@ using System.Diagnostics.CodeAnalysis;
 namespace Cave.Logging
 {
     /// <summary>
-    /// internal log helper class used to write to trace and debug even if the lib is in release mode
+    /// internal log helper class used to write to trace and debug even if the lib is in release mode.
     /// </summary>
     [ExcludeFromCodeCoverage]
     static class LogHelper
     {
         /// <summary>
-        /// Writes a line to the <see cref="Trace"/> output
+        /// Writes a line to the <see cref="Trace"/> output.
         /// </summary>
         /// <param name="msg"></param>
         public static void TraceLine(string msg)
@@ -23,7 +23,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Writes a line to the <see cref="Debug"/> output
+        /// Writes a line to the <see cref="Debug"/> output.
         /// </summary>
         /// <param name="msg"></param>
         public static void DebugLine(string msg)

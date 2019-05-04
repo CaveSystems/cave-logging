@@ -1,5 +1,5 @@
-using Cave.Console;
 using System;
+using Cave.Console;
 
 namespace Cave.Logging
 {
@@ -16,8 +16,8 @@ namespace Cave.Logging
         /// <param name="content">The content.</param>
         protected abstract void Write(DateTime dateTime, LogLevel level, string source, XT content);
 
-        /// <summary>Provides the callback function used to transmit the logging notifications</summary>
-        /// <param name="msg">The message</param>
+        /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
+        /// <param name="msg">The message.</param>
         public override void Write(LogMessage msg)
         {
             if (msg.Level > Level)

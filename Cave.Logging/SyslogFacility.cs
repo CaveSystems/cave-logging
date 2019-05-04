@@ -1,7 +1,7 @@
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a list of valid syslog facilities
+    /// Provides a list of valid syslog facilities.
     /// </summary>
     public enum SyslogFacility
     {

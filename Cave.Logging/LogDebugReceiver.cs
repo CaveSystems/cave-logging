@@ -1,11 +1,11 @@
-using Cave.Console;
 using System;
+using Cave.Console;
 
 namespace Cave.Logging
 {
     /// <summary>
     /// Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and
-    /// <see cref="System.Diagnostics.Trace"/>
+    /// <see cref="System.Diagnostics.Trace"/>.
     /// </summary>
     public sealed class LogDebugReceiver : LogReceiver
     {
@@ -28,7 +28,7 @@ namespace Cave.Logging
 #endif
 
         /// <summary>
-        /// Do not use string.Format while initializing this class!
+        /// Do not use string.Format while initializing this class!.
         /// </summary>
         internal LogDebugReceiver()
         {
@@ -56,7 +56,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the string "LogDebugReceiver[Debug+Tracewriter,Level]"
+        /// Obtains the string "LogDebugReceiver[Debug+Tracewriter,Level]".
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -65,7 +65,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the name of the log
+        /// Obtains the name of the log.
         /// </summary>
         public override string LogSourceName => "LogDebugReceiver[Debug+Tracewriter]";
     }

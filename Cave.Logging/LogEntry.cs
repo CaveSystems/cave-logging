@@ -1,15 +1,15 @@
-using Cave.Console;
-using Cave.Data;
-using Cave.IO;
 using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Cave.Console;
+using Cave.Data;
+using Cave.IO;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a log entry
+    /// Provides a log entry.
     /// </summary>
     [DebuggerDisplay("{ToShortString()}")]
     [Table("Logs")]
@@ -47,7 +47,7 @@ namespace Cave.Logging
 
         /// <summary>Parses the specified string for a LogEntry. This can only parse the result of a LogEntry.ToString() call.</summary>
         /// <param name="text">The string to parse.</param>
-        /// <returns>Returns a new logentry</returns>
+        /// <returns>Returns a new logentry.</returns>
         public static LogEntry Parse(string text)
         {
             if (text == null)
@@ -91,54 +91,54 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// ID of the message
+        /// ID of the message.
         /// </summary>
         [Field(Flags = FieldFlags.ID | FieldFlags.AutoIncrement)]
         public long ID;
 
         /// <summary>
-        /// DateTime of the message
+        /// DateTime of the message.
         /// </summary>
         [Field]
         [DateTimeFormat(DateTimeKind.Utc, DateTimeType.BigIntHumanReadable)]
         public DateTime DateTime;
 
         /// <summary>
-        /// Provides the level of the message
+        /// Provides the level of the message.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         public LogLevel Level;
 
         /// <summary>
-        /// The system this message was sent from
+        /// The system this message was sent from.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         [StringFormat(StringEncoding.ASCII)]
         public string HostName;
 
         /// <summary>
-        /// The process that generated this message
+        /// The process that generated this message.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         [StringFormat(StringEncoding.ASCII)]
         public string ProcessName;
 
         /// <summary>
-        /// The source of the message
+        /// The source of the message.
         /// </summary>
         [Field(Flags = FieldFlags.Index)]
         [StringFormat(StringEncoding.ASCII)]
         public string Source;
 
         /// <summary>
-        /// The content of the message
+        /// The content of the message.
         /// </summary>
         [Field]
         [StringFormat(StringEncoding.UTF8)]
         public XT Content;
 
         /// <summary>
-        /// Returns a text describing the content. The output of this function can be read by <see cref="Parse(string)"/>
+        /// Returns a text describing the content. The output of this function can be read by <see cref="Parse(string)"/>.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -187,7 +187,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns a short human readable string without any style and color information
+        /// Returns a short human readable string without any style and color information.
         /// </summary>
         /// <returns></returns>
         public string ToShortString()

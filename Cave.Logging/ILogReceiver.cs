@@ -3,7 +3,7 @@ using System;
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides an interface for log receivers
+    /// Provides an interface for log receivers.
     /// </summary>
     public interface ILogReceiver : ILogSource, IDisposable
     {
@@ -18,7 +18,7 @@ namespace Cave.Logging
         int LateMessageMilliSeconds { get; set; }
 
         /// <summary>
-        /// Gets / sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>
+        /// Gets / sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>.
         /// </summary>
         int LateMessageTreshold { get; set; }
 
@@ -37,18 +37,18 @@ namespace Cave.Logging
         LogExceptionMode ExceptionMode { get; set; }
 
         /// <summary>
-        /// Provides the callback function used to transmit the logging notifications 
+        /// Provides the callback function used to transmit the logging notifications.
         /// </summary>
-        /// <param name="msg">The message</param>
+        /// <param name="msg">The message.</param>
         void Write(LogMessage msg);
 
         /// <summary>
-        /// Obtains whether the <see cref="ILogReceiver"/> was already closed
+        /// Obtains whether the <see cref="ILogReceiver"/> was already closed.
         /// </summary>
         bool Closed { get; }
 
         /// <summary>
-        /// Closes the <see cref="ILogReceiver"/>
+        /// Closes the <see cref="ILogReceiver"/>.
         /// </summary>
         void Close();
     }

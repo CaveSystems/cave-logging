@@ -1,7 +1,7 @@
-using Cave.Console;
 using System;
 using System.IO;
 using System.Text;
+using Cave.Console;
 
 namespace Cave.Logging
 {
@@ -12,12 +12,12 @@ namespace Cave.Logging
     {
         #region default log files
         /// <summary>
-        /// Gets/sets the used file extension for the logs
+        /// Gets/sets the used file extension for the logs.
         /// </summary>
         public static string FileExtension = ".log";
 
         /// <summary>
-        /// Returns a <see cref="LogFile"/> instance for the local machine
+        /// Returns a <see cref="LogFile"/> instance for the local machine.
         /// </summary>
         public static LogFile CreateLocalMachineLogFile(LogFileFlags flags, string additionalPath = null)
         {
@@ -25,7 +25,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns a <see cref="LogFile"/> instance for the local user
+        /// Returns a <see cref="LogFile"/> instance for the local user.
         /// </summary>
         public static LogFile CreateLocalUserLogFile(LogFileFlags flags, string additionalPath = null)
         {
@@ -33,7 +33,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns a <see cref="LogFile"/> instance for the current (roaming) user
+        /// Returns a <see cref="LogFile"/> instance for the current (roaming) user.
         /// </summary>
         public static LogFile CreateUserLogFile(LogFileFlags flags, string additionalPath = null)
         {
@@ -43,7 +43,7 @@ namespace Cave.Logging
         /// <summary>
         /// Returns a <see cref="LogFile"/> instance for the current running program in the programs startup directory.
         /// This should only be used for administration processes.
-        /// Attention do nut use this for service processes!
+        /// Attention do nut use this for service processes!.
         /// </summary>
         /// <returns></returns>
         public static LogFile CreateProgramLogFile(LogFileFlags flags, string additionalPath = null)
@@ -80,7 +80,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Opens the specified logfile
+        /// Opens the specified logfile.
         /// </summary>
         /// <param name="fileName"></param>
         public LogFile(string fileName)
@@ -90,9 +90,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Opens the specified logfile
+        /// Opens the specified logfile.
         /// </summary>
-        /// <param name="level">The LogLevel to use initially</param>
+        /// <param name="level">The LogLevel to use initially.</param>
         /// <param name="fileName"></param>
         public LogFile(LogLevel level, string fileName)
             : base(fileName)
@@ -102,7 +102,7 @@ namespace Cave.Logging
         }
         #endregion
 
-        /// <summary>Closes the <see cref="LogReceiver" /></summary>
+        /// <summary>Closes the <see cref="LogReceiver" />.</summary>
         public override void Close()
         {
             lock (this)
@@ -142,12 +142,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the number of notifications logged
+        /// Obtains the number of notifications logged.
         /// </summary>
         public int Counter => m_Counter;
 
         /// <summary>
-        /// Obtains the string "LogFile"
+        /// Obtains the string "LogFile".
         /// </summary>
         public override string LogSourceName => $"LogFile <{Path.GetFileName(FileName)}>";
     }

@@ -16,7 +16,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new instance of a log receiver and registers it
+        /// Creates a new instance of a log receiver and registers it.
         /// </summary>
         protected LogReceiverBase()
         {
@@ -40,7 +40,7 @@ namespace Cave.Logging
         public int LateMessageMilliSeconds { get; set; }
 
         /// <summary>
-        /// Gets / sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>
+        /// Gets / sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>.
         /// </summary>
         public int LateMessageTreshold { get; set; }
 
@@ -49,13 +49,13 @@ namespace Cave.Logging
         /// </summary>
         public virtual LogReceiverMode Mode { get; set; } = LogReceiverMode.Opportune;
 
-        /// <summary>Provides the callback function used to transmit the logging notifications</summary>
-        /// <param name="msg">The message</param>
+        /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
+        /// <param name="msg">The message.</param>
         public abstract void Write(LogMessage msg);
 
         /// <summary>
         /// The <see cref="LogLevel"/> currently used.
-        /// This defaults to <see cref="LogLevel.Information"/>
+        /// This defaults to <see cref="LogLevel.Information"/>.
         /// </summary>
         public LogLevel Level { get; set; }
 
@@ -64,12 +64,12 @@ namespace Cave.Logging
         public LogExceptionMode ExceptionMode { get; set; }
 
         /// <summary>
-        /// Obtains whether the <see cref="LogReceiver"/> was already closed
+        /// Obtains whether the <see cref="LogReceiver"/> was already closed.
         /// </summary>
         public bool Closed { get; private set; }
 
         /// <summary>
-        /// Closes the <see cref="LogReceiver"/>
+        /// Closes the <see cref="LogReceiver"/>.
         /// </summary>
         public virtual void Close()
         {
@@ -88,7 +88,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Releases all resources used by the this instance
+        /// Releases all resources used by the this instance.
         /// </summary>
         public void Dispose()
         {
@@ -97,14 +97,14 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the name of the log
+        /// Obtains the name of the log.
         /// </summary>
         public abstract string LogSourceName { get; }
 
         #endregion
 
         /// <summary>
-        /// Obtains a string representing this instance
+        /// Obtains a string representing this instance.
         /// </summary>
         public override string ToString()
         {

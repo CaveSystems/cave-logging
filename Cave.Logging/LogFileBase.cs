@@ -4,14 +4,14 @@ using System.IO;
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a base class for file logging
+    /// Provides a base class for file logging.
     /// </summary>
     /// <seealso cref="Cave.Logging.LogReceiver" />
     public abstract class LogFileBase : LogReceiver
     {
         #region default log files
         /// <summary>
-        /// Rotates the logfile and keeps a specified number of old logfiles
+        /// Rotates the logfile and keeps a specified number of old logfiles.
         /// </summary>
         static void Rotate(string fileName, int keepOldFilesCount)
         {
@@ -73,10 +73,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns the log file name for the local machine
+        /// Returns the log file name for the local machine.
         /// </summary>
-        /// <returns>Returns a file name with full path without extension</returns>
-        /// <remarks>This function applies rotation</remarks>
+        /// <returns>Returns a file name with full path without extension.</returns>
+        /// <remarks>This function applies rotation.</remarks>
         protected static string GetLocalMachineLogFileName(LogFileFlags flags, string additionalPath = null)
         {
             string filename;
@@ -98,10 +98,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns the log file name for the local user
+        /// Returns the log file name for the local user.
         /// </summary>
-        /// <returns>Returns a file name with full path without extension</returns>
-        /// <remarks>This function applies rotation</remarks>
+        /// <returns>Returns a file name with full path without extension.</returns>
+        /// <remarks>This function applies rotation.</remarks>
         protected static string GetLocalUserLogFileName(LogFileFlags flags, string additionalPath = null)
         {
             string filename;
@@ -123,10 +123,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns the log file name for the current (roaming) user
+        /// Returns the log file name for the current (roaming) user.
         /// </summary>
-        /// <returns>Returns a file name with full path without extension</returns>
-        /// <remarks>This function applies rotation</remarks>
+        /// <returns>Returns a file name with full path without extension.</returns>
+        /// <remarks>This function applies rotation.</remarks>
         protected static string GetUserLogFileName(LogFileFlags flags, string additionalPath = null)
         {
             string filename;
@@ -150,10 +150,10 @@ namespace Cave.Logging
         /// <summary>
         /// Returns the log file name for the current running program in the programs startup directory.
         /// This should only be used for administration processes.
-        /// Attention do nut use this for service processes!
+        /// Attention do nut use this for service processes!.
         /// </summary>
-        /// <returns>Returns a file name with full path without extension</returns>
-        /// <remarks>This function applies rotation</remarks>
+        /// <returns>Returns a file name with full path without extension.</returns>
+        /// <remarks>This function applies rotation.</remarks>
         protected static string GetProgramLogFileName(LogFileFlags flags, string additionalPath = null)
         {
             string fileName = GetFileName(flags);
@@ -179,7 +179,7 @@ namespace Cave.Logging
         #endregion
 
         /// <summary>
-        /// Returns the current size of the logfile
+        /// Returns the current size of the logfile.
         /// </summary>
         /// <returns></returns>
         public long GetSize()

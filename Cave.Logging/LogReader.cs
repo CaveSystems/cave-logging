@@ -1,13 +1,13 @@
-using Cave.Data;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using Cave.Data;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a log source to be scanned for log entries
+    /// Provides a log source to be scanned for log entries.
     /// </summary>
     public class LogReader : ILogSource
     {
@@ -25,27 +25,27 @@ namespace Cave.Logging
         int m_OldLayoutProcessnameField;
 
         /// <summary>
-        /// Connection string for the storage
+        /// Connection string for the storage.
         /// </summary>
         public ConnectionString ConnectionString { get; private set; }
 
         /// <summary>
-        /// Obtains the <see cref="ITable"/> instance of the LogSource. 
+        /// Obtains the <see cref="ITable"/> instance of the LogSource.
         /// </summary>
         public ITable Table { get; private set; }
 
         /// <summary>
-        /// Filters log entries and returns only entries containing the specified string
+        /// Filters log entries and returns only entries containing the specified string.
         /// </summary>
         public string FilterHostName { get; set; }
 
         /// <summary>
-        /// Filters log entries and returns only entries containing the specified string
+        /// Filters log entries and returns only entries containing the specified string.
         /// </summary>
         public string FilterProcessName { get; set; }
 
         /// <summary>
-        /// Filters log entries and returns only entries containing the specified string
+        /// Filters log entries and returns only entries containing the specified string.
         /// </summary>
         public string FilterSource { get; set; }
 
@@ -53,9 +53,9 @@ namespace Cave.Logging
         /// <value>The layout.</value>
         public RowLayout Layout { get; } = RowLayout.CreateTyped(typeof(LogEntry));
 
-        /// <summary>Connects to the table and checks the layout against the current and old logging layout</summary>
+        /// <summary>Connects to the table and checks the layout against the current and old logging layout.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="throwEx">Throw exception of errors</param>
+        /// <param name="throwEx">Throw exception of errors.</param>
         /// <exception cref="InvalidDataException"></exception>
         bool ConnectTable(ITable table, bool throwEx)
         {
@@ -157,10 +157,10 @@ namespace Cave.Logging
             return true;
         }
 
-        /// <summary>Connects to the table and checks the layout against the current and old logging layout</summary>
+        /// <summary>Connects to the table and checks the layout against the current and old logging layout.</summary>
         /// <param name="db">The database.</param>
-        /// <param name="name">Name of the table</param>
-        /// <param name="throwEx">Throw exception of errors</param>
+        /// <param name="name">Name of the table.</param>
+        /// <param name="throwEx">Throw exception of errors.</param>
         /// <returns>Returns the ITable instance or null on error.</returns>
         /// <exception cref="InvalidDataException"></exception>
         ITable ConnectTable(IDatabase db, string name, bool throwEx)
@@ -225,14 +225,14 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Loads datasets with an old logging layout
+        /// Loads datasets with an old logging layout.
         /// </summary>
         /// <param name="search"></param>
         /// <param name="option"></param>
         /// <returns></returns>
         LogEntry[] OldLayoutGet(Search search, ResultOption option)
         {
-            List<Row> rows = Table.GetRows(search, option);
+            IList<Row> rows = Table.GetRows(search, option);
             if (rows.Count == 0)
             {
                 return new LogEntry[0];
@@ -251,14 +251,14 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Loads datasets from the source
+        /// Loads datasets from the source.
         /// </summary>
-        /// <param name="search">Search to use</param>
-        /// <param name="option">Option to use</param>
+        /// <param name="search">Search to use.</param>
+        /// <param name="option">Option to use.</param>
         /// <returns></returns>
         LogEntry[] Get(Search search, ResultOption option)
         {
-            List<Row> rows = Table.GetRows(search, option);
+            IList<Row> rows = Table.GetRows(search, option);
             LogEntry[] results = new LogEntry[rows.Count];
             for (int i = 0; i < results.Length; i++)
             {
@@ -371,9 +371,9 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the log entry with the specified id
+        /// Obtains the log entry with the specified id.
         /// </summary>
-        /// <param name="id">id of the entry</param>
+        /// <param name="id">id of the entry.</param>
         /// <returns></returns>
         public LogEntry Get(long id)
         {
@@ -389,20 +389,20 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains a list of ids present at the log table
+        /// Obtains a list of ids present at the log table.
         /// </summary>
         /// <returns></returns>
-        public List<long> GetIDs()
+        public IList<long> GetIDs()
         {
-            ResultOption option = ResultOption.SortAscending(Table.Layout.IDField.Name);
+            var option = ResultOption.SortAscending(Table.Layout.IDField.Name);
             return Table.FindRows(MakeFilters(), option);
         }
 
         /// <summary>
         /// Obtains a number of items previous to the specified id.
         /// </summary>
-        /// <param name="id">ID of the lastest entry</param>
-        /// <param name="backLogCount">Number of items to get</param>
+        /// <param name="id">ID of the lastest entry.</param>
+        /// <param name="backLogCount">Number of items to get.</param>
         /// <returns></returns>
         public LogEntry[] GetHistory(long id, int backLogCount)
         {
@@ -422,10 +422,10 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains items from the log table
+        /// Obtains items from the log table.
         /// </summary>
-        /// <param name="end">Last items date time</param>
-        /// <param name="backLogCount">Number of items to get</param>
+        /// <param name="end">Last items date time.</param>
+        /// <param name="backLogCount">Number of items to get.</param>
         /// <returns></returns>
         public LogEntry[] GetHistory(DateTime end, int backLogCount)
         {
@@ -448,8 +448,8 @@ namespace Cave.Logging
         /// <summary>
         /// Obtains datasets in the specified range. This function obeys filters.
         /// </summary>
-        /// <param name="start">Start date time</param>
-        /// <param name="end">End date time</param>
+        /// <param name="start">Start date time.</param>
+        /// <param name="end">End date time.</param>
         /// <returns></returns>
         public LogEntry[] GetHistory(DateTime start, DateTime end)
         {
@@ -466,7 +466,7 @@ namespace Cave.Logging
         /// <summary>
         /// Retrieves the next datasets from the table. This function obeys filters.
         /// </summary>
-        /// <param name="level">Minimum level to retrieve</param>
+        /// <param name="level">Minimum level to retrieve.</param>
         /// <returns></returns>
         public LogEntry[] GetNext(LogLevel level)
         {
@@ -497,7 +497,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Moves the reader to the end of the table
+        /// Moves the reader to the end of the table.
         /// </summary>
         public void MoveToEnd()
         {
@@ -505,7 +505,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Moves the reader to the start of the table
+        /// Moves the reader to the start of the table.
         /// </summary>
         public void MoveToStart()
         {
@@ -513,12 +513,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the number of items present at the table (without any filters appied)
+        /// Obtains the number of items present at the table (without any filters appied).
         /// </summary>
         public long RowCount => Table.RowCount;
 
         /// <summary>
-        /// Obtains the number items present at the table after filtering
+        /// Obtains the number items present at the table after filtering.
         /// </summary>
         public long FilteredRowCount => Table.Count(MakeFilters(), ResultOption.None);
 
@@ -537,12 +537,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the table name
+        /// Obtains the table name.
         /// </summary>
         public string Name => Table.Name;
 
         /// <summary>
-        /// returns the connection string of the source
+        /// returns the connection string of the source.
         /// </summary>
         /// <returns></returns>
         public override string ToString()

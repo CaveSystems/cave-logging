@@ -19,7 +19,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Provides the maximum item count of <see cref="LogMessage"/> items collected
+        /// Provides the maximum item count of <see cref="LogMessage"/> items collected.
         /// </summary>
         public int MaximumItemCount
         {
@@ -28,7 +28,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Clears the list of <see cref="LogMessage"/> items
+        /// Clears the list of <see cref="LogMessage"/> items.
         /// </summary>
         public void Clear()
         {
@@ -39,7 +39,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Retrieves a <see cref="LogMessage"/> items from the collector
+        /// Retrieves a <see cref="LogMessage"/> items from the collector.
         /// </summary>
         /// <returns></returns>
         public bool TryGet(out LogMessage msg)
@@ -57,7 +57,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Retrieves all present <see cref="LogMessage"/> items and clears the collector
+        /// Retrieves all present <see cref="LogMessage"/> items and clears the collector.
         /// </summary>
         /// <returns></returns>
         public LogMessage[] Retrieve()
@@ -71,7 +71,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Provides a list of <see cref="LogMessage"/> items
+        /// Provides a list of <see cref="LogMessage"/> items.
         /// </summary>
         public LogMessage[] ToArray()
         {
@@ -82,7 +82,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the count of items collected and not retrieved
+        /// Obtains the count of items collected and not retrieved.
         /// </summary>
         public int ItemCount
         {
@@ -96,7 +96,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns LogCollector[ItemCount,Level]
+        /// Returns LogCollector[ItemCount,Level].
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -106,8 +106,8 @@ namespace Cave.Logging
 
         #region ILogReceiver Member
 
-        /// <summary>Provides the callback function used to transmit the logging notifications</summary>
-        /// <param name="msg">The message</param>
+        /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
+        /// <param name="msg">The message.</param>
         public override void Write(LogMessage msg)
         {
             lock (m_Items)
@@ -118,7 +118,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the string "LogCollector"
+        /// Obtains the string "LogCollector".
         /// </summary>
         public override string LogSourceName => "LogCollector";
 
