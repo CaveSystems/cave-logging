@@ -1,4 +1,4 @@
-//this class defines always DEBUG and TRACE
+// this class defines always DEBUG and TRACE
 #define TRACE
 #define DEBUG
 

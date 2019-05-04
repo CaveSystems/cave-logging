@@ -8,7 +8,7 @@ namespace Cave.Logging
     /// </summary>
     public class LogConsole : LogReceiver
     {
-        string m_Title;
+        string currentTitle;
 
         #region public members
 
@@ -30,15 +30,15 @@ namespace Cave.Logging
         public ILogTarget Target { get; private set; }
 
         /// <summary>
-        /// Sets the title of the logconsole.
+        /// Gets or sets the title of the logconsole.
         /// </summary>
         public string Title
         {
             get => Target.Title;
             set
             {
-                m_Title = new XT(value).ToString();
-                Target.Title = m_Title;
+                currentTitle = new XT(value).ToString();
+                Target.Title = currentTitle;
             }
         }
 
@@ -60,11 +60,13 @@ namespace Cave.Logging
             return new LogConsole(new LogSystemConsole())
             {
                 Flags = flags,
-                Level = level
+                Level = level,
             };
         }
 
-        /// <summary>Creates a new logconsole object.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogConsole"/> class.
+        /// </summary>
         /// <param name="target">The target to log to.</param>
         public LogConsole(ILogTarget target)
         {
@@ -92,16 +94,16 @@ namespace Cave.Logging
 
             lock (Target)
             {
-                if (0 != Flags)
+                if (Flags != 0)
                 {
                     Target.Inverted = true;
                     #region DisplayLevel
-                    if (0 != (Flags & LogConsoleFlags.DisplayLongLevel))
+                    if ((Flags & LogConsoleFlags.DisplayLongLevel) != 0)
                     {
                         Target.TextColor = level.GetLogLevelColor();
                         Target.WriteString(StringExtensions.ForceLength(level.ToString(), 12));
                     }
-                    if (0 != (Flags & LogConsoleFlags.DisplayOneLetterLevel))
+                    if ((Flags & LogConsoleFlags.DisplayOneLetterLevel) != 0)
                     {
                         Target.TextColor = level.GetLogLevelColor();
                         switch (level)
@@ -120,13 +122,13 @@ namespace Cave.Logging
                     }
                     #endregion
                     #region DisplayTimeStamp
-                    if (0 != (Flags & LogConsoleFlags.DisplayTimeStamp))
+                    if ((Flags & LogConsoleFlags.DisplayTimeStamp) != 0)
                     {
                         Target.WriteString(dateTime.ToLocalTime().ToString(DateTimeFormat));
                     }
                     #endregion
                     #region DisplaySource
-                    if (0 != (Flags & LogConsoleFlags.DisplaySource))
+                    if ((Flags & LogConsoleFlags.DisplaySource) != 0)
                     {
                         Target.WriteString(" ");
                         Target.WriteString(source);
@@ -142,7 +144,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Gets/sets the flags for the logconsole. See the individual flags for more information.
+        /// Gets or sets the flags for the logconsole. See the individual flags for more information.
         /// </summary>
         public LogConsoleFlags Flags = LogConsoleFlags.Default;
 
@@ -156,7 +158,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the string "LogConsole".
+        /// Gets the string "LogConsole".
         /// </summary>
         public override string LogSourceName => "LogConsole";
     }

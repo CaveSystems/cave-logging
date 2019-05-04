@@ -8,19 +8,19 @@ namespace Cave.Logging
     public interface ILogTarget
     {
         /// <summary>
-        /// Invert the color (use color as background highlighter).
+        /// Gets or sets a value indicating whether invert the color (use color as background highlighter).
         /// </summary>
         bool Inverted { get; set; }
 
         /// <summary>
-        /// Gets/sets the current text color.
+        /// Gets or sets the current text color.
         /// </summary>
-        XTColor TextColor { set; get; }
+        XTColor TextColor { get; set; }
 
         /// <summary>
-        /// Gets/sets the current text color.
+        /// Gets or sets the current text color.
         /// </summary>
-        XTStyle TextStyle { set; get; }
+        XTStyle TextStyle { get; set; }
 
         /// <summary>
         /// Writes a string to the console (no formatting).
@@ -54,7 +54,7 @@ namespace Cave.Logging
         void ResetColor();
 
         /// <summary>
-        /// Gets/sets the console title.
+        /// Gets or sets the console title.
         /// </summary>
         string Title { get; set; }
 

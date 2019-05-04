@@ -18,12 +18,14 @@ namespace Cave.Syslog
         static IPAddress GetIPAddress(ConnectionString connection)
         {
             IPAddress[] addresses = Dns.GetHostAddresses(connection.Server);
-            //prefer IPv4
+
+            // prefer IPv4
             foreach (IPAddress address in addresses.Where(a => a.AddressFamily == AddressFamily.InterNetwork))
             {
                 return address;
             }
-            //search IPv6
+
+            // search IPv6
             foreach (IPAddress address in addresses.Where(a => a.AddressFamily == AddressFamily.InterNetworkV6))
             {
                 return address;
@@ -31,10 +33,10 @@ namespace Cave.Syslog
             throw new InvalidDataException(string.Format("Cannot find a valid IPv4 / v6 IPAddress for server {0}!", connection.Server));
         }
 
-        UdpClient m_UdpClient;
-        SyslogMessageVersion m_Version = SyslogMessageVersion.RFC3164;
-        int m_MaximumMessageLength = 2048;
-        string m_ProcessName;
+        UdpClient udpClient;
+        SyslogMessageVersion version = SyslogMessageVersion.RFC3164;
+        int maximumMessageLength = 2048;
+        string processName;
 
         /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
@@ -43,17 +45,17 @@ namespace Cave.Syslog
         /// <param name="content">The content.</param>
         protected override void Write(DateTime dateTime, LogLevel level, string source, XT content)
         {
-            UdpClient l_UdpClient = m_UdpClient;
+            UdpClient l_UdpClient = udpClient;
             if (l_UdpClient == null)
             {
                 return;
             }
 
             string text = source + ": " + content.Text;
-            foreach (string part in StringExtensions.SplitNewLineAndLength(text, m_MaximumMessageLength))
+            foreach (string part in StringExtensions.SplitNewLineAndLength(text, maximumMessageLength))
             {
                 SyslogSeverity l_Severity = (SyslogSeverity)((int)level & 0x7);
-                SyslogMessage item = new SyslogMessage(m_Version, Facility, l_Severity, dateTime, Environment.MachineName.ToLower(), m_ProcessName, 0, null, part, null);
+                SyslogMessage item = new SyslogMessage(version, Facility, l_Severity, dateTime, Environment.MachineName.ToLower(), processName, 0, null, part, null);
                 byte[] data = Encoding.UTF8.GetBytes(item.ToString());
                 l_UdpClient.Send(data, data.Length, Target);
             }
@@ -64,7 +66,7 @@ namespace Cave.Syslog
         /// </summary>
         public SyslogMessageVersion Version
         {
-            get => m_Version;
+            get => version;
             set
             {
                 switch (value)
@@ -72,7 +74,7 @@ namespace Cave.Syslog
                     case SyslogMessageVersion.RFC3164:
                     case SyslogMessageVersion.RFC5424:
                     case SyslogMessageVersion.RSYSLOG:
-                        m_Version = value;
+                        version = value;
                         return;
                     default:
                         throw new NotSupportedException(string.Format("Syslog protocol version '{0}' unknown or not supported!", value));
@@ -90,8 +92,8 @@ namespace Cave.Syslog
         public LogUdpSyslog()
             : base()
         {
-            m_ProcessName = Process.GetCurrentProcess().ProcessName;
-            m_UdpClient = new UdpClient();
+            processName = Process.GetCurrentProcess().ProcessName;
+            udpClient = new UdpClient();
             Target = new IPEndPoint(IPAddress.Loopback, 514);
         }
 
@@ -149,8 +151,8 @@ namespace Cave.Syslog
         /// </summary>
         public int MaximumMessageLength
         {
-            get => m_MaximumMessageLength;
-            set => m_MaximumMessageLength = Math.Max(480, Math.Min(65400, value));
+            get => maximumMessageLength;
+            set => maximumMessageLength = Math.Max(480, Math.Min(65400, value));
         }
 
         /// <summary>
@@ -158,7 +160,7 @@ namespace Cave.Syslog
         /// </summary>
         public override string ToString()
         {
-            return "Syslog<" + Target.ToString() + ">[" + m_Version + "]";
+            return "Syslog<" + Target.ToString() + ">[" + version + "]";
         }
 
         /// <summary>
@@ -172,23 +174,23 @@ namespace Cave.Syslog
             }
 
             base.Close();
-            m_UdpClient?.Close();
-            m_UdpClient = null;
+            udpClient?.Close();
+            udpClient = null;
         }
 
         /// <summary>Obtains the name of the log.</summary>
         public override string LogSourceName => "syslog://" + Target.ToString();
 
         #region IDisposable Member
+
         /// <summary>Releases the unmanaged resources used by this instance and optionally releases the managed resources.</summary>
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "m_UdpClient")]
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                m_UdpClient?.Close();
-                m_UdpClient = null;
+                udpClient?.Close();
+                udpClient = null;
             }
             base.Dispose(disposing);
         }

@@ -123,6 +123,6 @@ namespace Cave.Logging
         /// <summary>
         /// Reserved for local use
         /// </summary>
-        Local7 = 23
+        Local7 = 23,
     }
 }

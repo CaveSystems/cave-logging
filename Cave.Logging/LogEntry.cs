@@ -202,7 +202,6 @@ namespace Cave.Logging
             }
             if (Source != null)
             {
-
                 result.Append(Source.Replace(':', ' '));
                 result.Append(": ");
             }

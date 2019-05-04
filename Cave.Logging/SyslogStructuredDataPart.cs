@@ -11,12 +11,11 @@ namespace Cave.Logging
     /// </summary>
     public class SyslogStructuredDataPart
     {
-        Option[] m_Items;
+        Option[] items;
 
         /// <summary>
         /// Invalid characters that have to be escaped.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         public static char[] InvalidChars => new char[] { '"', '\\', ']' };
 
         /// <summary>
@@ -51,7 +50,7 @@ namespace Cave.Logging
             }
 
             Name = name;
-            m_Items = items;
+            this.items = items;
         }
 
         /// <summary>
@@ -62,7 +61,7 @@ namespace Cave.Logging
         /// <summary>
         /// Provides access to all options.
         /// </summary>
-        public Option[] Items => (Option[])m_Items.Clone();
+        public Option[] Items => (Option[])items.Clone();
 
         /// <summary>
         /// Obtains the encoded string of this instances name and data.
@@ -83,20 +82,20 @@ namespace Cave.Logging
             StringBuilder result = new StringBuilder();
             result.Append('[');
             result.Append(Name);
-            foreach (Option l_Element in Items)
+            foreach (Option item in Items)
             {
                 result.Append(' ');
-                if (!ASCII.IsClean(l_Element.Name) || (l_Element.Name.IndexOf(' ') >= 0))
+                if (!ASCII.IsClean(item.Name) || (item.Name.IndexOf(' ') >= 0))
                 {
                     result.Append("InvalidElementName");
                 }
                 else
                 {
-                    result.Append(l_Element.Name);
+                    result.Append(item.Name);
                 }
                 result.Append("=\"");
-                string value = l_Element.Value == null ? "" : l_Element.Value;
-                value = value.ReplaceChars(InvalidChars, "");
+                string value = item.Value == null ? string.Empty : item.Value;
+                value = value.ReplaceChars(InvalidChars, string.Empty);
                 result.Append(value);
                 result.Append("\"");
             }

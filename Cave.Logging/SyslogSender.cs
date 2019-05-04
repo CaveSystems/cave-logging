@@ -11,25 +11,26 @@ namespace Cave.Syslog
     /// </summary>
     public class SyslogSender : IDisposable
     {
-        TcpClient m_TcpClient;
-        UdpClient m_UdpClient;
-        ConnectionString m_Target;
-        SyslogMessageVersion m_Version = SyslogMessageVersion.Undefined;
+        TcpClient tcpClient;
+        UdpClient udpClient;
+        ConnectionString target;
+        SyslogMessageVersion version = SyslogMessageVersion.Undefined;
 
         /// <summary>
-        /// Creates a new syslog sender without message version preference. The message version can be set by the Connect() function later.
+        /// Initializes a new instance of the <see cref="SyslogSender"/> class.
         /// </summary>
-        public SyslogSender() : base()
+        public SyslogSender()
+            : base()
         {
         }
 
         /// <summary>
-        /// Creates a new syslog sender with the specified syslog message version.
+        /// Initializes a new instance of the <see cref="SyslogSender"/> class.
         /// </summary>
         /// <param name="version">The <see cref="SyslogMessageVersion"/> to use for all outgoing messages.</param>
         public SyslogSender(SyslogMessageVersion version)
         {
-            m_Version = version;
+            this.version = version;
         }
 
         /// <summary>
@@ -44,28 +45,28 @@ namespace Cave.Syslog
         public void Connect(ConnectionString connectionString)
         {
             OptionCollection options = OptionCollection.FromStrings(connectionString.Options.Split('&'));
-            if (m_Version == SyslogMessageVersion.Undefined)
+            if (version == SyslogMessageVersion.Undefined)
             {
                 if (options.Contains("version"))
                 {
-                    m_Version = (SyslogMessageVersion)Enum.Parse(typeof(SyslogMessageVersion), options["version"].Value, true);
+                    version = (SyslogMessageVersion)Enum.Parse(typeof(SyslogMessageVersion), options["version"].Value, true);
                 }
                 else
                 {
-                    m_Version = SyslogMessageVersion.RFC5424;
+                    version = SyslogMessageVersion.RFC5424;
                 }
             }
             switch (connectionString.ConnectionType)
             {
                 case ConnectionType.TCP:
-                    m_TcpClient = new TcpClient();
-                    m_TcpClient.Connect(connectionString.Server, connectionString.GetPort(514));
+                    tcpClient = new TcpClient();
+                    tcpClient.Connect(connectionString.Server, connectionString.GetPort(514));
                     return;
 
                 case ConnectionType.UDP:
-                    m_UdpClient = new UdpClient();
-                    m_UdpClient.Connect(connectionString.Server, connectionString.GetPort(514));
-                    m_UdpClient.Send(new byte[0], 0);
+                    udpClient = new UdpClient();
+                    udpClient.Connect(connectionString.Server, connectionString.GetPort(514));
+                    udpClient.Send(new byte[0], 0);
                     return;
 
                 default:
@@ -79,25 +80,25 @@ namespace Cave.Syslog
         /// <param name="msg"></param>
         public void Send(SyslogMessage msg)
         {
-            msg.Version = m_Version;
+            msg.Version = version;
             byte[] data = Encoding.UTF8.GetBytes(msg.ToString() + "\n");
 
-            if (m_TcpClient != null)
+            if (tcpClient != null)
             {
-                if (!m_TcpClient.Connected)
+                if (!tcpClient.Connected)
                 {
-                    //reconnect
-                    try { m_TcpClient.Connect(m_Target.Server, m_Target.GetPort(514)); }
-                    catch { this.LogWarning($"No connection to {m_Target.ToString(ConnectionStringPart.NoCredentials)}"); }
+                    // reconnect
+                    try { tcpClient.Connect(target.Server, target.GetPort(514)); }
+                    catch { this.LogWarning($"No connection to {target.ToString(ConnectionStringPart.NoCredentials)}"); }
                 }
 
-                m_TcpClient.Client.Send(data);
+                tcpClient.Client.Send(data);
                 return;
             }
 
-            if (m_UdpClient != null)
+            if (udpClient != null)
             {
-                m_UdpClient.Send(data, data.Length);
+                udpClient.Send(data, data.Length);
                 return;
             }
 
@@ -105,20 +106,28 @@ namespace Cave.Syslog
         }
 
         #region IDisposable Support
-        private bool m_Disposed = false;
+        private bool disposed = false;
 
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!m_Disposed)
+            if (!disposed)
             {
                 if (disposing)
                 {
-                    if (m_TcpClient != null) { m_TcpClient.Close(); m_TcpClient = null; }
-                    if (m_UdpClient != null) { m_UdpClient.Close(); m_UdpClient = null; }
+                    if (tcpClient != null)
+                    {
+                        tcpClient.Close();
+                        tcpClient = null;
+                    }
+                    if (udpClient != null)
+                    {
+                        udpClient.Close();
+                        udpClient = null;
+                    }
                 }
-                m_Disposed = true;
+                disposed = true;
             }
         }
 

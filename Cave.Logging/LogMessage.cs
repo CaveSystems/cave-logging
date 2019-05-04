@@ -33,9 +33,9 @@ namespace Cave.Logging
             DateTime = dateTime;
             Level = level;
             Source = source;
-            m_Content = content;
+            this.content = content;
             Exception = exception;
-            m_Arguments = arguments;
+            this.arguments = arguments;
         }
 
         /// <summary>The date time.</summary>
@@ -48,15 +48,15 @@ namespace Cave.Logging
         public string Source { get; }
 
         /// <summary>The content.</summary>
-        XT m_Content;
+        XT content;
 
         /// <summary>The arguments.</summary>
-        object[] m_Arguments;
+        object[] arguments;
 
         /// <summary>The exception.</summary>
         public Exception Exception { get; }
 
-        XT m_CompleteContent = null;
+        XT completeContent = null;
 
         /// <summary>Gets the content including arguments.</summary>
         /// <value>The content.</value>
@@ -66,19 +66,18 @@ namespace Cave.Logging
             {
                 lock (this)
                 {
-                    if (m_CompleteContent == null)
+                    if (completeContent == null)
                     {
-
-                        if (m_Arguments == null || m_Arguments.Length == 0)
+                        if (arguments == null || arguments.Length == 0)
                         {
-                            m_CompleteContent = m_Content;
+                            completeContent = content;
                         }
                         else
                         {
-                            m_CompleteContent = XT.Format(m_Content.Data, m_Arguments);
+                            completeContent = XT.Format(content.Data, arguments);
                         }
                     }
-                    return m_CompleteContent;
+                    return completeContent;
                 }
             }
         }

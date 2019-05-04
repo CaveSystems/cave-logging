@@ -25,23 +25,24 @@ namespace Cave.Logging
                 return;
             }
 
-            if (msg.Exception == null || 0 == ExceptionMode)
+            if (msg.Exception == null || ExceptionMode == 0)
             {
                 Write(msg.DateTime, msg.Level, msg.Source, msg.Content);
                 return;
             }
 
-            //log stacktrace
-            bool stackTrace = (0 != (ExceptionMode & LogExceptionMode.StackTrace));
+            // log stacktrace
+            bool stackTrace = (ExceptionMode & LogExceptionMode.StackTrace) != 0;
             XT exceptionMessage = msg.Exception.ToXT(stackTrace);
-            //with same level ?
-            if (0 != (ExceptionMode & LogExceptionMode.SameLevel))
+
+            // with same level ?
+            if ((ExceptionMode & LogExceptionMode.SameLevel) != 0)
             {
                 Write(msg.DateTime, msg.Level, msg.Source, msg.Content + new XT("\n") + exceptionMessage);
             }
             else
             {
-                //two different messages
+                // two different messages
                 Write(msg.DateTime, msg.Level, msg.Source, msg.Content);
                 Write(msg.DateTime, LogLevel.Verbose, msg.Source, exceptionMessage);
             }

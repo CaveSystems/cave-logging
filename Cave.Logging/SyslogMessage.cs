@@ -100,11 +100,11 @@ namespace Cave.Logging
 
             SyslogMessage result = new SyslogMessage
             {
-                Version = SyslogMessageVersion.RFC3164
+                Version = SyslogMessageVersion.RFC3164,
             };
             int start = 0;
 
-            //decode priority
+            // decode priority
             {
                 if (!data.StartsWith("<"))
                 {
@@ -122,7 +122,7 @@ namespace Cave.Logging
                 result.Facility = (SyslogFacility)(l_Priority / 8);
             }
 
-            //check space
+            // check space
             if (!char.IsLetter(data[start]))
             {
                 throw new FormatException(string.Format("Invalid parser for this message type!"));
@@ -135,13 +135,13 @@ namespace Cave.Logging
                 start++;
             }
 
-            //copy HostName
+            // copy HostName
             {
                 result.HostName = StringExtensions.GetString(data, start, ' ', ' ');
                 start += result.HostName.Length + 1;
             }
 
-            //decode ProcessName
+            // decode ProcessName
             {
                 result.ProcessName = StringExtensions.GetString(data, start, ' ', ':');
                 result.ProcessID = 0;
@@ -162,7 +162,7 @@ namespace Cave.Logging
                 start++;
             }
 
-            //copy content
+            // copy content
             string content = data.Substring(start, data.Length - start);
             result.Content = content.Replace('\0', ' ').TrimEnd('\r', '\n');
             return result;
@@ -176,16 +176,15 @@ namespace Cave.Logging
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1303:Literale nicht als lokalisierte Parameter �bergeben", MessageId = "Cave.Logging.SyslogStructuredDataPart.Parse(System.String)")]
         public static SyslogMessage ParseRFC5424(string data)
         {
             SyslogMessage result = new SyslogMessage
             {
-                Version = SyslogMessageVersion.RFC5424
+                Version = SyslogMessageVersion.RFC5424,
             };
             int start = 0;
 
-            //decode priority
+            // decode priority
             {
                 string l_PriorityString = StringExtensions.GetString(data, 0, '<', '>');
                 if (!int.TryParse(l_PriorityString, out int l_Priority))
@@ -198,7 +197,7 @@ namespace Cave.Logging
                 result.Facility = (SyslogFacility)(l_Priority / 8);
             }
 
-            //check 1
+            // check 1
             if (data[start++] != (byte)'1')
             {
                 throw new InvalidOperationException(string.Format("Invalid parser for this message type!"));
@@ -252,7 +251,7 @@ namespace Cave.Logging
                 {
                     while (true)
                     {
-                        //TODO escaped control chars
+                        // TODO escaped control chars
                         string s = StringExtensions.GetString(data, start, '[', ']');
                         parts.Add(SyslogStructuredDataPart.Parse("[" + s + "]"));
                         start += s.Length + 2;
@@ -280,19 +279,22 @@ namespace Cave.Logging
             }
             if (start < data.Length)
             {
-                //check for space (some syslog servers do not send this)
+                // check for space (some syslog servers do not send this)
                 if (data[start] == ' ')
                 {
                     start++;
                 }
-                //get message content
+
+                // get message content
                 string content = data.Substring(start);
-                //remove utf8 bom
+
+                // remove utf8 bom
                 if (content.StartsWith(ASCII.Strings.UTF8BOM))
                 {
                     content = content.Substring(ASCII.Strings.UTF8BOM.Length);
                 }
-                //replace invalid chars and trim end
+
+                // replace invalid chars and trim end
                 result.Content = content.Replace('\0', ' ').TrimEnd('\r', '\n');
             }
             return result;
@@ -303,16 +305,15 @@ namespace Cave.Logging
         /// </summary>
         /// <param name="data">RSYSLOG message data.</param>
         /// <returns></returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1303:Literale nicht als lokalisierte Parameter übergeben", MessageId = "Cave.Logging.SyslogStructuredDataPart.Parse(System.String)")]
         public static SyslogMessage ParseRSYSLOG(string data)
         {
             SyslogMessage result = new SyslogMessage
             {
-                Version = SyslogMessageVersion.RSYSLOG
+                Version = SyslogMessageVersion.RSYSLOG,
             };
             int start = 0;
 
-            //decode priority
+            // decode priority
             {
                 string l_PriorityString = StringExtensions.GetString(data, 0, '<', '>');
                 if (!int.TryParse(l_PriorityString, out int l_Priority))
@@ -368,12 +369,13 @@ namespace Cave.Logging
                 catch { }
             }
 
-            //check for space (some syslog servers do not send this)
+            // check for space (some syslog servers do not send this)
             if (data[start] == ' ')
             {
                 start++;
             }
-            //got structured data ?
+
+            // got structured data ?
             if ((data[start] == '[') && (data.IndexOf(']', start) > -1))
             {
                 List<SyslogStructuredDataPart> parts = new List<SyslogStructuredDataPart>();
@@ -381,7 +383,7 @@ namespace Cave.Logging
                 {
                     while (true)
                     {
-                        //TODO escaped control chars
+                        // TODO escaped control chars
                         string item = StringExtensions.GetString(data, start, '[', ']');
                         parts.Add(SyslogStructuredDataPart.Parse("[" + item + "]"));
                         start += item.Length + 2;
@@ -409,20 +411,22 @@ namespace Cave.Logging
             }
             if (start < data.Length)
             {
-                //check for space (some syslog servers do not send this)
+                // check for space (some syslog servers do not send this)
                 if (data[start] == ' ')
                 {
                     start++;
                 }
 
-                //get message content
+                // get message content
                 string content = data.Substring(start);
-                //remove utf8 bom
+
+                // remove utf8 bom
                 if (content.StartsWith(ASCII.Strings.UTF8BOM))
                 {
                     content = content.Substring(ASCII.Strings.UTF8BOM.Length);
                 }
-                //replace invalid chars and trim end
+
+                // replace invalid chars and trim end
                 result.Content = content.Replace('\0', ' ').TrimEnd('\r', '\n');
             }
             return result;
@@ -448,7 +452,7 @@ namespace Cave.Logging
             char version = data[index + 1];
             if (char.IsDigit(version))
             {
-                //check rsyslog
+                // check rsyslog
                 if (data.IndexOf('-', index) == index + 5)
                 {
                     return ParseRSYSLOG(data);
@@ -476,7 +480,7 @@ namespace Cave.Logging
         public int MaximumMessageLength => GetMaximumMessageLength(Version);
 
         /// <summary>
-        /// Creates a new syslog item.
+        /// Initializes a new instance of the <see cref="SyslogMessage"/> struct.
         /// </summary>
         /// <param name="version">Used SyslogVersion (used at ToString() methods).</param>
         /// <param name="facility"><see cref="SyslogFacility"/>.</param>
@@ -488,8 +492,7 @@ namespace Cave.Logging
         /// <param name="messageID">The message ID.</param>
         /// <param name="content">The content of the message.</param>
         /// <param name="data">The structured syslog data.</param>
-        public SyslogMessage(SyslogMessageVersion version, SyslogFacility facility, SyslogSeverity severity, SyslogMessageDateTime timeStamp, string hostName,
-            string processName, uint processID, string messageID, string content, SyslogStructuredData data)
+        public SyslogMessage(SyslogMessageVersion version, SyslogFacility facility, SyslogSeverity severity, SyslogMessageDateTime timeStamp, string hostName, string processName, uint processID, string messageID, string content, SyslogStructuredData data)
         {
             ID = -1;
             if (string.IsNullOrEmpty(hostName))
@@ -654,16 +657,19 @@ namespace Cave.Logging
             }
 
             StringBuilder stringBuilder = new StringBuilder();
-            //PRI: <PRI>
+
+            // PRI: <PRI>
             stringBuilder.Append("<");
-            stringBuilder.Append((int)Facility * 8 + (int)Severity);
+            stringBuilder.Append(((int)Facility * 8) + (int)Severity);
             stringBuilder.Append(">");
-            //HEADER: timestamp hostname
+
+            // HEADER: timestamp hostname
             stringBuilder.Append(TimeStamp.ToStringRFC3164());
             stringBuilder.Append(' ');
             stringBuilder.Append(HostName);
             stringBuilder.Append(' ');
-            //MSG Process: Message
+
+            // MSG Process: Message
             if (ProcessName.Length > 0)
             {
                 stringBuilder.Append(ProcessName);
@@ -688,14 +694,17 @@ namespace Cave.Logging
         public string ToStringRFC5424()
         {
             StringBuilder stringBuilder = new StringBuilder();
-            //PRI: <PRI>Version
+
+            // PRI: <PRI>Version
             stringBuilder.Append("<");
-            stringBuilder.Append((int)Facility * 8 + (int)Severity);
+            stringBuilder.Append(((int)Facility * 8) + (int)Severity);
             stringBuilder.Append(">1 ");
-            //TIMESTAMP
+
+            // TIMESTAMP
             stringBuilder.Append(TimeStamp.ToString());
             stringBuilder.Append(' ');
-            //HOSTNAME
+
+            // HOSTNAME
             if (string.IsNullOrEmpty(HostName))
             {
                 stringBuilder.Append('-');
@@ -705,7 +714,7 @@ namespace Cave.Logging
                 stringBuilder.Append(HostName);
             }
 
-            //APP-NAME
+            // APP-NAME
             stringBuilder.Append(' ');
             if (string.IsNullOrEmpty(ProcessName))
             {
@@ -716,7 +725,7 @@ namespace Cave.Logging
                 stringBuilder.Append(ProcessName);
             }
 
-            //PROCID
+            // PROCID
             stringBuilder.Append(' ');
             if (ProcessID == 0)
             {
@@ -727,7 +736,7 @@ namespace Cave.Logging
                 stringBuilder.Append(ProcessID.ToString());
             }
 
-            //MSGID
+            // MSGID
             stringBuilder.Append(' ');
             if (string.IsNullOrEmpty(MessageID))
             {
@@ -738,7 +747,7 @@ namespace Cave.Logging
                 stringBuilder.Append(MessageID);
             }
 
-            //STRUCTURED-DATA
+            // STRUCTURED-DATA
             stringBuilder.Append(' ');
             string valueuredDataString = (StructuredData == null) ? null : StructuredData.ToString();
             if (valueuredDataString == null)
@@ -799,17 +808,21 @@ namespace Cave.Logging
             }
 
             StringBuilder stringBuilder = new StringBuilder();
-            //PRI: <PRI>
+
+            // PRI: <PRI>
             stringBuilder.Append("<");
-            stringBuilder.Append((int)Facility * 8 + (int)Severity);
+            stringBuilder.Append(((int)Facility * 8) + (int)Severity);
             stringBuilder.Append(">");
-            //TIMESTAMP
+
+            // TIMESTAMP
             stringBuilder.Append(TimeStamp.ToString());
             stringBuilder.Append(' ');
-            //HOSTNAME
+
+            // HOSTNAME
             stringBuilder.Append(HostName);
             stringBuilder.Append(' ');
-            //MSG Process: Message
+
+            // MSG Process: Message
             if (ProcessName.Length > 0)
             {
                 stringBuilder.Append(ProcessName);

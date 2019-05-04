@@ -43,6 +43,6 @@ namespace Cave.Logging
         /// <summary>
         /// Debug-level messages
         /// </summary>
-        Debug = 7
+        Debug = 7,
     }
 }

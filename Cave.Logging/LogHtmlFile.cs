@@ -12,8 +12,9 @@ namespace Cave.Logging
     public class LogHtmlFile : LogFileBase
     {
         #region default log files
+
         /// <summary>
-        /// Gets/sets the used file extension for the html logs.
+        /// Gets or sets the used file extension for the html logs.
         /// </summary>
         public static string FileExtension = ".html";
 
@@ -53,7 +54,7 @@ namespace Cave.Logging
         }
         #endregion
 
-        StreamWriter m_Writer;
+        StreamWriter writer;
 
         /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
@@ -62,22 +63,26 @@ namespace Cave.Logging
         /// <param name="content">The content.</param>
         protected override void Write(DateTime dateTime, LogLevel level, string source, XT content)
         {
-            //start row
-            m_Writer.Write("<tr>");
-            //datetime
-            m_Writer.Write("<td>" + dateTime.ToString(StringExtensions.DisplayDateTimeWithTimeZoneFormat) + "</td>");
-            //loglevel (background colored)
+            // start row
+            writer.Write("<tr>");
+
+            // datetime
+            writer.Write("<td>" + dateTime.ToString(StringExtensions.DisplayDateTimeWithTimeZoneFormat) + "</td>");
+
+            // loglevel (background colored)
             {
                 XTColor color = Level.GetLogLevelColor();
-                if (color == XTColor.Default) { m_Writer.Write("<td>"); }
-                else { m_Writer.Write("<td class=\"" + color + "\">"); }
-                m_Writer.Write(Level + "</td>");
+                if (color == XTColor.Default) { writer.Write("<td>"); }
+                else { writer.Write("<td class=\"" + color + "\">"); }
+                writer.Write(Level + "</td>");
             }
-            //source
-            m_Writer.Write("<td>" + source + "</td>");
-            //colored content
+
+            // source
+            writer.Write("<td>" + source + "</td>");
+
+            // colored content
             {
-                m_Writer.Write("<td>");
+                writer.Write("<td>");
                 XTColor color = XTColor.Default;
                 foreach (XTItem item in content.Items)
                 {
@@ -85,48 +90,50 @@ namespace Cave.Logging
                     {
                         if (color != XTColor.Default)
                         {
-                            m_Writer.Write("</span>");
+                            writer.Write("</span>");
                         }
 
                         color = item.Color;
                         if (color != XTColor.Default)
                         {
-                            m_Writer.Write("<span style=\"color:" + color + "\">");
+                            writer.Write("<span style=\"color:" + color + "\">");
                         }
                     }
                     if (item.Text.Contains("\n"))
                     {
-                        m_Writer.Write("<br/>");
+                        writer.Write("<br/>");
                     }
                     else
                     {
-                        m_Writer.Write(item.Text);
+                        writer.Write(item.Text);
                     }
                 }
                 if (color != XTColor.Default)
                 {
-                    m_Writer.Write("</span>");
+                    writer.Write("</span>");
                 }
-                m_Writer.Write("</td>");
+                writer.Write("</td>");
             }
-            //end row
-            m_Writer.WriteLine("</tr>");
-            m_Writer.Flush();
+
+            // end row
+            writer.WriteLine("</tr>");
+            writer.Flush();
         }
 
         /// <summary>Initializes a new instance of the <see cref="LogHtmlFile"/> class.</summary>
         /// <param name="fileName">Name of the file.</param>
-        public LogHtmlFile(string fileName) : base(fileName)
+        public LogHtmlFile(string fileName)
+            : base(fileName)
         {
             this.LogDebug("Prepare logging to file <cyan>{0}", fileName);
-            m_Writer = File.CreateText(fileName);
-            m_Writer.WriteLine("<html><head>");
-            m_Writer.WriteLine(res.LogHtmsortTable);
-            m_Writer.WriteLine(res.LogHtmstyle);
-            m_Writer.WriteLine("</head>");
-            m_Writer.WriteLine("<body style=\"font-family:monospace\"><table class=\"sortable\">");
-            m_Writer.WriteLine("<tr><th>DateTime</th><th>Level</th><th>Source</th><th>Content</th></tr>");
-            m_Writer.Flush();
+            writer = File.CreateText(fileName);
+            writer.WriteLine("<html><head>");
+            writer.WriteLine(res.LogHtmsortTable);
+            writer.WriteLine(res.LogHtmstyle);
+            writer.WriteLine("</head>");
+            writer.WriteLine("<body style=\"font-family:monospace\"><table class=\"sortable\">");
+            writer.WriteLine("<tr><th>DateTime</th><th>Level</th><th>Source</th><th>Content</th></tr>");
+            writer.Flush();
         }
 
         /// <summary>Closes the <see cref="LogReceiver" />.</summary>
@@ -134,11 +141,11 @@ namespace Cave.Logging
         {
             lock (this)
             {
-                if (m_Writer != null)
+                if (writer != null)
                 {
-                    m_Writer.WriteLine("</table></body></html>");
-                    m_Writer.Close();
-                    m_Writer = null;
+                    writer.WriteLine("</table></body></html>");
+                    writer.Close();
+                    writer = null;
                 }
             }
         }

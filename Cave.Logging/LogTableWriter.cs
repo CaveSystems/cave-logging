@@ -8,7 +8,7 @@ namespace Cave.Logging
     /// </summary>
     public sealed class LogTableWriter : IDisposable
     {
-        TableWriter<LogEntry> m_Writer;
+        TableWriter<LogEntry> writer;
 
         /// <summary>Creates a new log table writer instance.</summary>
         /// <param name="logDatabase">The log database.</param>
@@ -24,9 +24,9 @@ namespace Cave.Logging
         /// <param name="logTable">Table to write to.</param>
         public LogTableWriter(ITable<LogEntry> logTable)
         {
-            m_Writer = new TableWriter<LogEntry>(logTable)
+            writer = new TableWriter<LogEntry>(logTable)
             {
-                TransactionFlags = TransactionFlags.AllowRequeue
+                TransactionFlags = TransactionFlags.AllowRequeue,
             };
         }
 
@@ -36,7 +36,7 @@ namespace Cave.Logging
         /// <param name="logEntry"></param>
         public void Write(LogEntry logEntry)
         {
-            m_Writer.Insert(logEntry);
+            writer.Insert(logEntry);
         }
 
         /// <summary>
@@ -44,28 +44,28 @@ namespace Cave.Logging
         /// </summary>
         public void Dispose()
         {
-            if (m_Writer != null)
+            if (writer != null)
             {
-                m_Writer.Close();
-                m_Writer = null;
+                writer.Close();
+                writer = null;
             }
         }
 
         /// <summary>
         /// Obtains the number of items queued for writing.
         /// </summary>
-        public int QueueCount => m_Writer.QueueCount;
+        public int QueueCount => writer.QueueCount;
 
         /// <summary>
         /// Obtains the number of items written.
         /// </summary>
-        public long WrittenCount => m_Writer.WrittenCount;
+        public long WrittenCount => writer.WrittenCount;
 
         /// <summary>The table this instance writes to.</summary>
-        public ITable<LogEntry> Table => m_Writer.Table;
+        public ITable<LogEntry> Table => writer.Table;
 
         /// <summary>The transaction log.</summary>
-        public TransactionLog<LogEntry> TransactionLog => m_Writer.TransactionLog;
+        public TransactionLog<LogEntry> TransactionLog => writer.TransactionLog;
 
         /// <summary>
         ///
@@ -73,7 +73,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public override string ToString()
         {
-            return m_Writer.ToString();
+            return writer.ToString();
         }
     }
 }

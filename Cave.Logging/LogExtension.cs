@@ -77,6 +77,7 @@ namespace Cave.Logging
         }
 
         #region log message
+
         /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
         /// <param name="source">The source of the message.</param>
         /// <param name="msg">The message to be logged.</param>
@@ -176,6 +177,7 @@ namespace Cave.Logging
         #endregion
 
         #region log exception and message
+
         /// <summary>
         /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
         /// </summary>

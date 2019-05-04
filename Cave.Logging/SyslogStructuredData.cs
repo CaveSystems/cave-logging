@@ -44,8 +44,8 @@ namespace Cave.Logging
             return new SyslogStructuredData(result);
         }
 
-        readonly Dictionary<string, SyslogStructuredDataPart> m_Data = new Dictionary<string, SyslogStructuredDataPart>();
-        readonly List<string> m_Names = new List<string>();
+        readonly Dictionary<string, SyslogStructuredDataPart> data = new Dictionary<string, SyslogStructuredDataPart>();
+        readonly List<string> names = new List<string>();
 
         /// <summary>
         /// Creates a new empty SyslogStructuredData instance.
@@ -91,6 +91,7 @@ namespace Cave.Logging
         }
 
         #region ICollection<string> implementation
+
         /// <summary>
         /// Adds a new empty structured data part with the specified name.
         /// </summary>
@@ -107,7 +108,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public bool Contains(string item)
         {
-            return m_Data.ContainsKey(item);
+            return data.ContainsKey(item);
         }
 
         /// <summary>
@@ -117,7 +118,7 @@ namespace Cave.Logging
         /// <param name="arrayIndex"></param>
         public void CopyTo(string[] array, int arrayIndex)
         {
-            m_Data.Keys.CopyTo(array, arrayIndex);
+            data.Keys.CopyTo(array, arrayIndex);
         }
 
         /// <summary>
@@ -132,8 +133,8 @@ namespace Cave.Logging
         /// <returns></returns>
         public bool Remove(string item)
         {
-            m_Names.Remove(item);
-            return m_Data.Remove(item);
+            names.Remove(item);
+            return data.Remove(item);
         }
 
         /// <summary>
@@ -142,11 +143,12 @@ namespace Cave.Logging
         /// <returns></returns>
         IEnumerator<string> IEnumerable<string>.GetEnumerator()
         {
-            return m_Data.Keys.GetEnumerator();
+            return data.Keys.GetEnumerator();
         }
         #endregion
 
         #region ICollection<SyslogStructuredPart>
+
         /// <summary>
         /// Adds a <see cref="SyslogStructuredDataPart"/>.
         /// </summary>
@@ -158,8 +160,8 @@ namespace Cave.Logging
                 throw new ArgumentNullException("item");
             }
 
-            m_Data.Add(item.Name, item);
-            m_Names.Add(item.Name);
+            data.Add(item.Name, item);
+            names.Add(item.Name);
         }
 
         /// <summary>
@@ -167,8 +169,8 @@ namespace Cave.Logging
         /// </summary>
         public void Clear()
         {
-            m_Data.Clear();
-            m_Names.Clear();
+            data.Clear();
+            names.Clear();
         }
 
         /// <summary>
@@ -183,7 +185,7 @@ namespace Cave.Logging
                 throw new ArgumentNullException("item");
             }
 
-            return m_Data.ContainsKey(item.Name) && m_Data[item.Name].Equals(item);
+            return data.ContainsKey(item.Name) && data[item.Name].Equals(item);
         }
 
         /// <summary>
@@ -193,13 +195,13 @@ namespace Cave.Logging
         /// <param name="arrayIndex"></param>
         public void CopyTo(SyslogStructuredDataPart[] array, int arrayIndex)
         {
-            m_Data.Values.CopyTo(array, arrayIndex);
+            data.Values.CopyTo(array, arrayIndex);
         }
 
         /// <summary>
         /// Obtains the number of <see cref="SyslogStructuredDataPart"/>s present.
         /// </summary>
-        public int Count => m_Data.Count;
+        public int Count => data.Count;
 
         /// <summary>
         /// Removes a specified <see cref="SyslogStructuredDataPart"/>.
@@ -227,7 +229,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public IEnumerator<SyslogStructuredDataPart> GetEnumerator()
         {
-            return m_Data.Values.GetEnumerator();
+            return data.Values.GetEnumerator();
         }
 
         /// <summary>
@@ -236,7 +238,7 @@ namespace Cave.Logging
         /// <returns></returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return m_Data.Values.GetEnumerator();
+            return data.Values.GetEnumerator();
         }
         #endregion
 
@@ -245,14 +247,14 @@ namespace Cave.Logging
         /// </summary>
         /// <param name="index">Index of the part.</param>
         /// <returns></returns>
-        public SyslogStructuredDataPart this[int index] => this[m_Names[index]];
+        public SyslogStructuredDataPart this[int index] => this[names[index]];
 
         /// <summary>
         /// Obtains the SyslogStructuredDataPart with the specified name.
         /// </summary>
         /// <param name="name">Name of the part.</param>
         /// <returns></returns>
-        public SyslogStructuredDataPart this[string name] => m_Data[name];
+        public SyslogStructuredDataPart this[string name] => data[name];
 
         /// <summary>
         /// Obtains all parts of the instance.
@@ -261,7 +263,7 @@ namespace Cave.Logging
         public SyslogStructuredDataPart[] ToArray()
         {
             SyslogStructuredDataPart[] result = new SyslogStructuredDataPart[Count];
-            m_Data.Values.CopyTo(result, 0);
+            data.Values.CopyTo(result, 0);
             return result;
         }
     }

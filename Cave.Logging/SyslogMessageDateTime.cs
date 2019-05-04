@@ -35,7 +35,7 @@ namespace Cave.Logging
                 return false;
             }
 
-            return dateTime1.m_Value == dateTime2.m_Value;
+            return dateTime1.Value == dateTime2.Value;
         }
 
         /// <summary>Implements the operator !=.</summary>
@@ -54,7 +54,7 @@ namespace Cave.Logging
                 return true;
             }
 
-            return dateTime1.m_Value != dateTime2.m_Value;
+            return dateTime1.Value != dateTime2.Value;
         }
 
         /// <summary>Implements the operator &lt;.</summary>
@@ -73,7 +73,7 @@ namespace Cave.Logging
                 return false;
             }
 
-            return dateTime1.m_Value < dateTime2.m_Value;
+            return dateTime1.Value < dateTime2.Value;
         }
 
         /// <summary>Implements the operator &gt;.</summary>
@@ -92,7 +92,7 @@ namespace Cave.Logging
                 return true;
             }
 
-            return dateTime1.m_Value > dateTime2.m_Value;
+            return dateTime1.Value > dateTime2.Value;
         }
 
         /// <summary>
@@ -184,14 +184,12 @@ namespace Cave.Logging
             return ParseRFC3164(text);
         }
 
-        DateTimeOffset m_Value;
-
         /// <summary>
         /// Creates a new SyslogMessageDateTime instance with the current date and time.
         /// </summary>
         public SyslogMessageDateTime()
         {
-            m_Value = DateTimeOffset.Now;
+            Value = DateTimeOffset.Now;
         }
 
         /// <summary>
@@ -217,7 +215,7 @@ namespace Cave.Logging
                 throw new ArgumentOutOfRangeException(nameof(ns));
             }
 
-            m_Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + ms * 1000L)));
+            Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + (ms * 1000L))));
         }
 
         /// <summary>
@@ -244,26 +242,26 @@ namespace Cave.Logging
                 throw new ArgumentOutOfRangeException(nameof(ns));
             }
 
-            m_Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + ms * 1000L)), offset);
+            Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + (ms * 1000L))), offset);
         }
 
         /// <summary>
-        /// Creates a new SyslogMessageDateTime from the specified local datetime value.
+        /// Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.
         /// </summary>
         /// <param name="localDateTime">The local datetime.</param>
         public SyslogMessageDateTime(DateTime localDateTime)
         {
-            m_Value = new DateTimeOffset(localDateTime);
+            Value = new DateTimeOffset(localDateTime);
         }
 
         /// <summary>
-        /// Creates a new SyslogMessageDateTime using the specified date, time and offset.
+        /// Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.
         /// </summary>
         /// <param name="dateTime">The date and time.</param>
         /// <param name="offset">The offset.</param>
         public SyslogMessageDateTime(DateTime dateTime, TimeSpan offset)
         {
-            m_Value = new DateTimeOffset(dateTime, offset);
+            Value = new DateTimeOffset(dateTime, offset);
         }
 
         /// <summary>
@@ -272,23 +270,23 @@ namespace Cave.Logging
         /// <param name="dateTime">The date, time and offset.</param>
         public SyslogMessageDateTime(DateTimeOffset dateTime)
         {
-            m_Value = dateTime;
+            Value = dateTime;
         }
 
         /// <summary>
         /// Obtains the DateTime value of this instance converted to the Universal Coordinated Time (Zulu).
         /// </summary>
-        public DateTime Utc => m_Value.UtcDateTime;
+        public DateTime Utc => Value.UtcDateTime;
 
         /// <summary>
         /// Obtains the DateTime value of this instance converted to the local time.
         /// </summary>
-        public DateTime Local => m_Value.LocalDateTime;
+        public DateTime Local => Value.LocalDateTime;
 
         /// <summary>
         /// Obtains the source value of this instance.
         /// </summary>
-        public DateTimeOffset Value => m_Value;
+        public DateTimeOffset Value { get; private set; }
 
         /// <summary>
         /// Obtains the RFC3164 string representation of this instance.
@@ -306,33 +304,34 @@ namespace Cave.Logging
         public string ToStringRFC5424()
         {
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append(m_Value.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss", DateTimeFormatInfo.InvariantInfo));
-            long l_Ticks = m_Value.Ticks % TimeSpan.TicksPerSecond;
-            //try to keep the date field as short as possible
+            stringBuilder.Append(Value.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss", DateTimeFormatInfo.InvariantInfo));
+            long l_Ticks = Value.Ticks % TimeSpan.TicksPerSecond;
+
+            // try to keep the date field as short as possible
             if (l_Ticks != 0)
             {
-                //we got milli seconds
+                // we got milli seconds
                 if (l_Ticks % 10000 != 0)
                 {
-                    //we got micro seconds
-                    stringBuilder.Append(m_Value.ToString("'.'ffffff"));
+                    // we got micro seconds
+                    stringBuilder.Append(Value.ToString("'.'ffffff"));
                 }
                 else
                 {
-                    stringBuilder.Append(m_Value.ToString("'.'fff"));
+                    stringBuilder.Append(Value.ToString("'.'fff"));
                 }
             }
-            if (m_Value.Offset == TimeSpan.Zero)
+            if (Value.Offset == TimeSpan.Zero)
             {
                 stringBuilder.Append("Z");
             }
-            else if (m_Value.Offset > TimeSpan.Zero)
+            else if (Value.Offset > TimeSpan.Zero)
             {
-                stringBuilder.AppendFormat("+{0:00}:{1:00}", m_Value.Offset.Hours, m_Value.Offset.Minutes);
+                stringBuilder.AppendFormat("+{0:00}:{1:00}", Value.Offset.Hours, Value.Offset.Minutes);
             }
             else
             {
-                stringBuilder.AppendFormat("{0:00}:{1:00}", m_Value.Offset.Hours, m_Value.Offset.Minutes);
+                stringBuilder.AppendFormat("{0:00}:{1:00}", Value.Offset.Hours, Value.Offset.Minutes);
             }
             return stringBuilder.ToString();
         }
@@ -352,7 +351,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public override int GetHashCode()
         {
-            return m_Value.GetHashCode();
+            return Value.GetHashCode();
         }
 
         /// <summary>
@@ -377,7 +376,7 @@ namespace Cave.Logging
                 return false;
             }
 
-            return m_Value.Equals(other.m_Value);
+            return Value.Equals(other.Value);
         }
 
         /// <summary>
@@ -393,7 +392,7 @@ namespace Cave.Logging
                 throw new ArgumentNullException("other");
             }
 
-            return m_Value.CompareTo(other.m_Value);
+            return Value.CompareTo(other.Value);
         }
 
         /// <summary>

@@ -15,14 +15,14 @@ namespace Cave.Logging
         /// <value>The name of the log source.</value>
         public string LogSourceName => "LogReader";
 
-        long m_LastID = 0;
-        bool m_OldLayout = false;
-        int m_OldLayoutDateTimeField;
-        int m_OldLayoutLevelField;
-        int m_OldLayoutSourceField;
-        int m_OldLayoutContentField;
-        int m_OldLayoutHostnameField;
-        int m_OldLayoutProcessnameField;
+        long lastID = 0;
+        bool oldLayout = false;
+        int oldLayoutDateTimeField;
+        int oldLayoutLevelField;
+        int oldLayoutSourceField;
+        int oldLayoutContentField;
+        int oldLayoutHostnameField;
+        int oldLayoutProcessnameField;
 
         /// <summary>
         /// Connection string for the storage.
@@ -59,21 +59,23 @@ namespace Cave.Logging
         /// <exception cref="InvalidDataException"></exception>
         bool ConnectTable(ITable table, bool throwEx)
         {
-            //check if it is using the current layout
+            // check if it is using the current layout
             if (table.Layout.Equals(RowLayout.CreateTyped(typeof(LogEntry))))
             {
                 return true;
             }
 
-            m_OldLayout = true;
-            //reset field indices
-            m_OldLayoutDateTimeField = -1;
-            m_OldLayoutLevelField = -1;
-            m_OldLayoutSourceField = -1;
-            m_OldLayoutContentField = -1;
-            m_OldLayoutHostnameField = -1;
-            m_OldLayoutProcessnameField = -1;
-            //check id field name
+            oldLayout = true;
+
+            // reset field indices
+            oldLayoutDateTimeField = -1;
+            oldLayoutLevelField = -1;
+            oldLayoutSourceField = -1;
+            oldLayoutContentField = -1;
+            oldLayoutHostnameField = -1;
+            oldLayoutProcessnameField = -1;
+
+            // check id field name
             if (table.Layout.IDFieldIndex < 0)
             {
                 string l_Error = "ID field does not match expected format!";
@@ -85,7 +87,8 @@ namespace Cave.Logging
 
                 return false;
             }
-            //find hostname field
+
+            // find hostname field
             for (int i = 0; i < table.Layout.FieldCount; i++)
             {
                 FieldProperties field = table.Layout.GetProperties(i);
@@ -93,35 +96,35 @@ namespace Cave.Logging
                 {
                     case "PROCESS":
                     case "PROCESSNAME":
-                        m_OldLayoutProcessnameField = i;
+                        oldLayoutProcessnameField = i;
                         break;
                     case "HOST":
                     case "HOSTNAME":
                     case "MACHINE":
                     case "MACHINENAME":
-                        m_OldLayoutHostnameField = i;
+                        oldLayoutHostnameField = i;
                         break;
                     case "DATETIME":
                     case "DATE":
                     case "CREATED":
-                        m_OldLayoutDateTimeField = i;
+                        oldLayoutDateTimeField = i;
                         break;
                     case "LEVEL":
                     case "LOGLEVEL":
-                        m_OldLayoutLevelField = i;
+                        oldLayoutLevelField = i;
                         break;
                     case "SOURCE":
-                        m_OldLayoutSourceField = i;
+                        oldLayoutSourceField = i;
                         break;
                     case "MESSAGE":
                     case "CONTENT":
                     case "TEXT":
                     case "MSG":
-                        m_OldLayoutContentField = i;
+                        oldLayoutContentField = i;
                         break;
                 }
             }
-            if (m_OldLayoutDateTimeField < 0)
+            if (oldLayoutDateTimeField < 0)
             {
                 string error = string.Format("Field {0} cannot be found!", "DateTime");
                 this.LogVerbose(error);
@@ -132,7 +135,7 @@ namespace Cave.Logging
 
                 return false;
             }
-            if (m_OldLayoutLevelField < 0)
+            if (oldLayoutLevelField < 0)
             {
                 string error = string.Format("Field {0} cannot be found!", "Level");
                 this.LogVerbose(error);
@@ -143,7 +146,7 @@ namespace Cave.Logging
 
                 return false;
             }
-            if (m_OldLayoutContentField < 0)
+            if (oldLayoutContentField < 0)
             {
                 string error = string.Format("Field {0} cannot be found!", "Content");
                 this.LogVerbose(error);
@@ -178,24 +181,25 @@ namespace Cave.Logging
         {
             LogEntry logEntry = new LogEntry
             {
-                //get id
-                ID = Layout.GetID(row)
+                // get id
+                ID = Layout.GetID(row),
             };
             #region decode datetime
-            //get row data
-            object dateTimeObject = row.GetValue(m_OldLayoutDateTimeField);
+
+            // get row data
+            object dateTimeObject = row.GetValue(oldLayoutDateTimeField);
             if (dateTimeObject is DateTime)
             {
-                //native value
+                // native value
                 logEntry.DateTime = (DateTime)dateTimeObject;
             }
             else if (dateTimeObject is long)
             {
-                //log value, check if bigint datetime
+                // log value, check if bigint datetime
                 long value = (long)dateTimeObject;
                 if (!DateTime.TryParseExact(value.ToString(), CaveSystemData.BigIntDateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out logEntry.DateTime))
                 {
-                    //tick value
+                    // tick value
                     logEntry.DateTime = new DateTime(value);
                 }
             }
@@ -204,21 +208,21 @@ namespace Cave.Logging
                 throw new InvalidDataException("Invalid or unknown datetime value format!");
             }
             #endregion
-            logEntry.Level = (LogLevel)Convert.ToInt64(row.GetValue(m_OldLayoutLevelField));
-            if (m_OldLayoutSourceField > -1)
+            logEntry.Level = (LogLevel)Convert.ToInt64(row.GetValue(oldLayoutLevelField));
+            if (oldLayoutSourceField > -1)
             {
-                logEntry.Source = row.GetValue(m_OldLayoutSourceField) as string;
+                logEntry.Source = row.GetValue(oldLayoutSourceField) as string;
             }
 
-            logEntry.Content = row.GetValue(m_OldLayoutContentField) as string;
-            if (m_OldLayoutHostnameField > -1)
+            logEntry.Content = row.GetValue(oldLayoutContentField) as string;
+            if (oldLayoutHostnameField > -1)
             {
-                logEntry.HostName = row.GetValue(m_OldLayoutHostnameField) as string;
+                logEntry.HostName = row.GetValue(oldLayoutHostnameField) as string;
             }
 
-            if (m_OldLayoutProcessnameField > -1)
+            if (oldLayoutProcessnameField > -1)
             {
-                logEntry.ProcessName = row.GetValue(m_OldLayoutProcessnameField) as string;
+                logEntry.ProcessName = row.GetValue(oldLayoutProcessnameField) as string;
             }
 
             return logEntry;
@@ -245,7 +249,7 @@ namespace Cave.Logging
             }
             if (results.Length > 0)
             {
-                m_LastID = Math.Max(m_LastID, results[results.Length - 1].ID);
+                lastID = Math.Max(lastID, results[results.Length - 1].ID);
             }
             return results;
         }
@@ -266,7 +270,7 @@ namespace Cave.Logging
             }
             if (results.Length > 0)
             {
-                m_LastID = Math.Max(m_LastID, results[results.Length - 1].ID);
+                lastID = Math.Max(lastID, results[results.Length - 1].ID);
             }
             return results;
         }
@@ -276,11 +280,11 @@ namespace Cave.Logging
             Search result = Search.None;
             if (FilterHostName != null)
             {
-                if (m_OldLayout)
+                if (oldLayout)
                 {
-                    if (m_OldLayoutHostnameField > -1)
+                    if (oldLayoutHostnameField > -1)
                     {
-                        string fieldName = Table.Layout.GetName(m_OldLayoutHostnameField);
+                        string fieldName = Table.Layout.GetName(oldLayoutHostnameField);
                         result &= Search.FieldLike(fieldName, FilterHostName);
                     }
                 }
@@ -291,11 +295,11 @@ namespace Cave.Logging
             }
             if (FilterProcessName != null)
             {
-                if (m_OldLayout)
+                if (oldLayout)
                 {
-                    if (m_OldLayoutProcessnameField > -1)
+                    if (oldLayoutProcessnameField > -1)
                     {
-                        string fieldName = Table.Layout.GetName(m_OldLayoutProcessnameField);
+                        string fieldName = Table.Layout.GetName(oldLayoutProcessnameField);
                         result &= Search.FieldLike(fieldName, FilterProcessName);
                     }
                 }
@@ -306,11 +310,11 @@ namespace Cave.Logging
             }
             if (FilterSource != null)
             {
-                if (m_OldLayout)
+                if (oldLayout)
                 {
-                    if (m_OldLayoutSourceField > -1)
+                    if (oldLayoutSourceField > -1)
                     {
-                        string fieldName = Table.Layout.GetName(m_OldLayoutSourceField);
+                        string fieldName = Table.Layout.GetName(oldLayoutSourceField);
                         result &= Search.FieldLike(fieldName, FilterSource);
                     }
                 }
@@ -342,27 +346,27 @@ namespace Cave.Logging
         /// <returns>Returns the last dataset of each source, host, process and level combination.</returns>
         public LogEntry[] GetGrouped()
         {
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 ResultOption option = ResultOption.SortDescending(Table.Layout.IDField.Name);
-                if (m_OldLayoutSourceField > -1)
+                if (oldLayoutSourceField > -1)
                 {
-                    option += ResultOption.Group(Table.Layout.GetName(m_OldLayoutSourceField));
+                    option += ResultOption.Group(Table.Layout.GetName(oldLayoutSourceField));
                 }
 
-                if (m_OldLayoutLevelField > -1)
+                if (oldLayoutLevelField > -1)
                 {
-                    option += ResultOption.Group(Table.Layout.GetName(m_OldLayoutLevelField));
+                    option += ResultOption.Group(Table.Layout.GetName(oldLayoutLevelField));
                 }
 
-                if (m_OldLayoutProcessnameField > -1)
+                if (oldLayoutProcessnameField > -1)
                 {
-                    option += ResultOption.Group(Table.Layout.GetName(m_OldLayoutProcessnameField));
+                    option += ResultOption.Group(Table.Layout.GetName(oldLayoutProcessnameField));
                 }
 
-                if (m_OldLayoutHostnameField > -1)
+                if (oldLayoutHostnameField > -1)
                 {
-                    option += ResultOption.Group(Table.Layout.GetName(m_OldLayoutHostnameField));
+                    option += ResultOption.Group(Table.Layout.GetName(oldLayoutHostnameField));
                 }
 
                 return OldLayoutGet(Search.None, option);
@@ -378,7 +382,7 @@ namespace Cave.Logging
         public LogEntry Get(long id)
         {
             Row row = Table.GetRow(id);
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 return ConvertOldLayoutRow(row);
             }
@@ -409,7 +413,7 @@ namespace Cave.Logging
             Search search = Search.FieldLike(Table.Layout.IDField.Name, id) & MakeFilters();
             ResultOption option = ResultOption.SortDescending(Table.Layout.IDField.Name) + ResultOption.Limit(backLogCount);
             LogEntry[] l_Entries;
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 l_Entries = OldLayoutGet(search, option);
             }
@@ -433,7 +437,7 @@ namespace Cave.Logging
             search &= MakeFilters();
             ResultOption option = ResultOption.SortDescending(Table.Layout.IDField.Name) + ResultOption.Limit(backLogCount);
             LogEntry[] l_Entries;
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 l_Entries = OldLayoutGet(search, option);
             }
@@ -455,7 +459,7 @@ namespace Cave.Logging
         {
             Search search = (Search.FieldGreater(nameof(LogEntry.DateTime), start) & Search.FieldSmaller(nameof(LogEntry.DateTime), end)) | Search.FieldEquals(nameof(LogEntry.DateTime), start) | Search.FieldEquals(nameof(LogEntry.DateTime), end);
             search &= MakeFilters();
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 return OldLayoutGet(search, ResultOption.SortAscending(Table.Layout.IDField.Name));
             }
@@ -470,9 +474,9 @@ namespace Cave.Logging
         /// <returns></returns>
         public LogEntry[] GetNext(LogLevel level)
         {
-            Search search = Search.FieldGreater(Table.Layout.IDField.Name, m_LastID) & Search.FieldSmaller("Level", level + 1);
+            Search search = Search.FieldGreater(Table.Layout.IDField.Name, lastID) & Search.FieldSmaller("Level", level + 1);
             search &= MakeFilters();
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 return OldLayoutGet(search, ResultOption.SortAscending(Table.Layout.IDField.Name));
             }
@@ -486,9 +490,9 @@ namespace Cave.Logging
         /// <returns></returns>
         public LogEntry[] GetNext()
         {
-            Search search = Search.FieldGreater(Table.Layout.IDField.Name, m_LastID);
+            Search search = Search.FieldGreater(Table.Layout.IDField.Name, lastID);
             search &= MakeFilters();
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 return OldLayoutGet(search, ResultOption.SortAscending(Table.Layout.IDField.Name));
             }
@@ -501,7 +505,7 @@ namespace Cave.Logging
         /// </summary>
         public void MoveToEnd()
         {
-            m_LastID = Table.FindRow(Search.None, ResultOption.SortDescending(Table.Layout.IDField.Name) + ResultOption.Limit(1));
+            lastID = Table.FindRow(Search.None, ResultOption.SortDescending(Table.Layout.IDField.Name) + ResultOption.Limit(1));
         }
 
         /// <summary>
@@ -509,7 +513,7 @@ namespace Cave.Logging
         /// </summary>
         public void MoveToStart()
         {
-            m_LastID = -1;
+            lastID = -1;
         }
 
         /// <summary>
@@ -529,7 +533,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public LogEntry GetAtIndex(int index)
         {
-            if (m_OldLayout)
+            if (oldLayout)
             {
                 ConvertOldLayoutRow(Table.GetRowAt(index));
             }

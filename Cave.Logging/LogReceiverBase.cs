@@ -29,13 +29,14 @@ namespace Cave.Logging
         }
 
         #region ILogReceiver Member
+
         /// <summary>
-        /// Gets/sets the time between two warnings.
+        /// Gets or sets the time between two warnings.
         /// </summary>
         public TimeSpan TimeBetweenWarnings { get; set; }
 
         /// <summary>
-        /// Gets/sets the time in milli seconds for detecting late messages. Messages older than this value will result in a warning message to the log system.
+        /// Gets or sets the time in milli seconds for detecting late messages. Messages older than this value will result in a warning message to the log system.
         /// </summary>
         public int LateMessageMilliSeconds { get; set; }
 

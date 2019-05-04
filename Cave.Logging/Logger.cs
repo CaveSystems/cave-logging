@@ -60,16 +60,16 @@ namespace Cave.Logging
         [DebuggerDisplay("{m_Receiver}")]
         sealed class DistributeWorker : ILogSource
         {
-            ILogReceiver m_Receiver;
-            object m_SyncRoot = new object();
-            LinkedList<LogMessage> m_Queue = new LinkedList<LogMessage>();
+            ILogReceiver receiver;
+            LinkedList<LogMessage> messageQueue = new LinkedList<LogMessage>();
+
             /// <summary>The current position in the static queue, this is relative to queue and is decreased/reseted during cleanup.</summary>
-            int m_CurrentDelayMilliSeconds;
-            bool m_Idle;
+            int currentDelayMilliSeconds;
+            bool isIdle;
 
             void Worker()
             {
-                Thread.CurrentThread.Name = "Logger " + m_Receiver;
+                Thread.CurrentThread.Name = "Logger " + receiver;
                 Thread.CurrentThread.IsBackground = true;
                 bool delayWarningSent = false;
                 try
@@ -77,56 +77,59 @@ namespace Cave.Logging
                     DateTime nextWarningUtc = DateTime.MinValue;
                     int discardedCount = 0;
 
-                    while (!m_Receiver.Closed)
+                    while (!receiver.Closed)
                     {
                         LinkedList<LogMessage> msgs = null;
-                        //wait for messages
-                        lock (m_SyncRoot)
+
+                        // wait for messages
+                        lock (this)
                         {
                             while (true)
                             {
-                                if (m_Queue.Count > 0)
+                                if (messageQueue.Count > 0)
                                 {
-                                    msgs = m_Queue;
-                                    m_Queue = new LinkedList<LogMessage>();
+                                    msgs = messageQueue;
+                                    messageQueue = new LinkedList<LogMessage>();
                                     break;
                                 }
-                                //entering idle mode
+
+                                // entering idle mode
                                 if (delayWarningSent)
                                 {
-                                    this.LogNotice(string.Format(res.LogReceiver_BacklogRecovered, m_Receiver));
+                                    this.LogNotice(string.Format(res.LogReceiver_BacklogRecovered, receiver));
                                     delayWarningSent = false;
                                     continue;
                                 }
-                                m_Idle = true;
-                                //wait for pulse
+                                isIdle = true;
+
+                                // wait for pulse
                                 while (true)
                                 {
-                                    Monitor.Wait(m_SyncRoot, 1000);
-                                    if (m_Receiver.Closed)
+                                    Monitor.Wait(this, 1000);
+                                    if (receiver.Closed)
                                     {
                                         return;
                                     }
 
                                     break;
                                 }
-                                m_Idle = false;
+                                isIdle = false;
                             }
                         }
 
                         foreach (LogMessage msg in msgs)
                         {
                             long delayTicks = (DateTime.UtcNow - msg.DateTime.ToUniversalTime()).Ticks;
-                            m_CurrentDelayMilliSeconds = (int)(delayTicks / TimeSpan.TicksPerMillisecond);
+                            currentDelayMilliSeconds = (int)(delayTicks / TimeSpan.TicksPerMillisecond);
 
-                            //do we have late messages ?
-                            if (m_CurrentDelayMilliSeconds > m_Receiver.LateMessageMilliSeconds)
+                            // do we have late messages ?
+                            if (currentDelayMilliSeconds > receiver.LateMessageMilliSeconds)
                             {
-                                //yes, opportune logging ?
-                                if (m_Receiver.Mode == LogReceiverMode.Opportune)
+                                // yes, opportune logging ?
+                                if (receiver.Mode == LogReceiverMode.Opportune)
                                 {
-                                    //discard old notifications
-                                    if (delayTicks / TimeSpan.TicksPerMillisecond > m_Receiver.LateMessageMilliSeconds)
+                                    // discard old notifications
+                                    if (delayTicks / TimeSpan.TicksPerMillisecond > receiver.LateMessageMilliSeconds)
                                     {
                                         discardedCount++;
                                         continue;
@@ -134,108 +137,111 @@ namespace Cave.Logging
                                 }
                                 else
                                 {
-                                    //no continous logging -> warn user
-                                    if ((msgs.Count > m_Receiver.LateMessageTreshold) && (DateTime.UtcNow > nextWarningUtc))
+                                    // no continous logging -> warn user
+                                    if ((msgs.Count > receiver.LateMessageTreshold) && (DateTime.UtcNow > nextWarningUtc))
                                     {
-                                        string warning = string.Format(res.LogReceiver_Backlog, m_Receiver, msgs.Count, StringExtensions.FormatTime(TimeSpan.FromMilliseconds(m_CurrentDelayMilliSeconds)));
-                                        //warn all
+                                        string warning = string.Format(res.LogReceiver_Backlog, receiver, msgs.Count, StringExtensions.FormatTime(TimeSpan.FromMilliseconds(currentDelayMilliSeconds)));
+
+                                        // warn all
                                         this.LogWarning(warning);
-                                        //warn self (direct write)
-                                        m_Receiver.Write(new LogMessage(m_Receiver.LogSourceName, DateTime.Now, LogLevel.Warning, null, warning, null));
-                                        //calc next
-                                        nextWarningUtc = DateTime.UtcNow + m_Receiver.TimeBetweenWarnings;
+
+                                        // warn self (direct write)
+                                        receiver.Write(new LogMessage(receiver.LogSourceName, DateTime.Now, LogLevel.Warning, null, warning, null));
+
+                                        // calc next
+                                        nextWarningUtc = DateTime.UtcNow + receiver.TimeBetweenWarnings;
                                         delayWarningSent = true;
                                     }
                                 }
                             }
-                            if (m_Receiver.Closed)
+                            if (receiver.Closed)
                             {
                                 break;
                             }
 
-                            if (msg.Level > m_Receiver.Level)
+                            if (msg.Level > receiver.Level)
                             {
                                 continue;
                             }
 
-                            m_Receiver.Write(msg);
+                            receiver.Write(msg);
                         }
                         if (discardedCount > 0)
                         {
                             if (DateTime.UtcNow > nextWarningUtc)
                             {
-                                string warning = string.Format(res.LogReceiver_Discarded, m_Receiver, discardedCount);
-                                m_Receiver.Write(new LogMessage(m_Receiver.LogSourceName, DateTime.Now, LogLevel.Warning, null, warning, null));
+                                string warning = string.Format(res.LogReceiver_Discarded, receiver, discardedCount);
+                                receiver.Write(new LogMessage(receiver.LogSourceName, DateTime.Now, LogLevel.Warning, null, warning, null));
                                 discardedCount = 0;
-                                nextWarningUtc = DateTime.UtcNow + m_Receiver.TimeBetweenWarnings;
+                                nextWarningUtc = DateTime.UtcNow + receiver.TimeBetweenWarnings;
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    this.LogEmergency(string.Format(res.Error_FatalExceptionAt, m_Receiver.LogSourceName), ex);
-                    m_Receiver.Close();
+                    this.LogEmergency(string.Format(res.Error_FatalExceptionAt, receiver.LogSourceName), ex);
+                    receiver.Close();
                 }
             }
 
             public void AddMessages(IEnumerable<LogMessage> messages)
             {
-                if (!Monitor.TryEnter(m_SyncRoot, 1000))
+                if (!Monitor.TryEnter(this, 1000))
                 {
-                    Send("Logger", LogLevel.Emergency, null, "Deadlock of logger worker queue {0} detected. Disabling receiver!", m_Receiver);
-                    m_Receiver.Close();
+                    Send("Logger", LogLevel.Emergency, null, "Deadlock of logger worker queue {0} detected. Disabling receiver!", receiver);
+                    receiver.Close();
                     return;
                 }
                 foreach (LogMessage msg in messages)
                 {
-                    m_Queue.AddLast(msg);
+                    messageQueue.AddLast(msg);
                 }
-                Monitor.Pulse(m_SyncRoot);
-                Monitor.Exit(m_SyncRoot);
+                Monitor.Pulse(this);
+                Monitor.Exit(this);
             }
 
-            public bool Idle { get { lock (m_SyncRoot) { return m_Idle; } } }
+            public bool Idle { get { lock (this) { return isIdle; } } }
 
             public string LogSourceName => "Logger.DistributeWorker";
 
             public DistributeWorker(ILogReceiver receiver)
             {
-                m_Receiver = receiver;
+                this.receiver = receiver;
                 new Thread(Worker).Start();
             }
 
-            public void Close() { m_Receiver.Close(); }
+            public void Close() { receiver.Close(); }
         }
         #endregion
 
         #region static class
 
-        static Dictionary<ILogReceiver, DistributeWorker> m_DistributeWorkers = new Dictionary<ILogReceiver, DistributeWorker>();
-        static LinkedList<LogMessage> m_MasterQueue = new LinkedList<LogMessage>();
-        static object m_MasterSync = new object();
-        static volatile bool m_MasterIdle;
-        static Thread m_LogThread;
+        static readonly Dictionary<ILogReceiver, DistributeWorker> distributeWorkers = new Dictionary<ILogReceiver, DistributeWorker>();
+        static LinkedList<LogMessage> masterQueue = new LinkedList<LogMessage>();
+        static object masterSync = new object();
+        static volatile bool masterIdle;
+        static Thread logThread;
 
         private static void MasterWorker()
         {
             while (true)
             {
                 LinkedList<LogMessage> items;
-                lock (m_MasterSync)
+                lock (masterSync)
                 {
-                    if (m_MasterQueue.Count == 0)
+                    if (masterQueue.Count == 0)
                     {
-                        m_MasterIdle = true;
-                        Monitor.Wait(m_MasterSync);
-                        m_MasterIdle = false;
+                        masterIdle = true;
+                        Monitor.Wait(masterSync);
+                        masterIdle = false;
                     }
-                    items = m_MasterQueue;
-                    m_MasterQueue = new LinkedList<LogMessage>();
+                    items = masterQueue;
+                    masterQueue = new LinkedList<LogMessage>();
                 }
-                lock (m_DistributeWorkers)
+                lock (distributeWorkers)
                 {
-                    foreach (DistributeWorker worker in m_DistributeWorkers.Values.ToArray())
+                    foreach (DistributeWorker worker in distributeWorkers.Values.ToArray())
                     {
                         worker.AddMessages(items);
                     }
@@ -252,12 +258,12 @@ namespace Cave.Logging
             {
                 DebugReceiver = new LogDebugReceiver();
             }
-            m_LogThread = new Thread(MasterWorker)
+            logThread = new Thread(MasterWorker)
             {
                 IsBackground = true,
-                Name = "Logger.MasterWorker"
+                Name = "Logger.MasterWorker",
             };
-            m_LogThread.Start();
+            logThread.Start();
         }
 
         /// <summary>
@@ -282,14 +288,14 @@ namespace Cave.Logging
                 throw new ArgumentException(string.Format("Receiver {0} was already closed!", logReceiver));
             }
 
-            lock (m_DistributeWorkers)
+            lock (distributeWorkers)
             {
-                if (m_DistributeWorkers.ContainsKey(logReceiver))
+                if (distributeWorkers.ContainsKey(logReceiver))
                 {
                     throw new InvalidOperationException(string.Format("LogReceiver {0} is already registered!", logReceiver));
                 }
 
-                m_DistributeWorkers.Add(logReceiver, new DistributeWorker(logReceiver));
+                distributeWorkers.Add(logReceiver, new DistributeWorker(logReceiver));
             }
         }
 
@@ -302,10 +308,10 @@ namespace Cave.Logging
             {
                 throw new ArgumentNullException("logReceiver");
             }
-            lock (m_DistributeWorkers)
+            lock (distributeWorkers)
             {
-                //remove if present
-                m_DistributeWorkers.Remove(logReceiver);
+                // remove if present
+                distributeWorkers.Remove(logReceiver);
             }
         }
 
@@ -324,12 +330,12 @@ namespace Cave.Logging
         [MethodImpl((MethodImplOptions)0x0100)]
         public static void Send(LogMessage msg)
         {
-            lock (m_MasterSync)
+            lock (masterSync)
             {
-                m_MasterQueue.AddLast(msg);
-                if (m_MasterIdle)
+                masterQueue.AddLast(msg);
+                if (masterIdle)
                 {
-                    Monitor.Pulse(m_MasterSync);
+                    Monitor.Pulse(masterSync);
                 }
             }
         }
@@ -339,16 +345,16 @@ namespace Cave.Logging
         [MethodImpl((MethodImplOptions)0x0100)]
         public static void Send(params LogMessage[] messages)
         {
-            lock (m_MasterSync)
+            lock (masterSync)
             {
                 foreach (LogMessage msg in messages)
                 {
-                    m_MasterQueue.AddLast(msg);
+                    masterQueue.AddLast(msg);
                 }
 
-                if (m_MasterIdle)
+                if (masterIdle)
                 {
-                    Monitor.Pulse(m_MasterSync);
+                    Monitor.Pulse(masterSync);
                 }
             }
         }
@@ -373,34 +379,35 @@ namespace Cave.Logging
             while (true)
             {
                 Thread.Sleep(1);
-                lock (m_MasterSync)
+                lock (masterSync)
                 {
-                    if (m_DistributeWorkers.Count == 0)
+                    if (distributeWorkers.Count == 0)
                     {
                         return;
                     }
 
-                    if (!m_MasterIdle)
+                    if (!masterIdle)
                     {
                         continue;
                     }
                 }
-                lock (m_DistributeWorkers)
+                lock (distributeWorkers)
                 {
-                    if (m_DistributeWorkers.Values.Any(w => !w.Idle))
+                    if (distributeWorkers.Values.Any(w => !w.Idle))
                     {
                         continue;
                     }
 
-                    lock (m_MasterSync)
+                    lock (masterSync)
                     {
-                        if (!m_MasterIdle)
+                        if (!masterIdle)
                         {
                             continue;
                         }
                     }
                 }
-                //all idle
+
+                // all idle
                 break;
             }
         }
@@ -411,10 +418,10 @@ namespace Cave.Logging
         public static void CloseAll()
         {
             DistributeWorker[] workers;
-            lock (m_DistributeWorkers)
+            lock (distributeWorkers)
             {
-                workers = m_DistributeWorkers.Values.ToArray();
-                m_DistributeWorkers.Clear();
+                workers = distributeWorkers.Values.ToArray();
+                distributeWorkers.Clear();
             }
             foreach (DistributeWorker worker in workers)
             {
@@ -423,6 +430,7 @@ namespace Cave.Logging
         }
 
         #region static string logging methods
+
         /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
         /// <param name="source">The source of the message.</param>
         /// <param name="msg">The message to be logged.</param>
@@ -631,6 +639,7 @@ namespace Cave.Logging
         #endregion
 
         #region logger class
+
         /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
         /// <param name="name">Name of the log source.</param>cd \\jenni
         ///
@@ -644,6 +653,7 @@ namespace Cave.Logging
         public string LogSourceName { get; set; }
 
         #region string logging methods
+
         /// <summary>Writes a message with the specified level.</summary>
         /// <param name="level">The level.</param>
         /// <param name="msg">The message.</param>

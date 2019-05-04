@@ -10,14 +10,14 @@ namespace Cave.Logging
     /// </summary>
     public class LogTableReceiver : LogReceiver
     {
-        RowLayout m_Layout;
+        RowLayout layout;
 
         /// <summary>Gets the writer.</summary>
         /// <value>The writer.</value>
         public TableWriter<LogEntry> Writer { get; private set; }
 
         /// <summary>
-        /// Gets/sets whether style and color information is written to the database or not.
+        /// Gets or sets whether style and color information is written to the database or not.
         /// </summary>
         public bool WriteContentStyle;
 
@@ -46,7 +46,7 @@ namespace Cave.Logging
                 throw new ArgumentNullException("Table");
             }
 
-            m_Layout = table.Layout;
+            layout = table.Layout;
             LogEntry logEntry = new LogEntry()
             {
                 DateTime = DateTime.Now,
@@ -54,7 +54,7 @@ namespace Cave.Logging
                 HostName = Logger.HostName,
                 ProcessName = Logger.ProcessName,
                 Source = "LogTableReceiver",
-                Content = "Started logging to table"
+                Content = "Started logging to table",
             };
             Writer = new TableWriter<LogEntry>(table);
             Writer.Insert(logEntry);
@@ -80,7 +80,7 @@ namespace Cave.Logging
         /// <param name="content">The content.</param>
         protected override void Write(DateTime dateTime, LogLevel level, string source, XT content)
         {
-            if (Closed || (m_Layout == null))
+            if (Closed || (layout == null))
             {
                 return;
             }
@@ -94,7 +94,7 @@ namespace Cave.Logging
                 Level = level,
                 Content = WriteContentStyle ? content : content.Text,
             };
-            Row row = Row.Create(m_Layout, logEntry);
+            Row row = Row.Create(layout, logEntry);
             TableWriter writer = Writer;
             if (writer != null)
             {

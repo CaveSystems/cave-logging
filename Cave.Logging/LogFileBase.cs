@@ -10,6 +10,7 @@ namespace Cave.Logging
     public abstract class LogFileBase : LogReceiver
     {
         #region default log files
+
         /// <summary>
         /// Rotates the logfile and keeps a specified number of old logfiles.
         /// </summary>
@@ -49,7 +50,7 @@ namespace Cave.Logging
         static string GetFileName(LogFileFlags flags)
         {
             string fileName = AssemblyVersionInfo.Program.Product;
-            if (0 != (flags & LogFileFlags.UseDateTimeFileName))
+            if ((flags & LogFileFlags.UseDateTimeFileName) != 0)
             {
                 fileName += " " + DateTime.Now.ToString(StringExtensions.FileNameDateTimeFormat);
             }
@@ -61,7 +62,7 @@ namespace Cave.Logging
         {
             string fileName = GetFileName(flags);
             AssemblyVersionInfo ver = AssemblyVersionInfo.Program;
-            if (0 != (flags & LogFileFlags.UseCompanyName))
+            if ((flags & LogFileFlags.UseCompanyName) != 0)
             {
                 fileName = FileSystem.Combine(basePath, ver.Company, ver.Product, additionalPath, "Logs", fileName);
             }
@@ -89,7 +90,7 @@ namespace Cave.Logging
                     filename = FileSystem.Combine("/var", "log", additionalPath, GetFileName(flags));
                     break;
             }
-            if (0 != (flags & LogFileFlags.UseRotation))
+            if ((flags & LogFileFlags.UseRotation) != 0)
             {
                 Rotate(filename, 10);
             }
@@ -114,7 +115,7 @@ namespace Cave.Logging
                     filename = FileSystem.Combine("~", ".local", "log", additionalPath, GetFileName(flags));
                     break;
             }
-            if (0 != (flags & LogFileFlags.UseRotation))
+            if ((flags & LogFileFlags.UseRotation) != 0)
             {
                 Rotate(filename, 10);
             }
@@ -139,7 +140,7 @@ namespace Cave.Logging
                     filename = FileSystem.Combine("~", "log", additionalPath, GetFileName(flags));
                     break;
             }
-            if (0 != (flags & LogFileFlags.UseRotation))
+            if ((flags & LogFileFlags.UseRotation) != 0)
             {
                 Rotate(filename, 10);
             }
@@ -159,7 +160,7 @@ namespace Cave.Logging
             string fileName = GetFileName(flags);
             string path = FileSystem.ProgramDirectory;
             fileName = FileSystem.Combine(path, additionalPath, "logs", fileName);
-            if (0 != (flags & LogFileFlags.UseRotation))
+            if ((flags & LogFileFlags.UseRotation) != 0)
             {
                 Rotate(fileName, 10);
             }
@@ -169,6 +170,7 @@ namespace Cave.Logging
         #endregion
 
         #region constructors
+
         /// <summary>Initializes a new instance of the <see cref="LogFileBase"/> class.</summary>
         /// <param name="fileName">Name of the file.</param>
         protected LogFileBase(string fileName)
@@ -184,7 +186,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public long GetSize()
         {
-            return (new FileInfo(FileName)).Length;
+            return new FileInfo(FileName).Length;
         }
 
         /// <summary>Gets the name of the file.</summary>

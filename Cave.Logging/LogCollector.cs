@@ -7,24 +7,31 @@ namespace Cave.Logging
     /// </summary>
     public class LogCollector : LogReceiverBase
     {
-        Queue<LogMessage> m_Items = new Queue<LogMessage>();
-        volatile int m_MaximumItemCount = 100;
+        Queue<LogMessage> items = new Queue<LogMessage>();
+        volatile int maximumItemCount = 100;
 
-        void m_Clean()
+        void CleanItems()
         {
-            while (m_Items.Count > m_MaximumItemCount)
+            while (items.Count > maximumItemCount)
             {
-                m_Items.Dequeue();
+                items.Dequeue();
             }
         }
 
         /// <summary>
-        /// Provides the maximum item count of <see cref="LogMessage"/> items collected.
+        /// Gets or sets the maximum item count of <see cref="LogMessage"/> items collected.
         /// </summary>
         public int MaximumItemCount
         {
-            get => m_MaximumItemCount;
-            set { m_MaximumItemCount = value; m_Clean(); }
+            get => maximumItemCount;
+            set
+            {
+                lock (items)
+                {
+                    maximumItemCount = value;
+                    CleanItems();
+                }
+            }
         }
 
         /// <summary>
@@ -32,9 +39,9 @@ namespace Cave.Logging
         /// </summary>
         public void Clear()
         {
-            lock (m_Items)
+            lock (items)
             {
-                m_Items.Clear();
+                items.Clear();
             }
         }
 
@@ -44,14 +51,14 @@ namespace Cave.Logging
         /// <returns></returns>
         public bool TryGet(out LogMessage msg)
         {
-            lock (m_Items)
+            lock (items)
             {
-                if (m_Items.Count == 0)
+                if (items.Count == 0)
                 {
                     msg = new LogMessage();
                     return false;
                 }
-                msg = m_Items.Dequeue();
+                msg = items.Dequeue();
                 return true;
             }
         }
@@ -62,10 +69,10 @@ namespace Cave.Logging
         /// <returns></returns>
         public LogMessage[] Retrieve()
         {
-            lock (m_Items)
+            lock (items)
             {
-                LogMessage[] result = m_Items.ToArray();
-                m_Items.Clear();
+                LogMessage[] result = items.ToArray();
+                items.Clear();
                 return result;
             }
         }
@@ -75,22 +82,22 @@ namespace Cave.Logging
         /// </summary>
         public LogMessage[] ToArray()
         {
-            lock (m_Items)
+            lock (items)
             {
-                return m_Items.ToArray();
+                return items.ToArray();
             }
         }
 
         /// <summary>
-        /// Obtains the count of items collected and not retrieved.
+        /// Gets the count of items collected and not retrieved.
         /// </summary>
         public int ItemCount
         {
             get
             {
-                lock (m_Items)
+                lock (items)
                 {
-                    return m_Items.Count;
+                    return items.Count;
                 }
             }
         }
@@ -110,15 +117,15 @@ namespace Cave.Logging
         /// <param name="msg">The message.</param>
         public override void Write(LogMessage msg)
         {
-            lock (m_Items)
+            lock (items)
             {
-                m_Items.Enqueue(msg);
-                m_Clean();
+                items.Enqueue(msg);
+                CleanItems();
             }
         }
 
         /// <summary>
-        /// Obtains the string "LogCollector".
+        /// Gets the string "LogCollector".
         /// </summary>
         public override string LogSourceName => "LogCollector";
 
