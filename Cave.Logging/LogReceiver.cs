@@ -33,7 +33,7 @@ namespace Cave.Logging
 
             // log stacktrace
             bool stackTrace = (ExceptionMode & LogExceptionMode.StackTrace) != 0;
-            XT exceptionMessage = msg.Exception.ToXT(stackTrace);
+            var exceptionMessage = msg.Exception.ToXT(stackTrace);
 
             // with same level ?
             if ((ExceptionMode & LogExceptionMode.SameLevel) != 0)

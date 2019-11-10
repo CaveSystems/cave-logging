@@ -155,7 +155,7 @@ namespace Cave.Logging
                 throw new ArgumentException("text");
             }
 
-            DateTimeOffset value = DateTimeOffset.ParseExact(str, DateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+            var value = DateTimeOffset.ParseExact(str, DateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
             return new SyslogMessageDateTime(value);
         }
 
@@ -303,7 +303,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public string ToStringRFC5424()
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             stringBuilder.Append(Value.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss", DateTimeFormatInfo.InvariantInfo));
             long l_Ticks = Value.Ticks % TimeSpan.TicksPerSecond;
 
@@ -403,7 +403,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public int CompareTo(object obj)
         {
-            SyslogMessageDateTime other = obj as SyslogMessageDateTime;
+            var other = obj as SyslogMessageDateTime;
             if (other == null)
             {
                 return -1;

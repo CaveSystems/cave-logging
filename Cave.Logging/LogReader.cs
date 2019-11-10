@@ -179,7 +179,7 @@ namespace Cave.Logging
 
         LogEntry ConvertOldLayoutRow(Row row)
         {
-            LogEntry logEntry = new LogEntry
+            var logEntry = new LogEntry
             {
                 // get id
                 ID = Layout.GetID(row),
@@ -242,7 +242,7 @@ namespace Cave.Logging
                 return new LogEntry[0];
             }
 
-            LogEntry[] results = new LogEntry[rows.Count];
+            var results = new LogEntry[rows.Count];
             for (int i = 0; i < results.Length; i++)
             {
                 results[i] = ConvertOldLayoutRow(rows[i]);
@@ -263,7 +263,7 @@ namespace Cave.Logging
         LogEntry[] Get(Search search, ResultOption option)
         {
             IList<Row> rows = Table.GetRows(search, option);
-            LogEntry[] results = new LogEntry[rows.Count];
+            var results = new LogEntry[rows.Count];
             for (int i = 0; i < results.Length; i++)
             {
                 results[i] = rows[i].GetStruct<LogEntry>(Table.Layout);
@@ -348,7 +348,7 @@ namespace Cave.Logging
         {
             if (oldLayout)
             {
-                ResultOption option = ResultOption.SortDescending(Table.Layout.IDField.Name);
+                var option = ResultOption.SortDescending(Table.Layout.IDField.Name);
                 if (oldLayoutSourceField > -1)
                 {
                     option += ResultOption.Group(Table.Layout.GetName(oldLayoutSourceField));
@@ -490,7 +490,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public LogEntry[] GetNext()
         {
-            Search search = Search.FieldGreater(Table.Layout.IDField.Name, lastID);
+            var search = Search.FieldGreater(Table.Layout.IDField.Name, lastID);
             search &= MakeFilters();
             if (oldLayout)
             {

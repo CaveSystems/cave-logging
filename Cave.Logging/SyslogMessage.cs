@@ -98,7 +98,7 @@ namespace Cave.Logging
                 throw new ArgumentNullException("data");
             }
 
-            SyslogMessage result = new SyslogMessage
+            var result = new SyslogMessage
             {
                 Version = SyslogMessageVersion.RFC3164,
             };
@@ -178,7 +178,7 @@ namespace Cave.Logging
         /// <exception cref="InvalidDataException"></exception>
         public static SyslogMessage ParseRFC5424(string data)
         {
-            SyslogMessage result = new SyslogMessage
+            var result = new SyslogMessage
             {
                 Version = SyslogMessageVersion.RFC5424,
             };
@@ -246,7 +246,7 @@ namespace Cave.Logging
             }
             else
             {
-                List<SyslogStructuredDataPart> parts = new List<SyslogStructuredDataPart>();
+                var parts = new List<SyslogStructuredDataPart>();
                 try
                 {
                     while (true)
@@ -307,7 +307,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public static SyslogMessage ParseRSYSLOG(string data)
         {
-            SyslogMessage result = new SyslogMessage
+            var result = new SyslogMessage
             {
                 Version = SyslogMessageVersion.RSYSLOG,
             };
@@ -378,7 +378,7 @@ namespace Cave.Logging
             // got structured data ?
             if ((data[start] == '[') && (data.IndexOf(']', start) > -1))
             {
-                List<SyslogStructuredDataPart> parts = new List<SyslogStructuredDataPart>();
+                var parts = new List<SyslogStructuredDataPart>();
                 try
                 {
                     while (true)
@@ -656,7 +656,7 @@ namespace Cave.Logging
                 throw new InvalidDataException(string.Format("{0} may only contain us-ascii characters!", "Content"));
             }
 
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
 
             // PRI: <PRI>
             stringBuilder.Append("<");
@@ -693,7 +693,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public string ToStringRFC5424()
         {
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
 
             // PRI: <PRI>Version
             stringBuilder.Append("<");
@@ -749,7 +749,7 @@ namespace Cave.Logging
 
             // STRUCTURED-DATA
             stringBuilder.Append(' ');
-            string valueuredDataString = (StructuredData == null) ? null : StructuredData.ToString();
+            string valueuredDataString = StructuredData?.ToString();
             if (valueuredDataString == null)
             {
                 stringBuilder.Append('-');
@@ -807,7 +807,7 @@ namespace Cave.Logging
                 throw new InvalidDataException(string.Format("{0} may only contain us-ascii characters!", "Hostname"));
             }
 
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
 
             // PRI: <PRI>
             stringBuilder.Append("<");
@@ -833,7 +833,7 @@ namespace Cave.Logging
                 stringBuilder.Append(": ");
             }
 
-            string dataString = (StructuredData == null) ? null : StructuredData.ToString();
+            string dataString = StructuredData?.ToString();
             if (dataString != null)
             {
                 stringBuilder.Append(dataString);
@@ -864,21 +864,7 @@ namespace Cave.Logging
         /// </summary>
         public int CompareTo(object obj)
         {
-            if (obj == null)
-            {
-                return -1;
-            }
-
-            if (obj is SyslogMessage)
-            {
-                if (Equals(obj))
-                {
-                    return 0;
-                }
-
-                return TimeStamp.CompareTo(((SyslogMessage)obj).TimeStamp);
-            }
-            return ToString().CompareTo(obj.ToString());
+            return obj is SyslogMessage msg ? Equals(msg) ? 0 : TimeStamp.CompareTo(msg.TimeStamp) : ToString().CompareTo(obj?.ToString());
         }
 
         #endregion
@@ -888,31 +874,15 @@ namespace Cave.Logging
         /// <summary>
         /// Determines whether the specified Object is equal to the SyslogItem.
         /// </summary>
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(obj, null))
-            {
-                return false;
-            }
-
-            if (!(obj is SyslogMessage))
-            {
-                return false;
-            }
-
-            SyslogMessage m = (SyslogMessage)obj;
-            return m == this;
-        }
+        /// <param name="obj">Object to test for equality.</param>
+        public override bool Equals(object obj) => obj is SyslogMessage msg ? msg.ToString() == ToString() : false;
 
         #endregion
 
         /// <summary>
         /// Obtains the hash code for this item.
         /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            return ToString().GetHashCode();
-        }
+        /// <returns>Returns a hash code.</returns>
+        public override int GetHashCode() => ToString().GetHashCode();
     }
 }

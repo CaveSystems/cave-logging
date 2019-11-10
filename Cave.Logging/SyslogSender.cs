@@ -44,7 +44,7 @@ namespace Cave.Syslog
         /// <param name="connectionString">Destination and syslog message version (optional, if not set at constructor already).</param>
         public void Connect(ConnectionString connectionString)
         {
-            OptionCollection options = OptionCollection.FromStrings(connectionString.Options.Split('&'));
+            var options = OptionCollection.FromStrings(connectionString.Options.Split('&'));
             if (version == SyslogMessageVersion.Undefined)
             {
                 if (options.Contains("version"))

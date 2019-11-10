@@ -143,7 +143,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             result.Append(DateTime.ToUniversalTime().ToString(StringExtensions.InterOpDateTimeFormat));
             result.Append('\t');
             result.Append(Level.ToString());
@@ -192,7 +192,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public string ToShortString()
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             result.Append(Level.ToString().ForceLength(12));
             result.Append(' ');
             if (DateTime > DateTime.MinValue)

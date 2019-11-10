@@ -22,7 +22,7 @@ namespace Cave.Logging
                 throw new ArgumentNullException("text");
             }
 
-            List<SyslogStructuredDataPart> result = new List<SyslogStructuredDataPart>();
+            var result = new List<SyslogStructuredDataPart>();
             int start = 0;
             while (true)
             {
@@ -82,7 +82,7 @@ namespace Cave.Logging
                 return null;
             }
 
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             foreach (SyslogStructuredDataPart part in this)
             {
                 result.Append(part.ToString());
@@ -262,7 +262,7 @@ namespace Cave.Logging
         /// <returns></returns>
         public SyslogStructuredDataPart[] ToArray()
         {
-            SyslogStructuredDataPart[] result = new SyslogStructuredDataPart[Count];
+            var result = new SyslogStructuredDataPart[Count];
             data.Values.CopyTo(result, 0);
             return result;
         }

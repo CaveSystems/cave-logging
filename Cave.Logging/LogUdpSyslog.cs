@@ -54,8 +54,8 @@ namespace Cave.Syslog
             string text = source + ": " + content.Text;
             foreach (string part in StringExtensions.SplitNewLineAndLength(text, maximumMessageLength))
             {
-                SyslogSeverity l_Severity = (SyslogSeverity)((int)level & 0x7);
-                SyslogMessage item = new SyslogMessage(version, Facility, l_Severity, dateTime, Environment.MachineName.ToLower(), processName, 0, null, part, null);
+                var l_Severity = (SyslogSeverity)((int)level & 0x7);
+                var item = new SyslogMessage(version, Facility, l_Severity, dateTime, Environment.MachineName.ToLower(), processName, 0, null, part, null);
                 byte[] data = Encoding.UTF8.GetBytes(item.ToString());
                 l_UdpClient.Send(data, data.Length, Target);
             }

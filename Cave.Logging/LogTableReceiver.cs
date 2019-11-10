@@ -47,7 +47,7 @@ namespace Cave.Logging
             }
 
             layout = table.Layout;
-            LogEntry logEntry = new LogEntry()
+            var logEntry = new LogEntry()
             {
                 DateTime = DateTime.Now,
                 Level = LogLevel.Information,
@@ -85,7 +85,7 @@ namespace Cave.Logging
                 return;
             }
 
-            LogEntry logEntry = new LogEntry()
+            var logEntry = new LogEntry()
             {
                 HostName = Logger.HostName,
                 ProcessName = Logger.ProcessName,
@@ -94,7 +94,7 @@ namespace Cave.Logging
                 Level = level,
                 Content = WriteContentStyle ? content : content.Text,
             };
-            Row row = Row.Create(layout, logEntry);
+            var row = Row.Create(layout, logEntry);
             TableWriter writer = Writer;
             if (writer != null)
             {

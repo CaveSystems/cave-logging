@@ -27,13 +27,13 @@ namespace Cave.Logging
         public static SyslogStructuredDataPart Parse(string text)
         {
             string content = StringExtensions.Unbox(text, "[", "]", true);
-            Arguments arguments = Arguments.FromString(Arguments.ParseOptions.ContainsCommand, content);
+            var arguments = Arguments.FromString(Arguments.ParseOptions.ContainsCommand, content);
             if (arguments.Parameters.Count > 0)
             {
                 throw new InvalidDataException(string.Format("Invalid structured data!"));
             }
 
-            SyslogStructuredDataPart result = new SyslogStructuredDataPart(arguments.Command, arguments.Options.ToArray());
+            var result = new SyslogStructuredDataPart(arguments.Command, arguments.Options.ToArray());
             return result;
         }
 
@@ -79,7 +79,7 @@ namespace Cave.Logging
                 return "[InvalidName]";
             }
 
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             result.Append('[');
             result.Append(Name);
             foreach (Option item in Items)
