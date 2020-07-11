@@ -185,7 +185,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new SyslogMessageDateTime instance with the current date and time.
+        /// Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.
         /// </summary>
         public SyslogMessageDateTime()
         {
@@ -193,16 +193,16 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new SyslogMessageDateTime from the specified local datetime value.
+        /// Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.
         /// </summary>
-        /// <param name="year"></param>
-        /// <param name="month"></param>
-        /// <param name="day"></param>
-        /// <param name="hour"></param>
-        /// <param name="minute"></param>
-        /// <param name="second"></param>
-        /// <param name="ms"></param>
-        /// <param name="ns"></param>
+        /// <param name="year">Year.</param>
+        /// <param name="month">Month.</param>
+        /// <param name="day">Day.</param>
+        /// <param name="hour">Hour.</param>
+        /// <param name="minute">Minute.</param>
+        /// <param name="second">Second.</param>
+        /// <param name="ms">Milliseconds.</param>
+        /// <param name="ns">Nanoseconds.</param>
         public SyslogMessageDateTime(int year, int month, int day, int hour, int minute, int second, int ms, int ns)
         {
             if (ms < 0 || ms > 999)
@@ -219,17 +219,17 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new SyslogMessageDateTime from the specified local datetime value.
+        /// Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.
         /// </summary>
-        /// <param name="year"></param>
-        /// <param name="month"></param>
-        /// <param name="day"></param>
-        /// <param name="hour"></param>
-        /// <param name="minute"></param>
-        /// <param name="second"></param>
-        /// <param name="ms"></param>
-        /// <param name="ns"></param>
-        /// <param name="offset"></param>
+        /// <param name="year">Year.</param>
+        /// <param name="month">Month.</param>
+        /// <param name="day">Day.</param>
+        /// <param name="hour">Hour.</param>
+        /// <param name="minute">Minute.</param>
+        /// <param name="second">Second.</param>
+        /// <param name="ms">Milliseconds.</param>
+        /// <param name="ns">Nanoseconds.</param>
+        /// <param name="offset">DateTime offset of the timezone.</param>
         public SyslogMessageDateTime(int year, int month, int day, int hour, int minute, int second, int ms, int ns, TimeSpan offset)
         {
             if (ms < 0 || ms > 999)
@@ -265,7 +265,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Creates a new SyslogMessageDateTime using the specified date, time and offset.
+        /// Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.
         /// </summary>
         /// <param name="dateTime">The date, time and offset.</param>
         public SyslogMessageDateTime(DateTimeOffset dateTime)
@@ -274,22 +274,22 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the DateTime value of this instance converted to the Universal Coordinated Time (Zulu).
+        /// Gets the DateTime value of this instance converted to the Universal Coordinated Time (Zulu).
         /// </summary>
         public DateTime Utc => Value.UtcDateTime;
 
         /// <summary>
-        /// Obtains the DateTime value of this instance converted to the local time.
+        /// Gets the DateTime value of this instance converted to the local time.
         /// </summary>
         public DateTime Local => Value.LocalDateTime;
 
         /// <summary>
-        /// Obtains the source value of this instance.
+        /// Gets the source value of this instance.
         /// </summary>
         public DateTimeOffset Value { get; private set; }
 
         /// <summary>
-        /// Obtains the RFC3164 string representation of this instance.
+        /// Gets the RFC3164 string representation of this instance.
         /// </summary>
         /// <returns></returns>
         public string ToStringRFC3164()
@@ -298,7 +298,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the RFC5424 string representation of this instance.
+        /// Gets the RFC5424 string representation of this instance.
         /// </summary>
         /// <returns></returns>
         public string ToStringRFC5424()
@@ -337,7 +337,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the <see cref="ToStringRFC5424()"/> result.
+        /// Gets the <see cref="ToStringRFC5424()"/> result.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -346,7 +346,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the hash code for the <see cref="Value"/>.
+        /// Gets the hash code for the <see cref="Value"/>.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

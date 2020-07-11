@@ -5,7 +5,7 @@ namespace Cave.Logging
     /// <summary>
     /// Provides an interface for log receivers.
     /// </summary>
-    public interface ILogReceiver : ILogSource, IDisposable
+    public interface ILogReceiver : IDisposable
     {
         /// <summary>
         /// Gets or sets the time between two warnings.
@@ -18,17 +18,17 @@ namespace Cave.Logging
         int LateMessageMilliSeconds { get; set; }
 
         /// <summary>
-        /// Gets / sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>.
+        /// Gets or sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>.
         /// </summary>
         int LateMessageTreshold { get; set; }
 
         /// <summary>
-        /// Gets / sets the operation mode of the receiver.
+        /// Gets or sets the operation mode of the receiver.
         /// </summary>
         LogReceiverMode Mode { get; set; }
 
         /// <summary>
-        /// Obtains the <see cref="LogLevel"/> of the receiver (will not receive notifications with loglevel greater then this).
+        /// Gets or sets the <see cref="LogLevel"/> of the receiver (will not receive notifications with loglevel greater then this).
         /// </summary>
         LogLevel Level { get; set; }
 
@@ -37,13 +37,13 @@ namespace Cave.Logging
         LogExceptionMode ExceptionMode { get; set; }
 
         /// <summary>
-        /// Provides the callback function used to transmit the logging notifications.
+        /// Gets or sets the callback function used to transmit the logging notifications.
         /// </summary>
         /// <param name="msg">The message.</param>
         void Write(LogMessage msg);
 
         /// <summary>
-        /// Obtains whether the <see cref="ILogReceiver"/> was already closed.
+        /// Gets a value indicating whether the <see cref="ILogReceiver"/> was already closed or not.
         /// </summary>
         bool Closed { get; }
 

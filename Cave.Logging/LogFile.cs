@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text;
-using Cave.Console;
 
 namespace Cave.Logging
 {
@@ -53,6 +52,8 @@ namespace Cave.Logging
         }
         #endregion
 
+        Logger logger;
+
         #region private implementation
 
         StreamWriter writer = null;
@@ -68,8 +69,8 @@ namespace Cave.Logging
             }
 
             string fullFilePath = Path.GetFullPath(fileName);
-
-            this.LogDebug("Prepare logging to file <cyan>{0}", fullFilePath);
+            logger = new Logger($"LogFile:{Path.GetFileName(fileName)}");
+            logger.LogDebug("Prepare logging to file <cyan>{0}", fullFilePath);
             Directory.CreateDirectory(Path.GetDirectoryName(fullFilePath));
             Stream stream = File.Open(fullFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             if (stream.CanSeek)
@@ -143,13 +144,8 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the number of notifications logged.
+        /// Gets the number of notifications logged.
         /// </summary>
         public int Counter { get; private set; } = 0;
-
-        /// <summary>
-        /// Obtains the string "LogFile".
-        /// </summary>
-        public override string LogSourceName => $"LogFile <{Path.GetFileName(FileName)}>";
     }
 }

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Cave.Console;
 using res = Cave.Logging.Properties.Resources;
 
 namespace Cave.Logging
@@ -15,52 +14,14 @@ namespace Cave.Logging
     /// in production products. Messages logged are queued and then distributed by a background thread to provide full
     /// speed even with slow loggers (file, database, network).
     /// </summary>
-    public class Logger : ILogSource
+    public class Logger
     {
-        static string hostName;
-        static string processName;
-
-        /// <summary>
-        /// Gets the host name of the local computer.
-        /// </summary>
-        public static string HostName
-        {
-            get
-            {
-                if (hostName == null)
-                {
-                    hostName = Dns.GetHostName().ToLower().ToString();
-                }
-                return hostName;
-            }
-        }
-
-        /// <summary>
-        /// Gets the name of the process.
-        /// </summary>
-        public static string ProcessName
-        {
-            get
-            {
-                if (processName == null)
-                {
-                    try { processName = AssemblyVersionInfo.Program.Product; }
-                    catch (Exception ex) { LogError("Logger", "Error loading process name into logger instance: " + ex.Message); }
-                }
-                if (processName == null)
-                {
-                    try { processName = Process.GetCurrentProcess().ProcessName; }
-                    catch (Exception ex) { LogError("Logger", "Error loading process name into logger instance: " + ex.Message); }
-                }
-                return processName;
-            }
-        }
-
         #region DistributionWorkerClass
-        [DebuggerDisplay("{m_Receiver}")]
-        sealed class DistributeWorker : ILogSource
+        [DebuggerDisplay("{receiver}")]
+        sealed class DistributeWorker
         {
-            ILogReceiver receiver;
+            readonly ILogReceiver receiver;
+            readonly Logger logger;
             LinkedList<LogMessage> messageQueue = new LinkedList<LogMessage>();
 
             /// <summary>The current position in the static queue, this is relative to queue and is decreased/reseted during cleanup.</summary>
@@ -69,7 +30,7 @@ namespace Cave.Logging
 
             void Worker()
             {
-                Thread.CurrentThread.Name = "Logger " + receiver;
+                Thread.CurrentThread.Name = logger.SourceName;
                 Thread.CurrentThread.IsBackground = true;
                 bool delayWarningSent = false;
                 try
@@ -96,7 +57,7 @@ namespace Cave.Logging
                                 // entering idle mode
                                 if (delayWarningSent)
                                 {
-                                    this.LogNotice(string.Format(res.LogReceiver_BacklogRecovered, receiver));
+                                    logger.LogNotice(string.Format(res.LogReceiver_BacklogRecovered, receiver));
                                     delayWarningSent = false;
                                     continue;
                                 }
@@ -143,10 +104,10 @@ namespace Cave.Logging
                                         string warning = string.Format(res.LogReceiver_Backlog, receiver, msgs.Count, StringExtensions.FormatTime(TimeSpan.FromMilliseconds(currentDelayMilliSeconds)));
 
                                         // warn all
-                                        this.LogWarning(warning);
+                                        logger.LogWarning(warning);
 
                                         // warn self (direct write)
-                                        receiver.Write(new LogMessage(receiver.LogSourceName, DateTime.Now, LogLevel.Warning, null, warning, null));
+                                        receiver.Write(new LogMessage(receiver.GetType().Name, DateTime.Now, LogLevel.Warning, null, warning, null));
 
                                         // calc next
                                         nextWarningUtc = DateTime.UtcNow + receiver.TimeBetweenWarnings;
@@ -171,7 +132,7 @@ namespace Cave.Logging
                             if (DateTime.UtcNow > nextWarningUtc)
                             {
                                 string warning = string.Format(res.LogReceiver_Discarded, receiver, discardedCount);
-                                receiver.Write(new LogMessage(receiver.LogSourceName, DateTime.Now, LogLevel.Warning, null, warning, null));
+                                receiver.Write(new LogMessage(receiver.GetType().Name, DateTime.Now, LogLevel.Warning, null, warning, null));
                                 discardedCount = 0;
                                 nextWarningUtc = DateTime.UtcNow + receiver.TimeBetweenWarnings;
                             }
@@ -180,7 +141,7 @@ namespace Cave.Logging
                 }
                 catch (Exception ex)
                 {
-                    this.LogEmergency(string.Format(res.Error_FatalExceptionAt, receiver.LogSourceName), ex);
+                    logger.LogEmergency(string.Format(res.Error_FatalExceptionAt, receiver.GetType().Name), ex);
                     receiver.Close();
                 }
             }
@@ -203,11 +164,10 @@ namespace Cave.Logging
 
             public bool Idle { get { lock (this) { return isIdle; } } }
 
-            public string LogSourceName => "Logger.DistributeWorker";
-
             public DistributeWorker(ILogReceiver receiver)
             {
                 this.receiver = receiver;
+                logger = new Logger("Logger " + receiver);
                 new Thread(Worker).Start();
             }
 
@@ -218,12 +178,14 @@ namespace Cave.Logging
         #region static class
 
         static readonly Dictionary<ILogReceiver, DistributeWorker> distributeWorkers = new Dictionary<ILogReceiver, DistributeWorker>();
+        static string hostName = Dns.GetHostName().ToLower().ToString();
+        static string processName = Process.GetCurrentProcess().ProcessName;
         static LinkedList<LogMessage> masterQueue = new LinkedList<LogMessage>();
         static object masterSync = new object();
         static volatile bool masterIdle;
         static Thread logThread;
 
-        private static void MasterWorker()
+        static void MasterWorker()
         {
             while (true)
             {
@@ -267,7 +229,17 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Provides access to the <see cref="LogDebugReceiver"/> instance.
+        /// Gets or sets the host name of the local computer.
+        /// </summary>
+        public static string HostName { get; set; } = hostName;
+
+        /// <summary>
+        /// Gets or sets the name of the process.
+        /// </summary>
+        public static string ProcessName { get; set; } = processName;
+
+        /// <summary>
+        /// Gets the <see cref="LogDebugReceiver"/> instance.
         /// This is only set if a debugger was attached during startup.
         /// </summary>
         public static LogDebugReceiver DebugReceiver { get; private set; }
@@ -316,12 +288,12 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Log to <see cref="Trace"/>. This setting is false by default.
+        /// Gets or sets a value indicating whether the logging system logs to <see cref="Trace"/>. This setting is false by default.
         /// </summary>
         public static bool LogToTrace { get => DebugReceiver.LogToTrace; set => DebugReceiver.LogToTrace = value; }
 
         /// <summary>
-        /// Log to <see cref="Debug"/>. This setting is true on debug compiles by default.
+        /// Gets or sets a value indicating whether the logging system logs to <see cref="Debug"/>. This setting is true on debug compiles by default.
         /// </summary>
         public static bool LogToDebug { get => DebugReceiver.LogToDebug; set => DebugReceiver.LogToDebug = value; }
 
@@ -641,16 +613,22 @@ namespace Cave.Logging
         #region logger class
 
         /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
-        /// <param name="name">Name of the log source.</param>cd \\jenni
+        /// <param name="name">Name of the log source.</param>
         ///
-        public Logger(string name)
+        public Logger(string name = null)
         {
-            LogSourceName = name;
+            StackFrame frame = new StackFrame(1);
+            SourceName = frame.GetMethod().DeclaringType.Name;
         }
 
-        /// <summary>Gets the name of the log source.</summary>
+        /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
+        /// <param name="type">Name of the log source.</param>
+        ///
+        public Logger(Type type) => SourceName = type?.Name ?? throw new ArgumentNullException(nameof(type));
+
+        /// <summary>Gets or sets the name of the log source.</summary>
         /// <value>The name of the log source.</value>
-        public string LogSourceName { get; set; }
+        public string SourceName { get; set; }
 
         #region string logging methods
 
@@ -670,7 +648,7 @@ namespace Cave.Logging
         /// <param name="args">The arguments.</param>
         public void Write(LogLevel level, Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, level, ex, msg, args);
+            Send(SourceName, level, ex, msg, args);
         }
 
         /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
@@ -678,7 +656,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogVerbose(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Verbose, null, msg, args);
+            Send(SourceName, LogLevel.Verbose, null, msg, args);
         }
 
         /// <summary>
@@ -688,7 +666,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogDebug(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Debug, null, msg, args);
+            Send(SourceName, LogLevel.Debug, null, msg, args);
         }
 
         /// <summary>
@@ -698,7 +676,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogInfo(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Information, null, msg, args);
+            Send(SourceName, LogLevel.Information, null, msg, args);
         }
 
         /// <summary>
@@ -708,7 +686,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogNotice(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Notice, null, msg, args);
+            Send(SourceName, LogLevel.Notice, null, msg, args);
         }
 
         /// <summary>
@@ -718,7 +696,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogWarning(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Warning, null, msg, args);
+            Send(SourceName, LogLevel.Warning, null, msg, args);
         }
 
         /// <summary>
@@ -728,7 +706,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogError(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Error, null, msg, args);
+            Send(SourceName, LogLevel.Error, null, msg, args);
         }
 
         /// <summary>
@@ -738,7 +716,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogCritical(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Critical, null, msg, args);
+            Send(SourceName, LogLevel.Critical, null, msg, args);
         }
 
         /// <summary>
@@ -748,7 +726,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogAlert(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Alert, null, msg, args);
+            Send(SourceName, LogLevel.Alert, null, msg, args);
         }
 
         /// <summary>
@@ -758,7 +736,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogEmergency(XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Emergency, null, msg, args);
+            Send(SourceName, LogLevel.Emergency, null, msg, args);
         }
 
         /// <summary>
@@ -769,7 +747,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogDebug(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Debug, ex, msg, args);
+            Send(SourceName, LogLevel.Debug, ex, msg, args);
         }
 
         /// <summary>
@@ -780,7 +758,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogVerbose(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Verbose, ex, msg, args);
+            Send(SourceName, LogLevel.Verbose, ex, msg, args);
         }
 
         /// <summary>
@@ -791,7 +769,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogInfo(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Information, ex, msg, args);
+            Send(SourceName, LogLevel.Information, ex, msg, args);
         }
 
         /// <summary>
@@ -802,7 +780,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogNotice(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Notice, ex, msg, args);
+            Send(SourceName, LogLevel.Notice, ex, msg, args);
         }
 
         /// <summary>
@@ -813,7 +791,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogWarning(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Warning, ex, msg, args);
+            Send(SourceName, LogLevel.Warning, ex, msg, args);
         }
 
         /// <summary>
@@ -824,7 +802,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogError(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Error, ex, msg, args);
+            Send(SourceName, LogLevel.Error, ex, msg, args);
         }
 
         /// <summary>
@@ -835,7 +813,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogCritical(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Critical, ex, msg, args);
+            Send(SourceName, LogLevel.Critical, ex, msg, args);
         }
 
         /// <summary>
@@ -846,7 +824,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogAlert(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Alert, ex, msg, args);
+            Send(SourceName, LogLevel.Alert, ex, msg, args);
         }
 
         /// <summary>
@@ -857,7 +835,7 @@ namespace Cave.Logging
         /// <param name="args">The message arguments.</param>
         public void LogEmergency(Exception ex, XT msg, params object[] args)
         {
-            Send(LogSourceName, LogLevel.Emergency, ex, msg, args);
+            Send(SourceName, LogLevel.Emergency, ex, msg, args);
         }
         #endregion
         #endregion

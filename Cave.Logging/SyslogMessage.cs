@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Cave.Data;
 
 namespace Cave.Logging
 {
@@ -475,7 +474,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Gets / sets the maximum message length used.
+        /// Gets the maximum message length used.
         /// </summary>
         public int MaximumMessageLength => GetMaximumMessageLength(Version);
 
@@ -494,7 +493,6 @@ namespace Cave.Logging
         /// <param name="data">The structured syslog data.</param>
         public SyslogMessage(SyslogMessageVersion version, SyslogFacility facility, SyslogSeverity severity, SyslogMessageDateTime timeStamp, string hostName, string processName, uint processID, string messageID, string content, SyslogStructuredData data)
         {
-            ID = -1;
             if (string.IsNullOrEmpty(hostName))
             {
                 hostName = Environment.MachineName.ToLower();
@@ -533,84 +531,57 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// ID of the message.
-        /// </summary>
-        [Field(Flags = FieldFlags.ID)]
-        public long ID;
-
-        /// <summary>
         /// Syslog protocol version.
         /// </summary>
-        [Field]
         public SyslogMessageVersion Version;
 
         /// <summary>
         /// The syslog facility.
         /// </summary>
-        [Field(Flags = FieldFlags.Index)]
         public SyslogFacility Facility;
 
         /// <summary>
         /// The syslog severity.
         /// </summary>
-        [Field(Flags = FieldFlags.Index)]
         public SyslogSeverity Severity;
 
         /// <summary>
         /// Provides access to the time stamp.
         /// </summary>
-        [Field(Flags = FieldFlags.Index)]
         public SyslogMessageDateTime TimeStamp;
 
         /// <summary>
         /// The server this message belongs to.
         /// </summary>
-        [Field(Flags = FieldFlags.Index)]
         public string HostName;
 
         /// <summary>
         /// The process this messages belongs to.
         /// </summary>
-        [Field(Flags = FieldFlags.Index)]
         public string ProcessName;
 
         /// <summary>
         /// The process id this messages belongs to.
         /// </summary>
-        [Field(Flags = FieldFlags.Index)]
         public uint ProcessID;
 
         /// <summary>
         /// The structured syslog data.
         /// </summary>
-        [Field]
         public SyslogStructuredData StructuredData;
 
         /// <summary>
         /// The content of the message.
         /// </summary>
-        [Field]
         public string Content;
 
         /// <summary>
         /// Senders ID of the message (do not use this as uuid!), this is only present for SyslogMessageVersion.RFC5424.
         /// </summary>
-        [Field]
         public string MessageID;
 
         /// <summary>Retrieves the syslog items encoded syslog string.</summary>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException">
-        /// ProcessName
-        /// or
-        /// Hostname
-        /// or
-        /// Content.
-        /// </exception>
-        /// <exception cref="NotSupportedException">
-        /// </exception>
-        /// <exception cref="InvalidDataException">
-        /// </exception>
+        /// <returns>A new string describing this instance in RFC 3164 format.</returns>
         public string ToStringRFC3164()
         {
             if (ProcessName == null)
@@ -690,7 +661,7 @@ namespace Cave.Logging
         /// <summary>
         /// Retrieves the syslog items encoded syslog string.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A new string describing this instance in RFC 5424 format.</returns>
         public string ToStringRFC5424()
         {
             var stringBuilder = new StringBuilder();
@@ -775,7 +746,7 @@ namespace Cave.Logging
         /// <summary>
         /// Retrieves the syslog items encoded syslog string.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A new string describing this instance in RSYSLOG format.</returns>
         public string ToStringRSYSLOG()
         {
             if (ProcessName == null)
@@ -846,6 +817,7 @@ namespace Cave.Logging
         /// <summary>
         /// Retrieves the syslog items encoded syslog string.
         /// </summary>
+        /// <returns>A new string describing this instance using the format specified at <see cref="Version"/>.</returns>
         public override string ToString()
         {
             switch (Version)

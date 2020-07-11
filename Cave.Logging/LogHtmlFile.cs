@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using Cave.Console;
 using res = Cave.Logging.Properties.Resources;
 
 namespace Cave.Logging
@@ -54,6 +53,7 @@ namespace Cave.Logging
         }
         #endregion
 
+        Logger logger;
         StreamWriter writer;
 
         /// <summary>Writes the specified log message.</summary>
@@ -125,7 +125,8 @@ namespace Cave.Logging
         public LogHtmlFile(string fileName)
             : base(fileName)
         {
-            this.LogDebug("Prepare logging to file <cyan>{0}", fileName);
+            logger = new Logger($"LogFile:{Path.GetFileName(fileName)}");
+            logger.LogDebug("Prepare logging to file <cyan>{0}", fileName);
             writer = File.CreateText(fileName);
             writer.WriteLine("<html><head>");
             writer.WriteLine(res.LogHtmsortTable);
@@ -149,8 +150,5 @@ namespace Cave.Logging
                 }
             }
         }
-
-        /// <summary>Obtains the name of the log.</summary>
-        public override string LogSourceName => "LogHtmlFile <" + FileName + ">";
     }
 }

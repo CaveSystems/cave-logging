@@ -1,5 +1,4 @@
 ﻿using System;
-using Cave.Console;
 
 namespace Cave.Logging
 {
@@ -38,22 +37,22 @@ namespace Cave.Logging
             this.arguments = arguments;
         }
 
-        /// <summary>The date time.</summary>
+        /// <summary>Gets the date time.</summary>
         public DateTime DateTime { get; }
 
-        /// <summary>The level.</summary>
+        /// <summary>Gets the level.</summary>
         public LogLevel Level { get; }
 
-        /// <summary>The source.</summary>
+        /// <summary>Gets the source.</summary>
         public string Source { get; }
 
-        /// <summary>The content.</summary>
+        /// <summary>Gets the content.</summary>
         XT content;
 
-        /// <summary>The arguments.</summary>
+        /// <summary>Gets the arguments.</summary>
         object[] arguments;
 
-        /// <summary>The exception.</summary>
+        /// <summary>Gets the exception.</summary>
         public Exception Exception { get; }
 
         XT completeContent = null;

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using Cave.Collections;
-using Cave.Console;
+using Cave.IO;
 
 namespace Cave.Logging
 {
@@ -14,7 +14,7 @@ namespace Cave.Logging
         Option[] items;
 
         /// <summary>
-        /// Invalid characters that have to be escaped.
+        /// Gets invalid characters that have to be escaped.
         /// </summary>
         public static char[] InvalidChars => new char[] { '"', '\\', ']' };
 
@@ -33,12 +33,12 @@ namespace Cave.Logging
                 throw new InvalidDataException(string.Format("Invalid structured data!"));
             }
 
-            var result = new SyslogStructuredDataPart(arguments.Command, arguments.Options.ToArray());
+            var result = new SyslogStructuredDataPart(content);
             return result;
         }
 
         /// <summary>
-        /// Creates a new SyslogStructuredDataPart with the specified name and elements.
+        /// Initializes a new instance of the <see cref="SyslogStructuredDataPart"/> class.
         /// </summary>
         /// <param name="name">The name of the structured data part.</param>
         /// <param name="items">The items of the data.</param>
@@ -59,7 +59,7 @@ namespace Cave.Logging
         public readonly string Name;
 
         /// <summary>
-        /// Provides access to all options.
+        /// Gets a copy of all options.
         /// </summary>
         public Option[] Items => (Option[])items.Clone();
 

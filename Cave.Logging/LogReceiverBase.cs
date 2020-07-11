@@ -41,12 +41,12 @@ namespace Cave.Logging
         public int LateMessageMilliSeconds { get; set; }
 
         /// <summary>
-        /// Gets / sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>.
+        /// Gets or sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliSeconds"/>.
         /// </summary>
         public int LateMessageTreshold { get; set; }
 
         /// <summary>
-        /// Gets / sets the operation mode of the receiver.
+        /// Gets or sets the operation mode of the receiver.
         /// </summary>
         public virtual LogReceiverMode Mode { get; set; } = LogReceiverMode.Opportune;
 
@@ -55,7 +55,7 @@ namespace Cave.Logging
         public abstract void Write(LogMessage msg);
 
         /// <summary>
-        /// The <see cref="LogLevel"/> currently used.
+        /// Gets or sets the <see cref="LogLevel"/> currently used.
         /// This defaults to <see cref="LogLevel.Information"/>.
         /// </summary>
         public LogLevel Level { get; set; }
@@ -65,7 +65,7 @@ namespace Cave.Logging
         public LogExceptionMode ExceptionMode { get; set; }
 
         /// <summary>
-        /// Obtains whether the <see cref="LogReceiver"/> was already closed.
+        /// Gets a value indicating whether the <see cref="LogReceiver"/> was already closed.
         /// </summary>
         public bool Closed { get; private set; }
 
@@ -97,19 +97,6 @@ namespace Cave.Logging
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Obtains the name of the log.
-        /// </summary>
-        public abstract string LogSourceName { get; }
-
         #endregion
-
-        /// <summary>
-        /// Obtains a string representing this instance.
-        /// </summary>
-        public override string ToString()
-        {
-            return LogSourceName;
-        }
     }
 }

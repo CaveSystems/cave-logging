@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Cave.Console;
 using Cave.Logging;
 
 namespace Cave.Syslog
@@ -36,7 +35,6 @@ namespace Cave.Syslog
         UdpClient udpClient;
         SyslogMessageVersion version = SyslogMessageVersion.RFC3164;
         int maximumMessageLength = 2048;
-        string processName;
 
         /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
@@ -45,8 +43,8 @@ namespace Cave.Syslog
         /// <param name="content">The content.</param>
         protected override void Write(DateTime dateTime, LogLevel level, string source, XT content)
         {
-            UdpClient l_UdpClient = udpClient;
-            if (l_UdpClient == null)
+            UdpClient udp = udpClient;
+            if (udp == null)
             {
                 return;
             }
@@ -55,14 +53,14 @@ namespace Cave.Syslog
             foreach (string part in StringExtensions.SplitNewLineAndLength(text, maximumMessageLength))
             {
                 var l_Severity = (SyslogSeverity)((int)level & 0x7);
-                var item = new SyslogMessage(version, Facility, l_Severity, dateTime, Environment.MachineName.ToLower(), processName, 0, null, part, null);
+                var item = new SyslogMessage(version, Facility, l_Severity, dateTime, Logger.HostName, Logger.ProcessName, 0, null, part, null);
                 byte[] data = Encoding.UTF8.GetBytes(item.ToString());
-                l_UdpClient.Send(data, data.Length, Target);
+                udp.Send(data, data.Length, Target);
             }
         }
 
         /// <summary>
-        /// Syslog protocol version to be used to send messages. Valid values: [0..1].
+        /// Gets or sets the syslog protocol version to be used to send messages. Valid values: [0..1].
         /// </summary>
         public SyslogMessageVersion Version
         {
@@ -88,17 +86,21 @@ namespace Cave.Syslog
         /// <summary>Retrieves the Facility used to send the syslog messages. The default facility is local0.</summary>
         public SyslogFacility Facility = SyslogFacility.Local0;
 
-        /// <summary>Creates a new syslog instance (localhost).</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
+        /// </summary>
+        /// <remarks>
+        /// This is the default instance logging to localhost.
+        /// </remarks>
         public LogUdpSyslog()
             : base()
         {
-            processName = Process.GetCurrentProcess().ProcessName;
             udpClient = new UdpClient();
             Target = new IPEndPoint(IPAddress.Loopback, 514);
         }
 
         /// <summary>
-        /// Creates a new syslog instance.
+        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
         /// </summary>
         /// <param name="target"><see cref="IPEndPoint"/>: target server.</param>
         public LogUdpSyslog(IPEndPoint target)
@@ -108,10 +110,10 @@ namespace Cave.Syslog
         }
 
         /// <summary>
-        /// Creates a new syslog instance.
+        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
         /// </summary>
-        /// <param name="address"></param>
-        /// <param name="port"></param>
+        /// <param name="address">Target ip address.</param>
+        /// <param name="port">Target port.</param>
         public LogUdpSyslog(IPAddress address, int port)
             : this()
         {
@@ -119,15 +121,15 @@ namespace Cave.Syslog
         }
 
         /// <summary>
-        /// Creates a new syslog instance.
+        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
         /// </summary>
-        /// <param name="connection"><see cref="ConnectionString"/> of the form udp://server:port, tcp://server:port, tcps://server:port.</param>
+        /// <param name="connection"><see cref="ConnectionString"/> of the form udp://server:port.</param>
         public LogUdpSyslog(ConnectionString connection)
             : this(GetIPAddress(connection), connection.GetPort(514))
         {
             if (connection.Protocol == null)
             {
-                throw new ArgumentNullException("connection", "Protocol (udp, tcp, tcps) has to be given!");
+                throw new ArgumentNullException("connection", "Protocol (udp) has to be given!");
             }
 
             switch (connection.Protocol.ToUpperInvariant())
@@ -147,7 +149,7 @@ namespace Cave.Syslog
         }
 
         /// <summary>
-        /// Gets / sets the maximum message length used.
+        /// Gets or sets the maximum message length used.
         /// </summary>
         public int MaximumMessageLength
         {
@@ -177,9 +179,6 @@ namespace Cave.Syslog
             udpClient?.Close();
             udpClient = null;
         }
-
-        /// <summary>Obtains the name of the log.</summary>
-        public override string LogSourceName => "syslog://" + Target.ToString();
 
         #region IDisposable Member
 

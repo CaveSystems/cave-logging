@@ -89,7 +89,7 @@ namespace Cave.Syslog
                 {
                     // reconnect
                     try { tcpClient.Connect(target.Server, target.GetPort(514)); }
-                    catch { this.LogWarning($"No connection to {target.ToString(ConnectionStringPart.NoCredentials)}"); }
+                    catch { throw; }
                 }
 
                 tcpClient.Client.Send(data);

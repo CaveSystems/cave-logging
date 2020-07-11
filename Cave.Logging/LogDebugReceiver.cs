@@ -1,5 +1,4 @@
 using System;
-using Cave.Console;
 
 namespace Cave.Logging
 {
@@ -63,10 +62,5 @@ namespace Cave.Logging
         {
             return "LogDebugReceiver[Debug+Tracewriter," + Level + "]";
         }
-
-        /// <summary>
-        /// Obtains the name of the log.
-        /// </summary>
-        public override string LogSourceName => "LogDebugReceiver[Debug+Tracewriter]";
     }
 }

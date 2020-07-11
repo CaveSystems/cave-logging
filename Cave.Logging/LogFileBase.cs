@@ -64,11 +64,11 @@ namespace Cave.Logging
             AssemblyVersionInfo ver = AssemblyVersionInfo.Program;
             if ((flags & LogFileFlags.UseCompanyName) != 0)
             {
-                fileName = FileSystem.Combine(basePath, ver.Company, ver.Product, additionalPath, "Logs", fileName);
+                fileName = Path.GetFullPath($"{basePath}/{ver.Company}/{ver.Product}/{additionalPath}/Logs/{fileName}");
             }
             else
             {
-                fileName = FileSystem.Combine(basePath, ver.Product, additionalPath, "Logs", fileName);
+                fileName = Path.GetFullPath($"{basePath}/{ver.Product}/{additionalPath}/Logs/{fileName}");
             }
             return fileName;
         }

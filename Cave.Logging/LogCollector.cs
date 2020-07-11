@@ -124,11 +124,6 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Gets the string "LogCollector".
-        /// </summary>
-        public override string LogSourceName => "LogCollector";
-
         #endregion
     }
 }

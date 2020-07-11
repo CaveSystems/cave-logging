@@ -1,5 +1,3 @@
-using Cave.Console;
-
 namespace Cave.Logging
 {
     /// <summary>

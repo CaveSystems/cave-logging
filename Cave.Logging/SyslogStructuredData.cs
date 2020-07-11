@@ -122,7 +122,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Returns false.
+        /// Gets a value indicating whether this instance is readonly. This always returns false.
         /// </summary>
         public bool IsReadOnly => false;
 
@@ -199,7 +199,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains the number of <see cref="SyslogStructuredDataPart"/>s present.
+        /// Gets the number of <see cref="SyslogStructuredDataPart"/>s present.
         /// </summary>
         public int Count => data.Count;
 
