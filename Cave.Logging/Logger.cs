@@ -10,14 +10,15 @@ using res = Cave.Logging.Properties.Resources;
 namespace Cave.Logging
 {
     /// <summary>
-    /// This is a full featured asynchronous logging facility for general statusmonitoring and logging for end users
+    /// This is a full featured asynchronous logging facility for general status monitoring and logging for end users
     /// in production products. Messages logged are queued and then distributed by a background thread to provide full
     /// speed even with slow loggers (file, database, network).
     /// </summary>
+    [DebuggerDisplay("{" + nameof(SourceName) + "}")]
     public class Logger
     {
         #region DistributionWorkerClass
-        [DebuggerDisplay("{receiver}")]
+        [DebuggerDisplay("{" + nameof(receiver) + "}")]
         sealed class DistributeWorker
         {
             readonly ILogReceiver receiver;
@@ -178,7 +179,7 @@ namespace Cave.Logging
         #region static class
 
         static readonly Dictionary<ILogReceiver, DistributeWorker> distributeWorkers = new Dictionary<ILogReceiver, DistributeWorker>();
-        static string hostName = Dns.GetHostName().ToLower().ToString();
+        static string hostName = Dns.GetHostName().ToLower();
         static string processName = Process.GetCurrentProcess().ProcessName;
         static LinkedList<LogMessage> masterQueue = new LinkedList<LogMessage>();
         static object masterSync = new object();
@@ -257,14 +258,14 @@ namespace Cave.Logging
 
             if (logReceiver.Closed)
             {
-                throw new ArgumentException(string.Format("Receiver {0} was already closed!", logReceiver));
+                throw new ArgumentException($"Receiver {logReceiver} was already closed!");
             }
 
             lock (distributeWorkers)
             {
                 if (distributeWorkers.ContainsKey(logReceiver))
                 {
-                    throw new InvalidOperationException(string.Format("LogReceiver {0} is already registered!", logReceiver));
+                    throw new InvalidOperationException($"LogReceiver {logReceiver} is already registered!");
                 }
 
                 distributeWorkers.Add(logReceiver, new DistributeWorker(logReceiver));
@@ -278,7 +279,7 @@ namespace Cave.Logging
         {
             if (logReceiver == null)
             {
-                throw new ArgumentNullException("logReceiver");
+                throw new ArgumentNullException(nameof(logReceiver));
             }
             lock (distributeWorkers)
             {
@@ -298,7 +299,7 @@ namespace Cave.Logging
         public static bool LogToDebug { get => DebugReceiver.LogToDebug; set => DebugReceiver.LogToDebug = value; }
 
         /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
-        /// <param name="msg"></param>
+        /// <param name="msg">Message to send.</param>
         [MethodImpl((MethodImplOptions)0x0100)]
         public static void Send(LogMessage msg)
         {
@@ -313,7 +314,7 @@ namespace Cave.Logging
         }
 
         /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
-        /// <param name="messages"></param>
+        /// <param name="messages">Messages to send.</param>
         [MethodImpl((MethodImplOptions)0x0100)]
         public static void Send(params LogMessage[] messages)
         {
@@ -618,7 +619,7 @@ namespace Cave.Logging
         public Logger(string name = null)
         {
             StackFrame frame = new StackFrame(1);
-            SourceName = frame.GetMethod().DeclaringType.Name;
+            SourceName = name ?? frame.GetMethod().DeclaringType.Name;
         }
 
         /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
