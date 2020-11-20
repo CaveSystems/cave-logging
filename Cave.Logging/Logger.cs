@@ -639,7 +639,7 @@ namespace Cave.Logging
         /// <param name="args">The arguments.</param>
         public void Write(LogLevel level, XT msg, params object[] args)
         {
-            Write(level, msg, args);
+            Send(SourceName, level, null, msg, args);
         }
 
         /// <summary>Writes a message with the specified level.</summary>
