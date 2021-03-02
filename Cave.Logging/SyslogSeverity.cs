@@ -3,7 +3,7 @@ namespace Cave.Logging
     /// <summary>
     /// Provides syslog severity constants.
     /// </summary>
-    public enum SyslogSeverity : int
+    public enum SyslogSeverity
     {
         /// <summary>
         /// System is unusable
@@ -43,6 +43,6 @@ namespace Cave.Logging
         /// <summary>
         /// Debug-level messages
         /// </summary>
-        Debug = 7,
+        Debug = 7
     }
 }

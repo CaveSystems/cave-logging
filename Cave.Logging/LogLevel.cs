@@ -48,6 +48,6 @@ namespace Cave.Logging
         /// <summary>
         /// (8) Any available messages (Debug very verbose)
         /// </summary>
-        Verbose = 0x8,
+        Verbose = 0x8
     }
 }

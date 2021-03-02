@@ -5,6 +5,8 @@ namespace Cave.Logging
     /// </summary>
     public static class LogExtension
     {
+        #region Static
+
         static string GetLogSourceName(object source)
         {
             if (source == null)
@@ -33,18 +35,25 @@ namespace Cave.Logging
                 case LogLevel.Alert:
                 case LogLevel.Critical:
                 case LogLevel.Error:
-                    return XTColor.Red;
+                return XTColor.Red;
+
                 case LogLevel.Warning:
-                    return XTColor.Yellow;
+                return XTColor.Yellow;
+
                 case LogLevel.Notice:
-                    return XTColor.Green;
+                return XTColor.Green;
+
                 case LogLevel.Information:
-                    return XTColor.Cyan;
+                return XTColor.Cyan;
+
                 case LogLevel.Debug:
-                    return XTColor.Default;
+                return XTColor.Default;
+
                 default:
-                    return XTColor.Blue;
+                return XTColor.Blue;
             }
         }
+
+        #endregion Static
     }
 }

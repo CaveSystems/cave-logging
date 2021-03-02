@@ -10,6 +10,8 @@ namespace Cave.Logging
     /// </summary>
     public class SyslogStructuredData : ICollection<SyslogStructuredDataPart>, ICollection<string>
     {
+        #region Static
+
         /// <summary>
         /// Parses an array of structured data instances.
         /// </summary>
@@ -23,13 +25,13 @@ namespace Cave.Logging
             }
 
             var result = new List<SyslogStructuredDataPart>();
-            int start = 0;
+            var start = 0;
             while (true)
             {
-                int l_End = text.IndexOf(']', start);
+                var l_End = text.IndexOf(']', start);
                 if (l_End > -1)
                 {
-                    result.Add(SyslogStructuredDataPart.Parse(text.Substring(start, l_End - start + 1)));
+                    result.Add(SyslogStructuredDataPart.Parse(text.Substring(start, (l_End - start) + 1)));
                     start = l_End + 1;
                 }
                 else
@@ -37,15 +39,25 @@ namespace Cave.Logging
                     break;
                 }
             }
+
             if (start < text.Length)
             {
                 result.Add(SyslogStructuredDataPart.Parse(text.Substring(start)));
             }
+
             return new SyslogStructuredData(result);
         }
 
-        readonly Dictionary<string, SyslogStructuredDataPart> data = new Dictionary<string, SyslogStructuredDataPart>();
-        readonly List<string> names = new List<string>();
+        #endregion Static
+
+        #region Private Fields
+
+        readonly Dictionary<string, SyslogStructuredDataPart> data = new();
+        readonly List<string> names = new();
+
+        #endregion Private Fields
+
+        #region Constructors
 
         /// <summary>
         /// Creates a new empty SyslogStructuredData instance.
@@ -65,11 +77,33 @@ namespace Cave.Logging
                 throw new ArgumentNullException("items");
             }
 
-            foreach (SyslogStructuredDataPart part in items)
+            foreach (var part in items)
             {
                 Add(part);
             }
         }
+
+        #endregion Constructors
+
+        #region Properties
+
+        /// <summary>
+        /// Obtains the SyslogStructuredDataPart with the specified index.
+        /// </summary>
+        /// <param name="index">Index of the part.</param>
+        /// <returns></returns>
+        public SyslogStructuredDataPart this[int index] => this[names[index]];
+
+        /// <summary>
+        /// Obtains the SyslogStructuredDataPart with the specified name.
+        /// </summary>
+        /// <param name="name">Name of the part.</param>
+        /// <returns></returns>
+        public SyslogStructuredDataPart this[string name] => data[name];
+
+        #endregion Properties
+
+        #region Overrides
 
         /// <summary>
         /// Obtains the encoded string of this instances name and data.
@@ -83,48 +117,57 @@ namespace Cave.Logging
             }
 
             var result = new StringBuilder();
-            foreach (SyslogStructuredDataPart part in this)
+            foreach (var part in this)
             {
-                result.Append(part.ToString());
+                result.Append(part);
             }
+
             return result.ToString();
         }
 
+        #endregion Overrides
+
+        #region Members
+
+        /// <summary>
+        /// Obtains all parts of the instance.
+        /// </summary>
+        /// <returns></returns>
+        public SyslogStructuredDataPart[] ToArray()
+        {
+            var result = new SyslogStructuredDataPart[Count];
+            data.Values.CopyTo(result, 0);
+            return result;
+        }
+
+        #endregion Members
+
         #region ICollection<string> implementation
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is readonly. This always returns false.
+        /// </summary>
+        public bool IsReadOnly => false;
 
         /// <summary>
         /// Adds a new empty structured data part with the specified name.
         /// </summary>
         /// <param name="item">The name of the <see cref="SyslogStructuredDataPart"/>.</param>
-        public void Add(string item)
-        {
-            Add(new SyslogStructuredDataPart(item));
-        }
+        public void Add(string item) => Add(new SyslogStructuredDataPart(item));
 
         /// <summary>
         /// Checks whether a structured data part with the specified name exists.
         /// </summary>
         /// <param name="item">The name of the <see cref="SyslogStructuredDataPart"/>.</param>
         /// <returns></returns>
-        public bool Contains(string item)
-        {
-            return data.ContainsKey(item);
-        }
+        public bool Contains(string item) => data.ContainsKey(item);
 
         /// <summary>
         /// Copies all <see cref="SyslogStructuredDataPart"/> names to the specified array.
         /// </summary>
         /// <param name="array"></param>
         /// <param name="arrayIndex"></param>
-        public void CopyTo(string[] array, int arrayIndex)
-        {
-            data.Keys.CopyTo(array, arrayIndex);
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this instance is readonly. This always returns false.
-        /// </summary>
-        public bool IsReadOnly => false;
+        public void CopyTo(string[] array, int arrayIndex) => data.Keys.CopyTo(array, arrayIndex);
 
         /// <summary>
         /// Removes a <see cref="SyslogStructuredDataPart"/> by name.
@@ -141,13 +184,16 @@ namespace Cave.Logging
         /// Obtains an enumerator for all <see cref="SyslogStructuredDataPart"/> names.
         /// </summary>
         /// <returns></returns>
-        IEnumerator<string> IEnumerable<string>.GetEnumerator()
-        {
-            return data.Keys.GetEnumerator();
-        }
-        #endregion
+        IEnumerator<string> IEnumerable<string>.GetEnumerator() => data.Keys.GetEnumerator();
+
+        #endregion ICollection<string> implementation
 
         #region ICollection<SyslogStructuredPart>
+
+        /// <summary>
+        /// Gets the number of <see cref="SyslogStructuredDataPart"/> s present.
+        /// </summary>
+        public int Count => data.Count;
 
         /// <summary>
         /// Adds a <see cref="SyslogStructuredDataPart"/>.
@@ -165,7 +211,7 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Removes all <see cref="SyslogStructuredDataPart"/>s.
+        /// Removes all <see cref="SyslogStructuredDataPart"/> s.
         /// </summary>
         public void Clear()
         {
@@ -193,15 +239,13 @@ namespace Cave.Logging
         /// </summary>
         /// <param name="array"></param>
         /// <param name="arrayIndex"></param>
-        public void CopyTo(SyslogStructuredDataPart[] array, int arrayIndex)
-        {
-            data.Values.CopyTo(array, arrayIndex);
-        }
+        public void CopyTo(SyslogStructuredDataPart[] array, int arrayIndex) => data.Values.CopyTo(array, arrayIndex);
 
         /// <summary>
-        /// Gets the number of <see cref="SyslogStructuredDataPart"/>s present.
+        /// Obtains an enumerator for all present <see cref="SyslogStructuredDataPart"/> s.
         /// </summary>
-        public int Count => data.Count;
+        /// <returns></returns>
+        public IEnumerator<SyslogStructuredDataPart> GetEnumerator() => data.Values.GetEnumerator();
 
         /// <summary>
         /// Removes a specified <see cref="SyslogStructuredDataPart"/>.
@@ -224,47 +268,11 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Obtains an enumerator for all present <see cref="SyslogStructuredDataPart"/>s.
+        /// Obtains an enumerator for all present <see cref="SyslogStructuredDataPart"/> s.
         /// </summary>
         /// <returns></returns>
-        public IEnumerator<SyslogStructuredDataPart> GetEnumerator()
-        {
-            return data.Values.GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => data.Values.GetEnumerator();
 
-        /// <summary>
-        /// Obtains an enumerator for all present <see cref="SyslogStructuredDataPart"/>s.
-        /// </summary>
-        /// <returns></returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return data.Values.GetEnumerator();
-        }
-        #endregion
-
-        /// <summary>
-        /// Obtains the SyslogStructuredDataPart with the specified index.
-        /// </summary>
-        /// <param name="index">Index of the part.</param>
-        /// <returns></returns>
-        public SyslogStructuredDataPart this[int index] => this[names[index]];
-
-        /// <summary>
-        /// Obtains the SyslogStructuredDataPart with the specified name.
-        /// </summary>
-        /// <param name="name">Name of the part.</param>
-        /// <returns></returns>
-        public SyslogStructuredDataPart this[string name] => data[name];
-
-        /// <summary>
-        /// Obtains all parts of the instance.
-        /// </summary>
-        /// <returns></returns>
-        public SyslogStructuredDataPart[] ToArray()
-        {
-            var result = new SyslogStructuredDataPart[Count];
-            data.Values.CopyTo(result, 0);
-            return result;
-        }
+        #endregion ICollection<SyslogStructuredPart>
     }
 }

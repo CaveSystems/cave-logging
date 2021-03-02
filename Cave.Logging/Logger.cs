@@ -3,247 +3,388 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using res = Cave.Logging.Properties.Resources;
+using Cave.Collections.Generic;
+using Cave.IO;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// This is a full featured asynchronous logging facility for general status monitoring and logging for end users
-    /// in production products. Messages logged are queued and then distributed by a background thread to provide full
-    /// speed even with slow loggers (file, database, network).
+    /// This is a full featured asynchronous logging facility for general status monitoring and logging for end users in production products. Messages logged
+    /// are queued and then distributed by a background thread to provide full speed even with slow loggers (file, database, network).
     /// </summary>
     [DebuggerDisplay("{" + nameof(SourceName) + "}")]
     public class Logger
     {
-        #region DistributionWorkerClass
-        [DebuggerDisplay("{" + nameof(receiver) + "}")]
-        sealed class DistributeWorker
-        {
-            readonly ILogReceiver receiver;
-            readonly Logger logger;
-            LinkedList<LogMessage> messageQueue = new LinkedList<LogMessage>();
+        #region Private Fields
 
-            /// <summary>The current position in the static queue, this is relative to queue and is decreased/reseted during cleanup.</summary>
-            int currentDelayMilliSeconds;
-            bool isIdle;
-
-            void Worker()
-            {
-                Thread.CurrentThread.Name = logger.SourceName;
-                Thread.CurrentThread.IsBackground = true;
-                bool delayWarningSent = false;
-                try
-                {
-                    DateTime nextWarningUtc = DateTime.MinValue;
-                    int discardedCount = 0;
-
-                    while (!receiver.Closed)
-                    {
-                        LinkedList<LogMessage> msgs = null;
-
-                        // wait for messages
-                        lock (this)
-                        {
-                            while (true)
-                            {
-                                if (messageQueue.Count > 0)
-                                {
-                                    msgs = messageQueue;
-                                    messageQueue = new LinkedList<LogMessage>();
-                                    break;
-                                }
-
-                                // entering idle mode
-                                if (delayWarningSent)
-                                {
-                                    logger.LogNotice(string.Format(res.LogReceiver_BacklogRecovered, receiver));
-                                    delayWarningSent = false;
-                                    continue;
-                                }
-                                isIdle = true;
-
-                                // wait for pulse
-                                while (true)
-                                {
-                                    Monitor.Wait(this, 1000);
-                                    if (receiver.Closed)
-                                    {
-                                        return;
-                                    }
-
-                                    break;
-                                }
-                                isIdle = false;
-                            }
-                        }
-
-                        foreach (LogMessage msg in msgs)
-                        {
-                            long delayTicks = (DateTime.UtcNow - msg.DateTime.ToUniversalTime()).Ticks;
-                            currentDelayMilliSeconds = (int)(delayTicks / TimeSpan.TicksPerMillisecond);
-
-                            // do we have late messages ?
-                            if (currentDelayMilliSeconds > receiver.LateMessageMilliSeconds)
-                            {
-                                // yes, opportune logging ?
-                                if (receiver.Mode == LogReceiverMode.Opportune)
-                                {
-                                    // discard old notifications
-                                    if (delayTicks / TimeSpan.TicksPerMillisecond > receiver.LateMessageMilliSeconds)
-                                    {
-                                        discardedCount++;
-                                        continue;
-                                    }
-                                }
-                                else
-                                {
-                                    // no continous logging -> warn user
-                                    if ((msgs.Count > receiver.LateMessageTreshold) && (DateTime.UtcNow > nextWarningUtc))
-                                    {
-                                        string warning = string.Format(res.LogReceiver_Backlog, receiver, msgs.Count, StringExtensions.FormatTime(TimeSpan.FromMilliseconds(currentDelayMilliSeconds)));
-
-                                        // warn all
-                                        logger.LogWarning(warning);
-
-                                        // warn self (direct write)
-                                        receiver.Write(new LogMessage(receiver.GetType().Name, DateTime.Now, LogLevel.Warning, null, warning, null));
-
-                                        // calc next
-                                        nextWarningUtc = DateTime.UtcNow + receiver.TimeBetweenWarnings;
-                                        delayWarningSent = true;
-                                    }
-                                }
-                            }
-                            if (receiver.Closed)
-                            {
-                                break;
-                            }
-
-                            if (msg.Level > receiver.Level)
-                            {
-                                continue;
-                            }
-
-                            receiver.Write(msg);
-                        }
-                        if (discardedCount > 0)
-                        {
-                            if (DateTime.UtcNow > nextWarningUtc)
-                            {
-                                string warning = string.Format(res.LogReceiver_Discarded, receiver, discardedCount);
-                                receiver.Write(new LogMessage(receiver.GetType().Name, DateTime.Now, LogLevel.Warning, null, warning, null));
-                                discardedCount = 0;
-                                nextWarningUtc = DateTime.UtcNow + receiver.TimeBetweenWarnings;
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogEmergency(string.Format(res.Error_FatalExceptionAt, receiver.GetType().Name), ex);
-                    receiver.Close();
-                }
-            }
-
-            public void AddMessages(IEnumerable<LogMessage> messages)
-            {
-                if (!Monitor.TryEnter(this, 1000))
-                {
-                    Send("Logger", LogLevel.Emergency, null, "Deadlock of logger worker queue {0} detected. Disabling receiver!", receiver);
-                    receiver.Close();
-                    return;
-                }
-                foreach (LogMessage msg in messages)
-                {
-                    messageQueue.AddLast(msg);
-                }
-                Monitor.Pulse(this);
-                Monitor.Exit(this);
-            }
-
-            public bool Idle { get { lock (this) { return isIdle; } } }
-
-            public DistributeWorker(ILogReceiver receiver)
-            {
-                this.receiver = receiver;
-                logger = new Logger("Logger " + receiver);
-                new Thread(Worker).Start();
-            }
-
-            public void Close() { receiver.Close(); }
-        }
-        #endregion
-
-        #region static class
-
-        static readonly Dictionary<ILogReceiver, DistributeWorker> distributeWorkers = new Dictionary<ILogReceiver, DistributeWorker>();
-        static string hostName = Dns.GetHostName().ToLower();
-        static string processName = Process.GetCurrentProcess().ProcessName;
-        static LinkedList<LogMessage> masterQueue = new LinkedList<LogMessage>();
-        static object masterSync = new object();
+        static readonly Set<ILogReceiver> ReceiverSet = new();
+        static readonly Thread Thread;
         static volatile bool masterIdle;
-        static Thread logThread;
+        static UncheckedRingBuffer<LogMessage> ringBuffer = new();
+
+        #endregion Private Fields
+
+        #region Private Methods
 
         static void MasterWorker()
         {
             while (true)
             {
-                LinkedList<LogMessage> items;
-                lock (masterSync)
+                LinkedList<LogMessage> items = new();
+                while (ringBuffer.TryRead(out var message))
                 {
-                    if (masterQueue.Count == 0)
-                    {
-                        masterIdle = true;
-                        Monitor.Wait(masterSync);
-                        masterIdle = false;
-                    }
-                    items = masterQueue;
-                    masterQueue = new LinkedList<LogMessage>();
+                    items.AddLast(message);
                 }
-                lock (distributeWorkers)
+
+                Thread.Sleep(1);
+                lock (ReceiverSet)
                 {
-                    foreach (DistributeWorker worker in distributeWorkers.Values.ToArray())
+                    foreach (var receiver in ReceiverSet)
                     {
-                        worker.AddMessages(items);
+                        receiver.AddMessages(items);
                     }
                 }
             }
         }
 
+        static void SetLogToDebug(bool value)
+        {
+            if (value)
+            {
+                (DebugReceiver ??= new LogDebugReceiver()).LogToDebug = value;
+            }
+            else if (DebugReceiver is not null)
+            {
+                DebugReceiver.LogToDebug = value;
+            }
+        }
+
+        static void SetLogToTrace(bool value)
+        {
+            if (value)
+            {
+                (DebugReceiver ??= new LogDebugReceiver()).LogToTrace = value;
+            }
+            else if (DebugReceiver is not null)
+            {
+                DebugReceiver.LogToTrace = value;
+            }
+        }
+
+        #endregion Private Methods
+
+        #region Public Constructors
+
         /// <summary>
-        /// Adds the debugreceiver if a debugger is attached.
+        /// Starts the logging system.
         /// </summary>
         static Logger()
         {
-            if (Debugger.IsAttached)
+            try
             {
-                DebugReceiver = new LogDebugReceiver();
+                HostName = Dns.GetHostName().ToLower();
             }
-            logThread = new Thread(MasterWorker)
+            catch
+            {
+                System.Diagnostics.Debug.WriteLine("Logger.cctor(): Could not get HostName!");
+                HostName = Environment.MachineName;
+            }
+
+            try
+            {
+                ProcessName = Process.GetCurrentProcess().ProcessName;
+            }
+            catch
+            {
+                System.Diagnostics.Debug.WriteLine("Logger.cctor(): Could not get ProcessName!");
+                ProcessName =
+                    (Assembly.GetEntryAssembly() ??
+                        Assembly.GetExecutingAssembly())?.GetName()?.Name ?? "Unknown process";
+            }
+
+            Thread = new Thread(MasterWorker)
             {
                 IsBackground = true,
                 Name = "Logger.MasterWorker",
+                Priority = ThreadPriority.Highest,
             };
-            logThread.Start();
+            Thread.Start();
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Logger"/> class.
+        /// </summary>
+        /// <param name="name">Name of the log source.</param>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public Logger(string name = null) => SourceName = name ?? new StackFrame(1).GetMethod()?.DeclaringType?.Name ?? throw new ArgumentException("Could not determine calling class name and no logger name given!");
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Logger"/> class.
+        /// </summary>
+        /// <param name="type">Name of the log source.</param>
+        public Logger(Type type) => SourceName = type?.Name ?? throw new ArgumentNullException(nameof(type));
+
+        #endregion Public Constructors
+
+        #region Public Properties
+
+        /// <summary>
+        /// Gets the <see cref="LogDebugReceiver"/> instance.
+        /// </summary>
+        public static LogDebugReceiver DebugReceiver { get; set; }
 
         /// <summary>
         /// Gets or sets the host name of the local computer.
         /// </summary>
-        public static string HostName { get; set; } = hostName;
+        public static string HostName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the logging system logs to <see cref="System.Diagnostics.Debug"/>.
+        /// </summary>
+        public static bool LogToDebug { get => DebugReceiver?.LogToDebug == false; set => SetLogToDebug(value); }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the logging system logs to <see cref="Trace"/>. This setting is false by default.
+        /// </summary>
+        public static bool LogToTrace { get => DebugReceiver?.LogToTrace == false; set => SetLogToTrace(value); }
 
         /// <summary>
         /// Gets or sets the name of the process.
         /// </summary>
-        public static string ProcessName { get; set; } = processName;
+        public static string ProcessName { get; set; }
 
         /// <summary>
-        /// Gets the <see cref="LogDebugReceiver"/> instance.
-        /// This is only set if a debugger was attached during startup.
+        /// Gets or sets the name of the log source.
         /// </summary>
-        public static LogDebugReceiver DebugReceiver { get; private set; }
+        /// <value>The name of the log source.</value>
+        public string SourceName { get; set; }
+
+        /// <inheritdoc/>
+        public static long LostCount => ringBuffer.LostCount;
+
+        /// <inheritdoc/>
+        public static long ReadCount => ringBuffer.ReadCount;
+
+        /// <inheritdoc/>
+        public static int ReadPosition => ringBuffer.ReadPosition;
+
+        /// <inheritdoc/>
+        public static long RejectedCount => ringBuffer.RejectedCount;
+
+        /// <inheritdoc/>
+        public static long WriteCount => ringBuffer.WriteCount;
+
+        /// <inheritdoc/>
+        public static int WritePosition => ringBuffer.WritePosition;
+
+        #endregion Public Properties
+
+        #region Public Methods
+
+        /// <summary>
+        /// Closes all receivers, does not flush or wait.
+        /// </summary>
+        public static void Close()
+        {
+            ILogReceiver[] receivers;
+            lock (ReceiverSet)
+            {
+                receivers = ReceiverSet.ToArray();
+                ReceiverSet.Clear();
+            }
+
+            foreach (var worker in receivers)
+            {
+                worker.Close();
+            }
+        }
+
+        /// <summary>
+        /// Waits until all notifications are sent.
+        /// </summary>
+        public static void Flush()
+        {
+            while (true)
+            {
+                Thread.Sleep(1);
+                lock (ReceiverSet)
+                {
+                    if (ReceiverSet.Count == 0)
+                    {
+                        return;
+                    }
+
+                    if (ReceiverSet.Any(w => !w.Idle))
+                    {
+                        continue;
+                    }
+
+                    if (ringBuffer.Available == 0)
+                    {
+                        continue;
+                    }
+                }
+
+                // all idle
+                break;
+            }
+        }
+
+        /// <summary>
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogAlert(string source, XT msg, params object[] args) => Send(source, LogLevel.Alert, null, msg, args);
+
+        /// <summary>
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogAlert(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Alert, ex, msg, args);
+
+        /// <summary>
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogCritical(string source, XT msg, params object[] args) => Send(source, LogLevel.Critical, null, msg, args);
+
+        /// <summary>
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogCritical(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Critical, ex, msg, args);
+
+        /// <summary>
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogDebug(string source, XT msg, params object[] args) => Send(source, LogLevel.Debug, null, msg, args);
+
+        /// <summary>
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogDebug(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Debug, ex, msg, args);
+
+        /// <summary>
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogEmergency(string source, XT msg, params object[] args) => Send(source, LogLevel.Emergency, null, msg, args);
+
+        /// <summary>
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogEmergency(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Emergency, ex, msg, args);
+
+        /// <summary>
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogError(string source, XT msg, params object[] args) => Send(source, LogLevel.Error, null, msg, args);
+
+        /// <summary>
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogError(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Error, ex, msg, args);
+
+        /// <summary>
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogInfo(string source, XT msg, params object[] args) => Send(source, LogLevel.Information, null, msg, args);
+
+        /// <summary>
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogInfo(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Information, ex, msg, args);
+
+        /// <summary>
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogNotice(string source, XT msg, params object[] args) => Send(source, LogLevel.Notice, null, msg, args);
+
+        /// <summary>
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogNotice(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Notice, ex, msg, args);
+
+        /// <summary>
+        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogVerbose(string source, XT msg, params object[] args) => Send(source, LogLevel.Verbose, null, msg, args);
+
+        /// <summary>
+        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogVerbose(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Verbose, ex, msg, args);
+
+        /// <summary>
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogWarning(string source, XT msg, params object[] args) => Send(source, LogLevel.Warning, null, msg, args);
+
+        /// <summary>
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
+        /// </summary>
+        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        public static void LogWarning(string source, Exception ex, XT msg, params object[] args) => Send(source, LogLevel.Warning, ex, msg, args);
 
         /// <summary>
         /// Registers an <see cref="ILogReceiver"/>.
@@ -261,16 +402,34 @@ namespace Cave.Logging
                 throw new ArgumentException($"Receiver {logReceiver} was already closed!");
             }
 
-            lock (distributeWorkers)
+            lock (ReceiverSet)
             {
-                if (distributeWorkers.ContainsKey(logReceiver))
+                if (ReceiverSet.Contains(logReceiver))
                 {
                     throw new InvalidOperationException($"LogReceiver {logReceiver} is already registered!");
                 }
 
-                distributeWorkers.Add(logReceiver, new DistributeWorker(logReceiver));
+                ReceiverSet.Add(logReceiver);
             }
         }
+
+        /// <summary>
+        /// Writes a <see cref="LogMessage"/> instance to the logging system.
+        /// </summary>
+        /// <param name="msg">Message to send.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public static void Send(LogMessage msg) => ringBuffer.Write(msg);
+
+        /// <summary>
+        /// Creates and writes a new <see cref="LogMessage"/> instance to the logging system.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <param name="level">The level.</param>
+        /// <param name="ex">The ex.</param>
+        /// <param name="content">The content.</param>
+        /// <param name="args">The arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public static void Send(string source, LogLevel level, Exception ex, XT content, params object[] args) => Send(new LogMessage(source, DateTime.Now, level, ex, content, args));
 
         /// <summary>
         /// Unregisters a receiver.
@@ -281,475 +440,140 @@ namespace Cave.Logging
             {
                 throw new ArgumentNullException(nameof(logReceiver));
             }
-            lock (distributeWorkers)
+
+            lock (ReceiverSet)
             {
                 // remove if present
-                distributeWorkers.Remove(logReceiver);
+                ReceiverSet.Remove(logReceiver);
             }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the logging system logs to <see cref="Trace"/>. This setting is false by default.
-        /// </summary>
-        public static bool LogToTrace { get => DebugReceiver.LogToTrace; set => DebugReceiver.LogToTrace = value; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the logging system logs to <see cref="Debug"/>. This setting is true on debug compiles by default.
-        /// </summary>
-        public static bool LogToDebug { get => DebugReceiver.LogToDebug; set => DebugReceiver.LogToDebug = value; }
-
-        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
-        /// <param name="msg">Message to send.</param>
-        [MethodImpl((MethodImplOptions)0x0100)]
-        public static void Send(LogMessage msg)
-        {
-            lock (masterSync)
-            {
-                masterQueue.AddLast(msg);
-                if (masterIdle)
-                {
-                    Monitor.Pulse(masterSync);
-                }
-            }
-        }
-
-        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
-        /// <param name="messages">Messages to send.</param>
-        [MethodImpl((MethodImplOptions)0x0100)]
-        public static void Send(params LogMessage[] messages)
-        {
-            lock (masterSync)
-            {
-                foreach (LogMessage msg in messages)
-                {
-                    masterQueue.AddLast(msg);
-                }
-
-                if (masterIdle)
-                {
-                    Monitor.Pulse(masterSync);
-                }
-            }
-        }
-
-        /// <summary>Creates and writes a new <see cref="LogMessage" /> synchronously (slow) to the logging system.</summary>
-        /// <param name="source">The source.</param>
-        /// <param name="level">The level.</param>
-        /// <param name="ex">The ex.</param>
-        /// <param name="content">The content.</param>
-        /// <param name="args">The arguments.</param>
-        [MethodImpl((MethodImplOptions)0x0100)]
-        public static void Send(string source, LogLevel level, Exception ex, XT content, params object[] args)
-        {
-            Send(new LogMessage(source, DateTime.Now, level, ex, content, args));
-        }
-
-        /// <summary>
-        /// Waits until all notifications are sent.
-        /// </summary>
-        public static void Flush()
-        {
-            while (true)
-            {
-                Thread.Sleep(1);
-                lock (masterSync)
-                {
-                    if (distributeWorkers.Count == 0)
-                    {
-                        return;
-                    }
-
-                    if (!masterIdle)
-                    {
-                        continue;
-                    }
-                }
-                lock (distributeWorkers)
-                {
-                    if (distributeWorkers.Values.Any(w => !w.Idle))
-                    {
-                        continue;
-                    }
-
-                    lock (masterSync)
-                    {
-                        if (!masterIdle)
-                        {
-                            continue;
-                        }
-                    }
-                }
-
-                // all idle
-                break;
-            }
-        }
-
-        /// <summary>
-        /// Closes all receivers, does not flush or wait.
-        /// </summary>
-        public static void CloseAll()
-        {
-            DistributeWorker[] workers;
-            lock (distributeWorkers)
-            {
-                workers = distributeWorkers.Values.ToArray();
-                distributeWorkers.Clear();
-            }
-            foreach (DistributeWorker worker in workers)
-            {
-                worker.Close();
-            }
-        }
-
-        #region static string logging methods
-
-        /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogVerbose(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Verbose, null, msg, args);
-        }
-
-        /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogDebug(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Debug, null, msg, args);
-        }
-
-        /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogInfo(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Information, null, msg, args);
-        }
-
-        /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogNotice(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Notice, null, msg, args);
-        }
-
-        /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogWarning(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Warning, null, msg, args);
-        }
-
-        /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogError(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Error, null, msg, args);
-        }
-
-        /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogCritical(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Critical, null, msg, args);
         }
 
         /// <summary>
         /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
-        /// <param name="source">The source of the message.</param>
         /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
-        public static void LogAlert(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Alert, null, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Alert(XT msg, params object[] args) => Send(SourceName, LogLevel.Alert, null, msg, args);
 
         /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
-        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Alert(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Alert, ex, msg, args);
+
+        /// <summary>
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
+        /// </summary>
         /// <param name="msg">Message to write.</param>
         /// <param name="args">The message arguments.</param>
-        public static void LogEmergency(string source, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Emergency, null, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Critical(XT msg, params object[] args) => Send(SourceName, LogLevel.Critical, null, msg, args);
+
+        /// <summary>
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Critical(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Critical, ex, msg, args);
 
         /// <summary>
         /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
         /// </summary>
-        /// <param name="source">The source of the message.</param>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Debug(XT msg, params object[] args) => Send(SourceName, LogLevel.Debug, null, msg, args);
+
+        /// <summary>
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
+        /// </summary>
         /// <param name="msg">Message to write.</param>
         /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
-        public static void LogDebug(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Debug, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Debug(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Debug, ex, msg, args);
+
+        /// <summary>
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Emergency(XT msg, params object[] args) => Send(SourceName, LogLevel.Emergency, null, msg, args);
+
+        /// <summary>
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Emergency(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Emergency, ex, msg, args);
+
+        /// <summary>
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Error(XT msg, params object[] args) => Send(SourceName, LogLevel.Error, null, msg, args);
+
+        /// <summary>
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Error(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Error, ex, msg, args);
+
+        /// <summary>
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Info(XT msg, params object[] args) => Send(SourceName, LogLevel.Information, null, msg, args);
+
+        /// <summary>
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Info(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Information, ex, msg, args);
+
+        /// <summary>
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Notice(XT msg, params object[] args) => Send(SourceName, LogLevel.Notice, null, msg, args);
+
+        /// <summary>
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Notice(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Notice, ex, msg, args);
 
         /// <summary>
         /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
         /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogVerbose(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Verbose, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogInfo(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Information, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogNotice(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Notice, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogWarning(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Warning, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogError(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Error, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogCritical(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Critical, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogAlert(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Alert, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
-        /// </summary>
-        /// <param name="source">The source of the message.</param>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public static void LogEmergency(string source, Exception ex, XT msg, params object[] args)
-        {
-            Send(source, LogLevel.Emergency, ex, msg, args);
-        }
-        #endregion
-        #endregion
-
-        #region logger class
-
-        /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
-        /// <param name="name">Name of the log source.</param>
-        ///
-        public Logger(string name = null)
-        {
-            StackFrame frame = new StackFrame(1);
-            SourceName = name ?? frame.GetMethod().DeclaringType.Name;
-        }
-
-        /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
-        /// <param name="type">Name of the log source.</param>
-        ///
-        public Logger(Type type) => SourceName = type?.Name ?? throw new ArgumentNullException(nameof(type));
-
-        /// <summary>Gets or sets the name of the log source.</summary>
-        /// <value>The name of the log source.</value>
-        public string SourceName { get; set; }
-
-        #region string logging methods
-
-        /// <summary>Writes a message with the specified level.</summary>
-        /// <param name="level">The level.</param>
-        /// <param name="msg">The message.</param>
-        /// <param name="args">The arguments.</param>
-        public void Write(LogLevel level, XT msg, params object[] args)
-        {
-            Write(level, msg, args);
-        }
-
-        /// <summary>Writes a message with the specified level.</summary>
-        /// <param name="level">The level.</param>
-        /// <param name="ex">The ex.</param>
-        /// <param name="msg">The message.</param>
-        /// <param name="args">The arguments.</param>
-        public void Write(LogLevel level, Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, level, ex, msg, args);
-        }
-
-        /// <summary>(8) Transmits a <see cref="LogLevel.Verbose" /> message.</summary>
         /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogVerbose(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Verbose, null, msg, args);
-        }
-
-        /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
-        /// </summary>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogDebug(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Debug, null, msg, args);
-        }
-
-        /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
-        /// </summary>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogInfo(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Information, null, msg, args);
-        }
-
-        /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
-        /// </summary>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogNotice(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Notice, null, msg, args);
-        }
-
-        /// <summary>
-        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
-        /// </summary>
-        /// <param name="msg">The message to be logged.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogWarning(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Warning, null, msg, args);
-        }
-
-        /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogError(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Error, null, msg, args);
-        }
-
-        /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogCritical(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Critical, null, msg, args);
-        }
-
-        /// <summary>
-        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogAlert(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Alert, null, msg, args);
-        }
-
-        /// <summary>
-        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogEmergency(XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Emergency, null, msg, args);
-        }
-
-        /// <summary>
-        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogDebug(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Debug, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Verbose(XT msg, params object[] args) => Send(SourceName, LogLevel.Verbose, null, msg, args);
 
         /// <summary>
         /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
@@ -757,32 +581,16 @@ namespace Cave.Logging
         /// <param name="msg">Message to write.</param>
         /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogVerbose(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Verbose, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Verbose(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Verbose, ex, msg, args);
 
         /// <summary>
-        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
         /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
+        /// <param name="msg">The message to be logged.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogInfo(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Information, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogNotice(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Notice, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Warning(XT msg, params object[] args) => Send(SourceName, LogLevel.Warning, null, msg, args);
 
         /// <summary>
         /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
@@ -790,32 +598,16 @@ namespace Cave.Logging
         /// <param name="msg">Message to write.</param>
         /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogWarning(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Warning, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Warning(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Warning, ex, msg, args);
 
         /// <summary>
-        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
         /// </summary>
         /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogError(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Error, ex, msg, args);
-        }
-
-        /// <summary>
-        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
-        /// </summary>
-        /// <param name="msg">Message to write.</param>
-        /// <param name="ex">Exception to write.</param>
-        /// <param name="args">The message arguments.</param>
-        public void LogCritical(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Critical, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogAlert(XT msg, params object[] args) => Send(SourceName, LogLevel.Alert, null, msg, args);
 
         /// <summary>
         /// (1) Transmits a <see cref="LogLevel.Alert"/> message.
@@ -823,10 +615,50 @@ namespace Cave.Logging
         /// <param name="msg">Message to write.</param>
         /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogAlert(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Alert, ex, msg, args);
-        }
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogAlert(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Alert, ex, msg, args);
+
+        /// <summary>
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogCritical(XT msg, params object[] args) => Send(SourceName, LogLevel.Critical, null, msg, args);
+
+        /// <summary>
+        /// (2) Transmits a <see cref="LogLevel.Critical"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogCritical(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Critical, ex, msg, args);
+
+        /// <summary>
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogDebug(XT msg, params object[] args) => Send(SourceName, LogLevel.Debug, null, msg, args);
+
+        /// <summary>
+        /// (7) Transmits a <see cref="LogLevel.Debug"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogDebug(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Debug, ex, msg, args);
+
+        /// <summary>
+        /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogEmergency(XT msg, params object[] args) => Send(SourceName, LogLevel.Emergency, null, msg, args);
 
         /// <summary>
         /// (0) Transmits a <see cref="LogLevel.Emergency"/> message.
@@ -834,11 +666,113 @@ namespace Cave.Logging
         /// <param name="msg">Message to write.</param>
         /// <param name="ex">Exception to write.</param>
         /// <param name="args">The message arguments.</param>
-        public void LogEmergency(Exception ex, XT msg, params object[] args)
-        {
-            Send(SourceName, LogLevel.Emergency, ex, msg, args);
-        }
-        #endregion
-        #endregion
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogEmergency(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Emergency, ex, msg, args);
+
+        /// <summary>
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogError(XT msg, params object[] args) => Send(SourceName, LogLevel.Error, null, msg, args);
+
+        /// <summary>
+        /// (3) Transmits a <see cref="LogLevel.Error"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogError(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Error, ex, msg, args);
+
+        /// <summary>
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogInfo(XT msg, params object[] args) => Send(SourceName, LogLevel.Information, null, msg, args);
+
+        /// <summary>
+        /// (6) Transmits a <see cref="LogLevel.Information"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogInfo(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Information, ex, msg, args);
+
+        /// <summary>
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogNotice(XT msg, params object[] args) => Send(SourceName, LogLevel.Notice, null, msg, args);
+
+        /// <summary>
+        /// (5) Transmits a <see cref="LogLevel.Notice"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogNotice(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Notice, ex, msg, args);
+
+        /// <summary>
+        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogVerbose(XT msg, params object[] args) => Send(SourceName, LogLevel.Verbose, null, msg, args);
+
+        /// <summary>
+        /// (8) Transmits a <see cref="LogLevel.Verbose"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogVerbose(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Verbose, ex, msg, args);
+
+        /// <summary>
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
+        /// </summary>
+        /// <param name="msg">The message to be logged.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogWarning(XT msg, params object[] args) => Send(SourceName, LogLevel.Warning, null, msg, args);
+
+        /// <summary>
+        /// (4) Transmits a <see cref="LogLevel.Warning"/> message.
+        /// </summary>
+        /// <param name="msg">Message to write.</param>
+        /// <param name="ex">Exception to write.</param>
+        /// <param name="args">The message arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void LogWarning(Exception ex, XT msg = null, params object[] args) => Send(SourceName, LogLevel.Warning, ex, msg, args);
+
+        /// <summary>
+        /// Writes a message with the specified level.
+        /// </summary>
+        /// <param name="level">The level.</param>
+        /// <param name="msg">The message.</param>
+        /// <param name="args">The arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Write(LogLevel level, XT msg = null, params object[] args) => Send(SourceName, level, null, msg, args);
+
+        /// <summary>
+        /// Writes a message with the specified level.
+        /// </summary>
+        /// <param name="level">The level.</param>
+        /// <param name="ex">The ex.</param>
+        /// <param name="msg">The message.</param>
+        /// <param name="args">The arguments.</param>
+        [MethodImpl((MethodImplOptions)0x0100)]
+        public void Write(LogLevel level, Exception ex, XT msg = null, params object[] args) => Send(SourceName, level, ex, msg, args);
+
+        #endregion Public Methods
     }
 }

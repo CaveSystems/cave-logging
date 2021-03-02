@@ -7,10 +7,32 @@ namespace Cave.Logging
     /// </summary>
     public class LogMessage
     {
-        /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
+        #region Private Fields
+
+        /// <summary>
+        /// Gets the arguments.
+        /// </summary>
+        readonly object[] arguments;
+
+        /// <summary>
+        /// Gets the content.
+        /// </summary>
+        readonly XT content;
+
+        XT completeContent;
+
+        #endregion Private Fields
+
+        #region Constructors
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogMessage"/> class.
+        /// </summary>
         public LogMessage() { }
 
-        /// <summary>Initializes a new instance of the <see cref="LogMessage" /> class.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LogMessage"/> class.
+        /// </summary>
         /// <param name="source">The source.</param>
         /// <param name="dateTime">The date time.</param>
         /// <param name="level">The level.</param>
@@ -37,27 +59,13 @@ namespace Cave.Logging
             this.arguments = arguments;
         }
 
-        /// <summary>Gets the date time.</summary>
-        public DateTime DateTime { get; }
+        #endregion Constructors
 
-        /// <summary>Gets the level.</summary>
-        public LogLevel Level { get; }
+        #region Properties
 
-        /// <summary>Gets the source.</summary>
-        public string Source { get; }
-
-        /// <summary>Gets the content.</summary>
-        XT content;
-
-        /// <summary>Gets the arguments.</summary>
-        object[] arguments;
-
-        /// <summary>Gets the exception.</summary>
-        public Exception Exception { get; }
-
-        XT completeContent = null;
-
-        /// <summary>Gets the content including arguments.</summary>
+        /// <summary>
+        /// Gets the content including arguments.
+        /// </summary>
         /// <value>The content.</value>
         public XT Content
         {
@@ -67,7 +75,7 @@ namespace Cave.Logging
                 {
                     if (completeContent == null)
                     {
-                        if (arguments == null || arguments.Length == 0)
+                        if ((arguments == null) || (arguments.Length == 0))
                         {
                             completeContent = content;
                         }
@@ -76,9 +84,32 @@ namespace Cave.Logging
                             completeContent = XT.Format(content.Data, arguments);
                         }
                     }
+
                     return completeContent;
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the date time.
+        /// </summary>
+        public DateTime DateTime { get; }
+
+        /// <summary>
+        /// Gets the exception.
+        /// </summary>
+        public Exception Exception { get; }
+
+        /// <summary>
+        /// Gets the level.
+        /// </summary>
+        public LogLevel Level { get; }
+
+        /// <summary>
+        /// Gets the source.
+        /// </summary>
+        public string Source { get; }
+
+        #endregion Properties
     }
 }

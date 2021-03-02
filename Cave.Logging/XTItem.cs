@@ -8,31 +8,59 @@ namespace Cave
     /// </summary>
     public class XTItem
     {
-        /// <summary>Implements the operator +.</summary>
-        /// <param name="x1">The first item to add.</param>
-        /// <param name="x2">The second item to add.</param>
-        /// <returns>The result of the operator.</returns>
-        public static XT operator +(XTItem x1, XTItem x2)
-        {
-            return new XT(x1, x2);
-        }
+        #region Static
 
-        /// <summary>Implements the operator ==.</summary>
-        /// <param name="x1">The first item.</param>
-        /// <param name="x2">The second item.</param>
-        /// <returns>The result of the operator.</returns>
-        public static bool operator ==(XTItem x1, XTItem x2) => x1?.ToString() == x2?.ToString();
+        /// <summary>
+        /// Provides a new line item.
+        /// </summary>
+        public static readonly XTItem NewLine = new(XTColor.Default, XTStyle.Default, Environment.NewLine);
 
-        /// <summary>Implements the operator !=.</summary>
+        /// <summary>
+        /// Implements the operator !=.
+        /// </summary>
         /// <param name="x1">The first item.</param>
         /// <param name="x2">The second item.</param>
         /// <returns>The result of the operator.</returns>
         public static bool operator !=(XTItem x1, XTItem x2) => x1?.ToString() != x2?.ToString();
 
         /// <summary>
-        /// Provides a new line item.
+        /// Implements the operator +.
         /// </summary>
-        public static readonly XTItem NewLine = new XTItem(XTColor.Default, XTStyle.Default, Environment.NewLine);
+        /// <param name="x1">The first item to add.</param>
+        /// <param name="x2">The second item to add.</param>
+        /// <returns>The result of the operator.</returns>
+        public static XT operator +(XTItem x1, XTItem x2) => new(x1, x2);
+
+        /// <summary>
+        /// Implements the operator ==.
+        /// </summary>
+        /// <param name="x1">The first item.</param>
+        /// <param name="x2">The second item.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator ==(XTItem x1, XTItem x2) => x1?.ToString() == x2?.ToString();
+
+        #endregion Static
+
+        #region Public Fields
+
+        /// <summary>
+        /// Gets the Color of the item.
+        /// </summary>
+        public readonly XTColor Color;
+
+        /// <summary>
+        /// Gets the Style of the item.
+        /// </summary>
+        public readonly XTStyle Style;
+
+        /// <summary>
+        /// Gets the text of the item.
+        /// </summary>
+        public readonly string Text;
+
+        #endregion Public Fields
+
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XTItem"/> class.
@@ -59,7 +87,9 @@ namespace Cave
             Text = text;
         }
 
-        /// <summary>Initializes a new instance of the <see cref="XTItem"/> class.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="XTItem"/> class.
+        /// </summary>
         /// <param name="text">The text.</param>
         public XTItem(string text)
         {
@@ -68,20 +98,25 @@ namespace Cave
             Text = text;
         }
 
-        /// <summary>
-        /// Gets the Color of the item.
-        /// </summary>
-        public readonly XTColor Color;
+        #endregion Constructors
+
+        #region Overrides
 
         /// <summary>
-        /// Gets the Style of the item.
+        /// Determines whether the specified <see cref="object"/>, is equal to this instance.
         /// </summary>
-        public readonly XTStyle Style;
+        /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
+        /// <returns><c>true</c> if the specified <see cref="object"/> is equal to this instance; otherwise, <c>false</c>.</returns>
+        public override bool Equals(object obj) =>
+            obj is XTItem other
+                ? (other.Color == Color) && (other.Style == Style) && (other.Text == Text)
+                : false;
 
         /// <summary>
-        /// Gets the text of the item.
+        /// Returns a hash code for this instance.
         /// </summary>
-        public readonly string Text;
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
+        public override int GetHashCode() => Text.GetHashCode() ^ Style.GetHashCode() ^ Color.GetHashCode();
 
         /// <summary>
         /// Gets the full data text repesentation of the item containing style color and text.
@@ -96,26 +131,18 @@ namespace Cave
                 result.Append(Style);
                 result.Append('>');
             }
+
             if (Color != XTColor.Default)
             {
                 result.Append('<');
                 result.Append(Color);
                 result.Append('>');
             }
+
             result.Append(Text);
             return result.ToString();
         }
 
-        /// <summary>Determines whether the specified <see cref="object" />, is equal to this instance.</summary>
-        /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><c>true</c> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
-        public override bool Equals(object obj) =>
-            obj is XTItem other
-            ? other.Color == Color && other.Style == Style && other.Text == Text
-            : false;
-
-        /// <summary>Returns a hash code for this instance.</summary>
-        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. </returns>
-        public override int GetHashCode() => Text.GetHashCode() ^ Style.GetHashCode() ^ Color.GetHashCode();
+        #endregion Overrides
     }
 }

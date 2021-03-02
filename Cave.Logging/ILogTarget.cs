@@ -5,6 +5,8 @@ namespace Cave.Logging
     /// </summary>
     public interface ILogTarget
     {
+        #region Properties
+
         /// <summary>
         /// Gets or sets a value indicating whether invert the color (use color as background highlighter).
         /// </summary>
@@ -21,11 +23,28 @@ namespace Cave.Logging
         XTStyle TextStyle { get; set; }
 
         /// <summary>
-        /// Writes a string to the console (no formatting).
+        /// Gets or sets the console title.
         /// </summary>
-        /// <param name="text">The plain string to write.</param>
-        /// <returns>Returns the number of newlines printed.</returns>
-        int WriteString(string text);
+        string Title { get; set; }
+
+        #endregion Properties
+
+        #region Members
+
+        /// <summary>
+        /// Clears the console.
+        /// </summary>
+        void Clear();
+
+        /// <summary>
+        /// Starts a new line at the console.
+        /// </summary>
+        void NewLine();
+
+        /// <summary>
+        /// Resets the color to default value.
+        /// </summary>
+        void ResetColor();
 
         /// <summary>
         /// Writes a LogText to the console (with formatting).
@@ -42,23 +61,12 @@ namespace Cave.Logging
         int Write(XTItem item);
 
         /// <summary>
-        /// Starts a new line at the console.
+        /// Writes a string to the console (no formatting).
         /// </summary>
-        void NewLine();
+        /// <param name="text">The plain string to write.</param>
+        /// <returns>Returns the number of newlines printed.</returns>
+        int WriteString(string text);
 
-        /// <summary>
-        /// Resets the color to default value.
-        /// </summary>
-        void ResetColor();
-
-        /// <summary>
-        /// Gets or sets the console title.
-        /// </summary>
-        string Title { get; set; }
-
-        /// <summary>
-        /// Clears the console.
-        /// </summary>
-        void Clear();
+        #endregion Members
     }
 }

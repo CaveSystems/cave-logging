@@ -5,7 +5,9 @@ namespace Cave.Logging
     /// </summary>
     public enum LogReceiverMode
     {
-        /// <summary>The undefined mode</summary>
+        /// <summary>
+        /// The undefined mode
+        /// </summary>
         Undefined = 0,
 
         /// <summary>
@@ -16,6 +18,6 @@ namespace Cave.Logging
         /// <summary>
         /// Continuous logging: The <see cref="ILogReceiver"/> caches all messages and write them out whenever possible
         /// </summary>
-        Continuous,
+        Continuous
     }
 }

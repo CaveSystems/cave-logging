@@ -3,7 +3,7 @@ namespace Cave.Logging
     /// <summary>
     /// Provides available syslog message versions.
     /// </summary>
-    public enum SyslogMessageVersion : int
+    public enum SyslogMessageVersion
     {
         /// <summary>
         /// Undefined syslog message version (usually RFC3164)
@@ -23,6 +23,6 @@ namespace Cave.Logging
         /// <summary>
         /// rsyslog format (needed for extended messages since rsyslog is not capable of handling RFC 5424 correctly)
         /// </summary>
-        RSYSLOG = 3,
+        RSYSLOG = 3
     }
 }

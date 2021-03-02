@@ -5,7 +5,9 @@ namespace Cave.Logging
     /// </summary>
     public enum LogFileFlags
     {
-        /// <summary>No Flags</summary>
+        /// <summary>
+        /// No Flags
+        /// </summary>
         None = 0,
 
         /// <summary>
@@ -14,14 +16,13 @@ namespace Cave.Logging
         UseRotation = 1,
 
         /// <summary>
-        /// Use a fileName based on the date and time.
-        /// (This disables UseRotation)
+        /// Use a fileName based on the date and time. (This disables UseRotation)
         /// </summary>
         UseDateTimeFileName = 2,
 
         /// <summary>
         /// Use a company name in the path.
         /// </summary>
-        UseCompanyName = 4,
+        UseCompanyName = 4
     }
 }

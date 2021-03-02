@@ -58,6 +58,6 @@ namespace Cave
         /// <summary>
         /// white
         /// </summary>
-        White = 108,
+        White = 108
     }
 }

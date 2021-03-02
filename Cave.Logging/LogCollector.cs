@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Cave.Logging
@@ -5,16 +6,28 @@ namespace Cave.Logging
     /// <summary>
     /// Automatically collects the latest and keeps a specified number of <see cref="LogMessage"/> items from the logging system.
     /// </summary>
-    public class LogCollector : LogReceiverBase
+    public class LogCollector : LogReceiver
     {
-        Queue<LogMessage> items = new Queue<LogMessage>();
+        #region Fields
+
+        readonly Queue<LogMessage> items = new();
         volatile int maximumItemCount = 100;
 
-        void CleanItems()
+        #endregion Fields
+
+        #region Properties
+
+        /// <summary>
+        /// Gets the count of items collected and not retrieved.
+        /// </summary>
+        public int ItemCount
         {
-            while (items.Count > maximumItemCount)
+            get
             {
-                items.Dequeue();
+                lock (items)
+                {
+                    return items.Count;
+                }
             }
         }
 
@@ -34,6 +47,28 @@ namespace Cave.Logging
             }
         }
 
+        #endregion Properties
+
+        #region Overrides
+
+        /// <summary>
+        /// Returns LogCollector[ItemCount,Level].
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => "LogCollector[" + ItemCount + "," + Level + "]";
+
+        #endregion Overrides
+
+        #region Members
+
+        void CleanItems()
+        {
+            while (items.Count > maximumItemCount)
+            {
+                items.Dequeue();
+            }
+        }
+
         /// <summary>
         /// Clears the list of <see cref="LogMessage"/> items.
         /// </summary>
@@ -46,24 +81,6 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Retrieves a <see cref="LogMessage"/> items from the collector.
-        /// </summary>
-        /// <returns></returns>
-        public bool TryGet(out LogMessage msg)
-        {
-            lock (items)
-            {
-                if (items.Count == 0)
-                {
-                    msg = new LogMessage();
-                    return false;
-                }
-                msg = items.Dequeue();
-                return true;
-            }
-        }
-
-        /// <summary>
         /// Retrieves all present <see cref="LogMessage"/> items and clears the collector.
         /// </summary>
         /// <returns></returns>
@@ -71,7 +88,7 @@ namespace Cave.Logging
         {
             lock (items)
             {
-                LogMessage[] result = items.ToArray();
+                var result = items.ToArray();
                 items.Clear();
                 return result;
             }
@@ -89,31 +106,34 @@ namespace Cave.Logging
         }
 
         /// <summary>
-        /// Gets the count of items collected and not retrieved.
+        /// Retrieves a <see cref="LogMessage"/> items from the collector.
         /// </summary>
-        public int ItemCount
+        /// <returns></returns>
+        public bool TryGet(out LogMessage msg)
         {
-            get
+            lock (items)
             {
-                lock (items)
+                if (items.Count == 0)
                 {
-                    return items.Count;
+                    msg = new LogMessage();
+                    return false;
                 }
+
+                msg = items.Dequeue();
+                return true;
             }
         }
 
-        /// <summary>
-        /// Returns LogCollector[ItemCount,Level].
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return "LogCollector[" + ItemCount + "," + Level + "]";
-        }
+        #endregion Members
 
         #region ILogReceiver Member
 
-        /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
+        /// <inheritdoc/>
+        protected override void Write(DateTime dateTime, LogLevel level, string source, XT content) => Write(new LogMessage(source, dateTime, level, null, content, null));
+
+        /// <summary>
+        /// Provides the callback function used to transmit the logging notifications.
+        /// </summary>
         /// <param name="msg">The message.</param>
         public override void Write(LogMessage msg)
         {
@@ -124,6 +144,6 @@ namespace Cave.Logging
             }
         }
 
-        #endregion
+        #endregion ILogReceiver Member
     }
 }

@@ -1,48 +1,25 @@
 using System;
+using System.Diagnostics;
 
 namespace Cave.Logging
 {
     /// <summary>
-    /// Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and
-    /// <see cref="System.Diagnostics.Trace"/>.
+    /// Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and <see cref="System.Diagnostics.Trace"/>.
     /// </summary>
     public sealed class LogDebugReceiver : LogReceiver
     {
-        /// <summary>
-        /// Log to <see cref="System.Diagnostics.Trace"/>. This setting is false by default.
-        /// </summary>
-#if DEBUG
-        public bool LogToTrace = false;
-#else
-        public bool LogToTrace = false;
-#endif
+        #region Protected Methods
 
         /// <summary>
-        /// Log to <see cref="System.Diagnostics.Debug"/>. This setting is true on debug compiles by default.
+        /// Writes the specified log message.
         /// </summary>
-#if DEBUG
-        public bool LogToDebug = true;
-#else
-        public bool LogToDebug = false;
-#endif
-
-        /// <summary>
-        /// Do not use string.Format while initializing this class!.
-        /// </summary>
-        internal LogDebugReceiver()
-        {
-            Mode = LogReceiverMode.Continuous;
-            Level = LogLevel.Debug;
-        }
-
-        /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
         /// <param name="level">The level.</param>
         /// <param name="source">The source.</param>
         /// <param name="content">The content.</param>
         protected override void Write(DateTime dateTime, LogLevel level, string source, XT content)
         {
-            string text = dateTime.ToLocalTime().ToString(StringExtensions.DisplayDateTimeFormat) + " " + level + " " + source + ": " + content.Text;
+            var text = dateTime.ToLocalTime().ToString(StringExtensions.DisplayDateTimeFormat) + " " + level + " " + source + ": " + content.Text;
             if (LogToDebug)
             {
                 LogHelper.DebugLine(text);
@@ -54,13 +31,33 @@ namespace Cave.Logging
             }
         }
 
+        #endregion Protected Methods
+
+        #region Internal Constructors
+
         /// <summary>
-        /// Obtains the string "LogDebugReceiver[Debug+Tracewriter,Level]".
+        /// Do not use string.Format while initializing this class!.
         /// </summary>
-        /// <returns></returns>
-        public override string ToString()
+        internal LogDebugReceiver()
         {
-            return "LogDebugReceiver[Debug+Tracewriter," + Level + "]";
+            Mode = LogReceiverMode.Continuous;
+            Level = LogLevel.Debug;
         }
+
+        #endregion Internal Constructors
+
+        #region Public Fields
+
+        /// <summary>
+        /// Log to <see cref="Debug"/>. This setting is false by default.
+        /// </summary>
+        public bool LogToDebug = false;
+
+        /// <summary>
+        /// Log to <see cref="Trace"/>. This setting is false by default.
+        /// </summary>
+        public bool LogToTrace = false;
+
+        #endregion Public Fields
     }
 }

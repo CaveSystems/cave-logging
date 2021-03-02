@@ -5,8 +5,14 @@ namespace Cave
     /// </summary>
     public interface IXT
     {
-        /// <summary>Provides an eXtended Text string for this object.</summary>
+        #region Members
+
+        /// <summary>
+        /// Provides an eXtended Text string for this object.
+        /// </summary>
         /// <returns>Returns a new XT instance with the description of this object.</returns>
         XT ToXT();
+
+        #endregion Members
     }
 }
