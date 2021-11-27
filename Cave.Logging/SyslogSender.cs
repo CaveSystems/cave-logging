@@ -6,13 +6,16 @@ using Cave.Logging;
 
 namespace Cave.Syslog
 {
-    /// <summary>
-    /// Provides a tcp and udp syslog sender for RFC5424, RFC3164 and RSYSLOG format.
-    /// </summary>
+    /// <summary>Provides a tcp and udp syslog sender for RFC5424, RFC3164 and RSYSLOG format.</summary>
     public class SyslogSender : IDisposable
     {
         #region Private Fields
 
+#if NETSTANDARD1_0_OR_GREATER || NET50
+        static readonly byte[] empty = Array.Empty<byte>();
+#else
+        static readonly byte[] empty = new byte[0];
+#endif
         ConnectionString target;
         TcpClient tcpClient;
         UdpClient udpClient;
@@ -22,16 +25,12 @@ namespace Cave.Syslog
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SyslogSender"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SyslogSender"/> class.</summary>
         public SyslogSender()
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SyslogSender"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SyslogSender"/> class.</summary>
         /// <param name="version">The <see cref="SyslogMessageVersion"/> to use for all outgoing messages.</param>
         public SyslogSender(SyslogMessageVersion version) => this.version = version;
 
@@ -63,24 +62,22 @@ namespace Cave.Syslog
             switch (connectionString.ConnectionType)
             {
                 case ConnectionType.TCP:
-                tcpClient = new TcpClient();
-                tcpClient.Connect(connectionString.Server, connectionString.GetPort(514));
-                return;
+                    tcpClient = new TcpClient();
+                    tcpClient.Connect(connectionString.Server, connectionString.GetPort(514));
+                    return;
 
                 case ConnectionType.UDP:
-                udpClient = new UdpClient();
-                udpClient.Connect(connectionString.Server, connectionString.GetPort(514));
-                udpClient.Send(new byte[0], 0);
-                return;
+                    udpClient = new UdpClient();
+                    udpClient.Connect(connectionString.Server, connectionString.GetPort(514));
+                    udpClient.Send(empty, 0);
+                    return;
 
                 default:
-                throw new NotImplementedException(string.Format("Unknown connection type {0}!", connectionString.ConnectionType));
+                    throw new NotImplementedException(string.Format("Unknown connection type {0}!", connectionString.ConnectionType));
             }
         }
 
-        /// <summary>
-        /// Sends a syslog message to the connected destination.
-        /// </summary>
+        /// <summary>Sends a syslog message to the connected destination.</summary>
         /// <param name="msg"></param>
         public void Send(SyslogMessage msg)
         {
@@ -113,9 +110,7 @@ namespace Cave.Syslog
 
         bool disposed;
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
+        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
@@ -140,9 +135,7 @@ namespace Cave.Syslog
             }
         }
 
-        /// <summary>
-        /// Releases all resources used by the this instance.
-        /// </summary>
+        /// <summary>Releases all resources used by the this instance.</summary>
         public void Dispose()
         {
             Dispose(true);

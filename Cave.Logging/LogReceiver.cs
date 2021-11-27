@@ -2,26 +2,17 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Cave.Logging.Properties;
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Provides the abstract log receiver implementation.
-    /// </summary>
+    /// <summary>Provides the abstract log receiver implementation.</summary>
     public abstract class LogReceiver : ILogReceiver
     {
         #region Private Fields
 
-        readonly Logger Log;
-
-        readonly Thread OutputThread;
-
-        /// <summary>
-        /// current delay in milliseconds.
-        /// </summary>
-        int currentDelay;
-
+        readonly Logger log;
+        readonly Thread outputThread;
+        int currentDelayMsec;
         bool isIdle;
         LinkedList<LogMessage> messageQueue = new();
 
@@ -29,9 +20,7 @@ namespace Cave.Logging
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogReceiver"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogReceiver"/> class.</summary>
         protected LogReceiver()
         {
             Name = GetType().Name;
@@ -40,20 +29,23 @@ namespace Cave.Logging
             LateMessageThreshold = 1000;
             Level = LogLevel.Information;
             ExceptionMode = Debugger.IsAttached ? LogExceptionMode.Full : LogExceptionMode.IncludeChildren;
-            Log = new Logger($"LogReceiverThread: {Name}");
-            OutputThread = new Thread(OutputWorker)
+            log = new Logger($"LogReceiverThread: {Name}");
+            outputThread = new Thread(OutputWorker)
             {
                 Name = Name,
                 IsBackground = true,
                 Priority = ThreadPriority.Highest
             };
-            OutputThread.Start();
+            outputThread.Start();
             Logger.Register(this);
         }
 
         #endregion Constructors
 
         #region ILogReceiver Members
+
+        /// <inheritdoc/>
+        public TimeSpan CurrentDelay => new(currentDelayMsec * TimeSpan.TicksPerMillisecond);
 
         /// <inheritdoc/>
         public string Name { get; private set; }
@@ -82,9 +74,7 @@ namespace Cave.Logging
 
         #region Overrides
 
-        /// <summary>
-        /// Finalizes an instance of the <see cref="LogReceiver"/> class.
-        /// </summary>
+        /// <summary>Finalizes an instance of the <see cref="LogReceiver"/> class.</summary>
         ~LogReceiver() => Dispose(false);
 
         #endregion Overrides
@@ -117,7 +107,7 @@ namespace Cave.Logging
                             // entering idle mode
                             if (delayWarningSent)
                             {
-                                Log.Notice(string.Format(Resources.LogReceiver_BacklogRecovered, Name));
+                                log.Notice("LogReceiver {0} backlog has recovered!", Name);
                                 delayWarningSent = false;
                                 continue;
                             }
@@ -143,10 +133,10 @@ namespace Cave.Logging
                     foreach (var msg in msgs)
                     {
                         var delayTicks = (DateTime.UtcNow - msg.DateTime.ToUniversalTime()).Ticks;
-                        currentDelay = (int)(delayTicks / TimeSpan.TicksPerMillisecond);
+                        currentDelayMsec = (int)(delayTicks / TimeSpan.TicksPerMillisecond);
 
                         // do we have late messages ?
-                        if (currentDelay > LateMessageMilliseconds)
+                        if (currentDelayMsec > LateMessageMilliseconds)
                         {
                             // yes, opportune logging ?
                             if (Mode == LogReceiverMode.Opportune)
@@ -163,11 +153,10 @@ namespace Cave.Logging
                                 // no continous logging -> warn user
                                 if ((msgs.Count > LateMessageThreshold) && (DateTime.UtcNow > nextWarningUtc))
                                 {
-                                    var warning = string.Format(Resources.LogReceiver_Backlog, Name, msgs.Count,
-                                        TimeSpan.FromMilliseconds(currentDelay).FormatTime());
+                                    var warning = string.Format("LogReceiver {0} has a backlog of {1} messages (current delay {2})!", Name, msgs.Count, TimeSpan.FromMilliseconds(currentDelayMsec).FormatTime());
 
                                     // warn all
-                                    Log.Warning(warning);
+                                    log.Warning(warning);
 
                                     // warn self (direct write)
                                     Write(new LogMessage(Name, DateTime.Now, LogLevel.Warning, null, warning, null));
@@ -196,7 +185,7 @@ namespace Cave.Logging
                     {
                         if (DateTime.UtcNow > nextWarningUtc)
                         {
-                            var warning = string.Format(Resources.LogReceiver_Discarded, Name, discardedCount);
+                            var warning = string.Format("LogReceiver {0} discarded {1} late messages!", Name, discardedCount);
                             Write(new LogMessage(Name, DateTime.Now, LogLevel.Warning, null, warning, null));
                             discardedCount = 0;
                             nextWarningUtc = DateTime.UtcNow + TimeBetweenWarnings;
@@ -206,7 +195,7 @@ namespace Cave.Logging
             }
             catch (Exception ex)
             {
-                Log.Emergency(string.Format(Resources.Error_FatalExceptionAt, Name), ex);
+                log.Emergency(ex, "{0} encountered a fatal exception!", Name);
             }
             finally
             {
@@ -214,9 +203,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Writes the specified log message.
-        /// </summary>
+        /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
         /// <param name="level">The level.</param>
         /// <param name="source">The source.</param>
@@ -227,9 +214,7 @@ namespace Cave.Logging
 
         #region ILogReceiver Member
 
-        /// <summary>
-        /// Releases the unmanaged resources used by this instance and optionally releases the managed resources.
-        /// </summary>
+        /// <summary>Releases the unmanaged resources used by this instance and optionally releases the managed resources.</summary>
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
@@ -240,17 +225,14 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="LogReceiver"/> was already closed.
-        /// </summary>
+        /// <summary>Gets a value indicating whether the <see cref="LogReceiver"/> was already closed.</summary>
         public bool Closed { get; set; }
 
-        /// <summary>
-        /// Gets or sets the exception mode.
-        /// </summary>
+        /// <summary>Gets or sets the exception mode.</summary>
         /// <value>The exception mode.</value>
         public LogExceptionMode ExceptionMode { get; set; }
 
+        /// <summary>Gets a value indicating whether the receiver is idle or not.</summary>
         public bool Idle
         {
             get
@@ -264,43 +246,29 @@ namespace Cave.Logging
         /// </summary>
         public int LateMessageMilliseconds { get; set; }
 
-        /// <summary>
-        /// Gets or sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliseconds"/>.
-        /// </summary>
+        /// <summary>Gets or sets the maximum number of messages allowed to be older than <see cref="LateMessageMilliseconds"/>.</summary>
         public int LateMessageThreshold { get; set; }
 
-        /// <summary>
-        /// Gets or sets the <see cref="LogLevel"/> currently used. This defaults to <see cref="LogLevel.Information"/>.
-        /// </summary>
+        /// <summary>Gets or sets the <see cref="LogLevel"/> currently used. This defaults to <see cref="LogLevel.Information"/>.</summary>
         public LogLevel Level { get; set; }
 
-        /// <summary>
-        /// Gets or sets the operation mode of the receiver.
-        /// </summary>
+        /// <summary>Gets or sets the operation mode of the receiver.</summary>
         public virtual LogReceiverMode Mode { get; set; } = LogReceiverMode.Opportune;
 
-        /// <summary>
-        /// Gets or sets the time between two warnings.
-        /// </summary>
+        /// <summary>Gets or sets the time between two warnings.</summary>
         public TimeSpan TimeBetweenWarnings { get; set; }
 
-        /// <summary>
-        /// Closes the <see cref="LogReceiver"/>.
-        /// </summary>
+        /// <summary>Closes the <see cref="LogReceiver"/>.</summary>
         public virtual void Close() => Dispose();
 
-        /// <summary>
-        /// Releases all resources used by the this instance.
-        /// </summary>
+        /// <summary>Releases all resources used by the this instance.</summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Provides the callback function used to transmit the logging notifications.
-        /// </summary>
+        /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
         /// <param name="msg">The message.</param>
         public virtual void Write(LogMessage msg)
         {

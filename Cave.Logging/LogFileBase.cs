@@ -3,9 +3,7 @@ using System.IO;
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Provides a base class for file logging.
-    /// </summary>
+    /// <summary>Provides a base class for file logging.</summary>
     /// <seealso cref="Cave.Logging.LogReceiver"/>
     public abstract class LogFileBase : LogReceiver
     {
@@ -13,9 +11,7 @@ namespace Cave.Logging
 
         #region constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogFileBase"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogFileBase"/> class.</summary>
         /// <param name="fileName">Name of the file.</param>
         protected LogFileBase(string fileName) => FileName = fileName;
 
@@ -25,9 +21,7 @@ namespace Cave.Logging
 
         #region Properties
 
-        /// <summary>
-        /// Gets the name of the file.
-        /// </summary>
+        /// <summary>Gets the name of the file.</summary>
         /// <value>The name of the file.</value>
         public string FileName { get; }
 
@@ -35,9 +29,7 @@ namespace Cave.Logging
 
         #region Members
 
-        /// <summary>
-        /// Returns the current size of the logfile.
-        /// </summary>
+        /// <summary>Returns the current size of the logfile.</summary>
         /// <returns></returns>
         public long GetSize() => new FileInfo(FileName).Length;
 
@@ -72,9 +64,7 @@ namespace Cave.Logging
             return fileName;
         }
 
-        /// <summary>
-        /// Rotates the logfile and keeps a specified number of old logfiles.
-        /// </summary>
+        /// <summary>Rotates the logfile and keeps a specified number of old logfiles.</summary>
         static void Rotate(string fileName, int keepOldFilesCount)
         {
             if (keepOldFilesCount < 1)
@@ -111,14 +101,12 @@ namespace Cave.Logging
             logger.Info("RotationComplete {0} files.", fileCount);
         }
 
-        /// <summary>
-        /// Returns the log file name for the local machine.
-        /// </summary>
+        /// <summary>Returns the log file name for the local machine.</summary>
         /// <returns>Returns a file name with full path without extension.</returns>
         /// <remarks>This function applies rotation.</remarks>
         protected static string GetLocalMachineLogFileName(LogFileFlags flags, string additionalPath = null)
         {
-            string filename = Platform.Type switch
+            var filename = Platform.Type switch
             {
                 PlatformType.Linux => FileSystem.Combine("/var", "log", additionalPath, GetFileName(flags)),
                 _ => GetFullPath(FileSystem.LocalMachineConfiguration, additionalPath, flags)
@@ -132,14 +120,12 @@ namespace Cave.Logging
             return filename;
         }
 
-        /// <summary>
-        /// Returns the log file name for the local user.
-        /// </summary>
+        /// <summary>Returns the log file name for the local user.</summary>
         /// <returns>Returns a file name with full path without extension.</returns>
         /// <remarks>This function applies rotation.</remarks>
         protected static string GetLocalUserLogFileName(LogFileFlags flags, string additionalPath = null)
         {
-            string filename = Platform.Type switch
+            var filename = Platform.Type switch
             {
                 PlatformType.Linux => FileSystem.Combine("~", ".local", "log", additionalPath, GetFileName(flags)),
                 _ => GetFullPath(FileSystem.LocalUserConfiguration, additionalPath, flags)
@@ -172,14 +158,12 @@ namespace Cave.Logging
             return fileName;
         }
 
-        /// <summary>
-        /// Returns the log file name for the current (roaming) user.
-        /// </summary>
+        /// <summary>Returns the log file name for the current (roaming) user.</summary>
         /// <returns>Returns a file name with full path without extension.</returns>
         /// <remarks>This function applies rotation.</remarks>
         protected static string GetUserLogFileName(LogFileFlags flags, string additionalPath = null)
         {
-            string filename = Platform.Type switch
+            var filename = Platform.Type switch
             {
                 PlatformType.Linux => FileSystem.Combine("~", "log", additionalPath, GetFileName(flags)),
                 _ => GetFullPath(FileSystem.UserConfiguration, additionalPath, flags)

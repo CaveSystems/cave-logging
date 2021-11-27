@@ -6,75 +6,49 @@ using System.Text;
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Provides a syslog entry. RFC 3164, RFC 3195, RFC 5424.
-    /// </summary>
+    /// <summary>Provides a syslog entry. RFC 3164, RFC 3195, RFC 5424.</summary>
     public struct SyslogMessage : IComparable
     {
         #region Public Fields
 
-        /// <summary>
-        /// Provides the chars valid for names and ids at structured data.
-        /// </summary>
+        /// <summary>Provides the chars valid for names and ids at structured data.</summary>
         public const string ValidNameChars = "!\"#$%&'()*+,-./0123456789:;<>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
-        /// <summary>
-        /// The content of the message.
-        /// </summary>
+        /// <summary>The content of the message.</summary>
         public string Content;
 
-        /// <summary>
-        /// The syslog facility.
-        /// </summary>
+        /// <summary>The syslog facility.</summary>
         public SyslogFacility Facility;
 
-        /// <summary>
-        /// The server this message belongs to.
-        /// </summary>
+        /// <summary>The server this message belongs to.</summary>
         public string HostName;
 
-        /// <summary>
-        /// Senders ID of the message (do not use this as uuid!), this is only present for SyslogMessageVersion.RFC5424.
-        /// </summary>
+        /// <summary>Senders ID of the message (do not use this as uuid!), this is only present for SyslogMessageVersion.RFC5424.</summary>
         public string MessageID;
 
-        /// <summary>
-        /// The process id this messages belongs to.
-        /// </summary>
+        /// <summary>The process id this messages belongs to.</summary>
         public uint ProcessID;
 
-        /// <summary>
-        /// The process this messages belongs to.
-        /// </summary>
+        /// <summary>The process this messages belongs to.</summary>
         public string ProcessName;
 
-        /// <summary>
-        /// The syslog severity.
-        /// </summary>
+        /// <summary>The syslog severity.</summary>
         public SyslogSeverity Severity;
 
-        /// <summary>
-        /// The structured syslog data.
-        /// </summary>
+        /// <summary>The structured syslog data.</summary>
         public SyslogStructuredData StructuredData;
 
-        /// <summary>
-        /// Provides access to the time stamp.
-        /// </summary>
+        /// <summary>Provides access to the time stamp.</summary>
         public SyslogMessageDateTime TimeStamp;
 
-        /// <summary>
-        /// Syslog protocol version.
-        /// </summary>
+        /// <summary>Syslog protocol version.</summary>
         public SyslogMessageVersion Version;
 
         #endregion Public Fields
 
         #region Public Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SyslogMessage"/> struct.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SyslogMessage"/> struct.</summary>
         /// <param name="version">Used SyslogVersion (used at ToString() methods).</param>
         /// <param name="facility"><see cref="SyslogFacility"/>.</param>
         /// <param name="severity"><see cref="SyslogSeverity"/>.</param>
@@ -104,7 +78,11 @@ namespace Cave.Logging
                 processName = Process.GetCurrentProcess().MainModule.ModuleName;
                 if (processID == 0)
                 {
+#if NET50
+                    processID = (uint)Environment.ProcessId;
+#else
                     processID = (uint)Process.GetCurrentProcess().Id;
+#endif
                 }
             }
 
@@ -129,90 +107,84 @@ namespace Cave.Logging
 
         #region Public Properties
 
-        /// <summary>
-        /// Gets the maximum message length used.
-        /// </summary>
+        /// <summary>Gets the maximum message length used.</summary>
         public int MaximumMessageLength => GetMaximumMessageLength(Version);
 
         #endregion Public Properties
 
         #region Public Methods
 
-        /// <summary>
-        /// Gets the maximum message length.
-        /// </summary>
-        public static int GetMaximumMessageLength(SyslogMessageVersion version)
+        /// <summary>Gets the maximum message length.</summary>
+        public static int GetMaximumMessageLength(SyslogMessageVersion version) => version switch
         {
-            switch (version)
-            {
-                case SyslogMessageVersion.RFC3164: return 2048;
-                case SyslogMessageVersion.RSYSLOG:
-                case SyslogMessageVersion.RFC5424: return 65400;
-                default: throw new NotImplementedException(string.Format("SyslogMessageVersion {0} undefined!", version));
-            }
-        }
+            SyslogMessageVersion.RFC3164 => 2048,
+            SyslogMessageVersion.RSYSLOG or SyslogMessageVersion.RFC5424 => 65400,
+            _ => throw new NotImplementedException(string.Format("SyslogMessageVersion {0} undefined!", version)),
+        };
 
-        /// <summary>
-        /// Implements the operator !=.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
+        /// <summary>Implements the operator !=.</summary>
+        /// <param name="msg1">The first message.</param>
+        /// <param name="msg2">The second message.</param>
         /// <returns>The result of the operator.</returns>
-        public static bool operator !=(SyslogMessage x, SyslogMessage y) =>
-            (x.Content != y.Content)
-         || (x.Facility != y.Facility)
-         || (x.HostName != y.HostName)
-         || (x.MessageID != y.MessageID)
-         || (x.ProcessID != y.ProcessID)
-         || (x.ProcessName != y.ProcessName)
-         || (x.Severity != y.Severity)
-         || (x.TimeStamp != y.TimeStamp)
-         || (x.Version != y.Version)
-         || (x.StructuredData != y.StructuredData);
+        public static bool operator !=(SyslogMessage msg1, SyslogMessage msg2) =>
+            (msg1.Content != msg2.Content)
+         || (msg1.Facility != msg2.Facility)
+         || (msg1.HostName != msg2.HostName)
+         || (msg1.MessageID != msg2.MessageID)
+         || (msg1.ProcessID != msg2.ProcessID)
+         || (msg1.ProcessName != msg2.ProcessName)
+         || (msg1.Severity != msg2.Severity)
+         || (msg1.TimeStamp != msg2.TimeStamp)
+         || (msg1.Version != msg2.Version)
+         || (msg1.StructuredData != msg2.StructuredData);
 
-        /// <summary>
-        /// Implements the operator &lt;.
-        /// </summary>
-        /// <param name="msg1">The MSG1.</param>
-        /// <param name="msg2">The MSG2.</param>
+        /// <summary>Implements the operator &lt;.</summary>
+        /// <param name="msg1">The first message.</param>
+        /// <param name="msg2">The second message.</param>
         /// <returns>The result of the operator.</returns>
         public static bool operator <(SyslogMessage msg1, SyslogMessage msg2) => msg1.TimeStamp < msg2.TimeStamp;
 
-        /// <summary>
-        /// Implements the operator ==.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
+        /// <summary>Implements the operator &gt;=.</summary>
+        /// <param name="msg1">The first message.</param>
+        /// <param name="msg2">The second message.</param>
         /// <returns>The result of the operator.</returns>
-        public static bool operator ==(SyslogMessage x, SyslogMessage y) =>
-            (x.Content == y.Content)
-         && (x.Facility == y.Facility)
-         && (x.HostName == y.HostName)
-         && (x.MessageID == y.MessageID)
-         && (x.ProcessID == y.ProcessID)
-         && (x.ProcessName == y.ProcessName)
-         && (x.Severity == y.Severity)
-         && (x.TimeStamp == y.TimeStamp)
-         && (x.Version == y.Version)
-         && (x.StructuredData == y.StructuredData);
+        public static bool operator <=(SyslogMessage msg1, SyslogMessage msg2) => msg1.TimeStamp < msg2.TimeStamp || msg1.TimeStamp == msg2.TimeStamp;
 
-        /// <summary>
-        /// Implements the operator &gt;.
-        /// </summary>
-        /// <param name="msg1">The MSG1.</param>
-        /// <param name="msg2">The MSG2.</param>
+        /// <summary>Implements the operator ==.</summary>
+        /// <param name="msg1">The first message.</param>
+        /// <param name="msg2">The second message.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator ==(SyslogMessage msg1, SyslogMessage msg2) =>
+            (msg1.Content == msg2.Content)
+         && (msg1.Facility == msg2.Facility)
+         && (msg1.HostName == msg2.HostName)
+         && (msg1.MessageID == msg2.MessageID)
+         && (msg1.ProcessID == msg2.ProcessID)
+         && (msg1.ProcessName == msg2.ProcessName)
+         && (msg1.Severity == msg2.Severity)
+         && (msg1.TimeStamp == msg2.TimeStamp)
+         && (msg1.Version == msg2.Version)
+         && (msg1.StructuredData == msg2.StructuredData);
+
+        /// <summary>Implements the operator &gt;.</summary>
+        /// <param name="msg1">The first message.</param>
+        /// <param name="msg2">The second message.</param>
         /// <returns>The result of the operator.</returns>
         public static bool operator >(SyslogMessage msg1, SyslogMessage msg2) => msg1.TimeStamp > msg2.TimeStamp;
 
-        /// <summary>
-        /// Creates a syslog item from specified encoded syslog data.
-        /// </summary>
+        /// <summary>Implements the operator &lt;=.</summary>
+        /// <param name="msg1">The first message.</param>
+        /// <param name="msg2">The second message.</param>
+        /// <returns>The result of the operator.</returns>
+        public static bool operator >=(SyslogMessage msg1, SyslogMessage msg2) => msg1.TimeStamp > msg2.TimeStamp || msg1.TimeStamp == msg2.TimeStamp;
+
+        /// <summary>Creates a syslog item from specified encoded syslog data.</summary>
         /// <param name="data">The data to be parsed.</param>
         public static SyslogMessage Parse(string data)
         {
             if (data == null)
             {
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             }
 
             var index = data.IndexOf('>');
@@ -242,16 +214,14 @@ namespace Cave.Logging
             throw new FormatException();
         }
 
-        /// <summary>
-        /// Parses a RFC3164 formatted syslog message. http://www.ietf.org/rfc/rfc3164.txt.
-        /// </summary>
+        /// <summary>Parses a RFC3164 formatted syslog message. http://www.ietf.org/rfc/rfc3164.txt.</summary>
         /// <param name="data">BSD syslog data.</param>
         /// <returns></returns>
         public static SyslogMessage ParseRFC3164(string data)
         {
             if (data == null)
             {
-                throw new ArgumentNullException("data");
+                throw new ArgumentNullException(nameof(data));
             }
 
             var result = new SyslogMessage { Version = SyslogMessageVersion.RFC3164 };
@@ -322,9 +292,7 @@ namespace Cave.Logging
             return result;
         }
 
-        /// <summary>
-        /// Parses a RFC5424 formatted syslog message. http://www.ietf.org/rfc/rfc5424.txt.
-        /// </summary>
+        /// <summary>Parses a RFC5424 formatted syslog message. http://www.ietf.org/rfc/rfc5424.txt.</summary>
         /// <param name="data">Syslog Protocol Data.</param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
@@ -452,9 +420,7 @@ namespace Cave.Logging
             return result;
         }
 
-        /// <summary>
-        /// Parses proprietary RSYSLOG protocol messages.
-        /// </summary>
+        /// <summary>Parses proprietary RSYSLOG protocol messages.</summary>
         /// <param name="data">RSYSLOG message data.</param>
         /// <returns></returns>
         public static SyslogMessage ParseRSYSLOG(string data)
@@ -580,30 +546,20 @@ namespace Cave.Logging
             return result;
         }
 
-        /// <summary>
-        /// Obtains the hash code for this item.
-        /// </summary>
+        /// <summary>Obtains the hash code for this item.</summary>
         /// <returns>Returns a hash code.</returns>
         public override int GetHashCode() => ToString().GetHashCode();
 
-        /// <summary>
-        /// Retrieves the syslog items encoded syslog string.
-        /// </summary>
+        /// <summary>Retrieves the syslog items encoded syslog string.</summary>
         /// <returns>A new string describing this instance using the format specified at <see cref="Version"/>.</returns>
-        public override string ToString()
+        public override string ToString() => Version switch
         {
-            switch (Version)
-            {
-                case SyslogMessageVersion.RFC3164: return ToStringRFC3164();
-                case SyslogMessageVersion.RSYSLOG: return ToStringRSYSLOG();
-                default:
-                case SyslogMessageVersion.RFC5424: return ToStringRFC5424();
-            }
-        }
+            SyslogMessageVersion.RFC3164 => ToStringRFC3164(),
+            SyslogMessageVersion.RSYSLOG => ToStringRSYSLOG(),
+            _ => ToStringRFC5424(),
+        };
 
-        /// <summary>
-        /// Retrieves the syslog items encoded syslog string.
-        /// </summary>
+        /// <summary>Retrieves the syslog items encoded syslog string.</summary>
         /// <returns>A new string describing this instance in RFC 3164 format.</returns>
         public string ToStringRFC3164()
         {
@@ -655,9 +611,9 @@ namespace Cave.Logging
             var stringBuilder = new StringBuilder();
 
             // PRI: <PRI>
-            stringBuilder.Append("<");
+            stringBuilder.Append('<');
             stringBuilder.Append(((int)Facility * 8) + (int)Severity);
-            stringBuilder.Append(">");
+            stringBuilder.Append('>');
 
             // HEADER: timestamp hostname
             stringBuilder.Append(TimeStamp.ToStringRFC3164());
@@ -671,7 +627,9 @@ namespace Cave.Logging
                 stringBuilder.Append(ProcessName);
                 if (ProcessID != 0)
                 {
-                    stringBuilder.Append("[" + ProcessID + "]");
+                    stringBuilder.Append('[');
+                    stringBuilder.Append(ProcessID);
+                    stringBuilder.Append(']');
                 }
 
                 stringBuilder.Append(": ");
@@ -686,16 +644,14 @@ namespace Cave.Logging
             return stringBuilder.ToString();
         }
 
-        /// <summary>
-        /// Retrieves the syslog items encoded syslog string.
-        /// </summary>
+        /// <summary>Retrieves the syslog items encoded syslog string.</summary>
         /// <returns>A new string describing this instance in RFC 5424 format.</returns>
         public string ToStringRFC5424()
         {
             var stringBuilder = new StringBuilder();
 
             // PRI: <PRI>Version
-            stringBuilder.Append("<");
+            stringBuilder.Append('<');
             stringBuilder.Append(((int)Facility * 8) + (int)Severity);
             stringBuilder.Append(">1 ");
 
@@ -732,7 +688,7 @@ namespace Cave.Logging
             }
             else
             {
-                stringBuilder.Append(ProcessID.ToString());
+                stringBuilder.Append(ProcessID);
             }
 
             // MSGID
@@ -772,9 +728,7 @@ namespace Cave.Logging
             return stringBuilder.ToString();
         }
 
-        /// <summary>
-        /// Retrieves the syslog items encoded syslog string.
-        /// </summary>
+        /// <summary>Retrieves the syslog items encoded syslog string.</summary>
         /// <returns>A new string describing this instance in RSYSLOG format.</returns>
         public string ToStringRSYSLOG()
         {
@@ -811,9 +765,9 @@ namespace Cave.Logging
             var stringBuilder = new StringBuilder();
 
             // PRI: <PRI>
-            stringBuilder.Append("<");
+            stringBuilder.Append('<');
             stringBuilder.Append(((int)Facility * 8) + (int)Severity);
-            stringBuilder.Append(">");
+            stringBuilder.Append('>');
 
             // TIMESTAMP
             stringBuilder.Append(TimeStamp);
@@ -829,7 +783,9 @@ namespace Cave.Logging
                 stringBuilder.Append(ProcessName);
                 if (ProcessID != 0)
                 {
-                    stringBuilder.Append("[" + ProcessID + "]");
+                    stringBuilder.Append('[');
+                    stringBuilder.Append(ProcessID);
+                    stringBuilder.Append(']');
                 }
 
                 stringBuilder.Append(": ");
@@ -839,7 +795,7 @@ namespace Cave.Logging
             if (dataString != null)
             {
                 stringBuilder.Append(dataString);
-                stringBuilder.Append(" ");
+                stringBuilder.Append(' ');
             }
 
             stringBuilder.Append(Content);
@@ -860,11 +816,9 @@ namespace Cave.Logging
 
         #region IEquatable Member
 
-        /// <summary>
-        /// Determines whether the specified Object is equal to the SyslogItem.
-        /// </summary>
+        /// <summary>Determines whether the specified Object is equal to the SyslogItem.</summary>
         /// <param name="obj">Object to test for equality.</param>
-        public override bool Equals(object obj) => obj is SyslogMessage msg ? msg.ToString() == ToString() : false;
+        public override bool Equals(object obj) => obj is SyslogMessage msg && msg.ToString() == ToString();
 
         #endregion IEquatable Member
     }

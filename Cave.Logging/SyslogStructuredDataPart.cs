@@ -6,16 +6,12 @@ using Cave.IO;
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Provides structured data encoding / decoding for syslog messages according to RFC 5424.
-    /// </summary>
+    /// <summary>Provides structured data encoding / decoding for syslog messages according to RFC 5424.</summary>
     public class SyslogStructuredDataPart
     {
         #region Static
 
-        /// <summary>
-        /// Gets invalid characters that have to be escaped.
-        /// </summary>
+        /// <summary>Gets invalid characters that have to be escaped.</summary>
         public static char[] InvalidChars =>
             new[]
             {
@@ -52,25 +48,21 @@ namespace Cave.Logging
 
         #region Public Fields
 
-        /// <summary>
-        /// Provides access to the name of the instance.
-        /// </summary>
+        /// <summary>Provides access to the name of the instance.</summary>
         public readonly string Name;
 
         #endregion Public Fields
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SyslogStructuredDataPart"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SyslogStructuredDataPart"/> class.</summary>
         /// <param name="name">The name of the structured data part.</param>
         /// <param name="items">The items of the data.</param>
         public SyslogStructuredDataPart(string name, params Option[] items)
         {
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
             }
 
             Name = name;
@@ -81,18 +73,14 @@ namespace Cave.Logging
 
         #region Properties
 
-        /// <summary>
-        /// Gets a copy of all options.
-        /// </summary>
+        /// <summary>Gets a copy of all options.</summary>
         public Option[] Items => (Option[])items.Clone();
 
         #endregion Properties
 
         #region Overrides
 
-        /// <summary>
-        /// Obtains the encoded string of this instances name and data.
-        /// </summary>
+        /// <summary>Obtains the encoded string of this instances name and data.</summary>
         /// <returns></returns>
         public override string ToString()
         {
@@ -122,10 +110,10 @@ namespace Cave.Logging
                 }
 
                 result.Append("=\"");
-                var value = item.Value == null ? string.Empty : item.Value;
+                var value = item.Value ?? string.Empty;
                 value = value.ReplaceChars(InvalidChars, string.Empty);
                 result.Append(value);
-                result.Append("\"");
+                result.Append('"');
             }
 
             result.Append(']');

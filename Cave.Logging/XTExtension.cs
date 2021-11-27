@@ -5,16 +5,12 @@ using System.Text;
 
 namespace Cave
 {
-    /// <summary>
-    /// Provides extension functions for <see cref="XT"/>.
-    /// </summary>
+    /// <summary>Provides extension functions for <see cref="XT"/>.</summary>
     public static class XTExtension
     {
         #region Static
 
-        /// <summary>
-        /// Retrieves the <see cref="XT"/> instance as HTML.
-        /// </summary>
+        /// <summary>Retrieves the <see cref="XT"/> instance as HTML.</summary>
         /// <param name="items">The extended text.</param>
         /// <returns>Returns the html code.</returns>
         public static string ToHtml(this IEnumerable<IXT> items)
@@ -28,9 +24,7 @@ namespace Cave
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Retrieves the <see cref="XT"/> instance as HTML.
-        /// </summary>
+        /// <summary>Retrieves the <see cref="XT"/> instance as HTML.</summary>
         /// <param name="items">The extended text.</param>
         /// <returns>Returns the html code.</returns>
         public static string ToHtml(this IEnumerable<XT> items)
@@ -44,18 +38,14 @@ namespace Cave
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Gets the eXtended Text for a KeyValuePair.
-        /// </summary>
+        /// <summary>Gets the eXtended Text for a KeyValuePair.</summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <typeparam name="TValue">The type of the value.</typeparam>
         /// <param name="item">The item.</param>
         /// <returns>Returns a new <see cref="XT"/> instance.</returns>
         public static XT ToXT<TKey, TValue>(this KeyValuePair<TKey, TValue> item) => XT.Format("{0}={1}", item.Key, item.Value);
 
-        /// <summary>
-        /// Gets the eXtended Text for a KeyValuePair enumeration.
-        /// </summary>
+        /// <summary>Gets the eXtended Text for a KeyValuePair enumeration.</summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <typeparam name="TValue">The type of the value.</typeparam>
         /// <param name="items">The items.</param>
@@ -71,9 +61,7 @@ namespace Cave
             return x;
         }
 
-        /// <summary>
-        /// Gets the eXtended Text for a value.
-        /// </summary>
+        /// <summary>Gets the eXtended Text for a value.</summary>
         /// <param name="timeSpan">The time span.</param>
         /// <returns>Returns a new <see cref="XT"/> instance.</returns>
         public static XT ToXT(this TimeSpan timeSpan) =>
@@ -83,9 +71,7 @@ namespace Cave
                     ? new XT(XTColor.Magenta, XTStyle.Default, timeSpan.FormatTime())
                     : new XT(XTColor.White, XTStyle.Default, timeSpan.FormatTime());
 
-        /// <summary>
-        /// Converts a exception to a loggable text message.
-        /// </summary>
+        /// <summary>Converts a exception to a loggable text message.</summary>
         /// <param name="ex">The <see cref="Exception"/>.</param>
         /// <param name="debug">Include debug information (stacktrace, data).</param>
         /// <returns>Returns a new <see cref="XT"/> instance.</returns>
@@ -191,9 +177,9 @@ namespace Cave
                 result.AddRange(ToXT(ex.InnerException, debug).Items);
             }
 
-            if (ex is ReflectionTypeLoadException)
+            if (ex is ReflectionTypeLoadException exception)
             {
-                foreach (var inner in ((ReflectionTypeLoadException)ex).LoaderExceptions)
+                foreach (var inner in exception.LoaderExceptions)
                 {
                     if (debug)
                     {
@@ -213,9 +199,7 @@ namespace Cave
             return new XT(result.ToArray());
         }
 
-        /// <summary>
-        /// Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.
-        /// </summary>
+        /// <summary>Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
         /// <param name="x">The extended text.</param>
         /// <param name="sb">The StringBuilder.</param>
         public static void WriteHtml(this XT x, StringBuilder sb)
@@ -300,16 +284,12 @@ namespace Cave
             }
         }
 
-        /// <summary>
-        /// Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.
-        /// </summary>
+        /// <summary>Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
         /// <param name="x">The extended text.</param>
         /// <param name="sb">The StringBuilder.</param>
         public static void WriteHtml(this IXT x, StringBuilder sb) => x.ToXT().WriteHtml(sb);
 
-        /// <summary>
-        /// Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.
-        /// </summary>
+        /// <summary>Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
         /// <param name="items">The extended text items.</param>
         /// <param name="sb">The StringBuilder.</param>
         public static void WriteHtml(this IEnumerable<XT> items, StringBuilder sb)
@@ -320,9 +300,7 @@ namespace Cave
             }
         }
 
-        /// <summary>
-        /// Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.
-        /// </summary>
+        /// <summary>Writes the <see cref="XT"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
         /// <param name="items">The extended text items.</param>
         /// <param name="sb">The StringBuilder.</param>
         public static void WriteHtml(this IEnumerable<IXT> items, StringBuilder sb)

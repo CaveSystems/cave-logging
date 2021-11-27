@@ -3,16 +3,12 @@ using System.Diagnostics;
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and <see cref="System.Diagnostics.Trace"/>.
-    /// </summary>
+    /// <summary>Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and <see cref="System.Diagnostics.Trace"/>.</summary>
     public sealed class LogDebugReceiver : LogReceiver
     {
         #region Protected Methods
 
-        /// <summary>
-        /// Writes the specified log message.
-        /// </summary>
+        /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
         /// <param name="level">The level.</param>
         /// <param name="source">The source.</param>
@@ -35,9 +31,7 @@ namespace Cave.Logging
 
         #region Internal Constructors
 
-        /// <summary>
-        /// Do not use string.Format while initializing this class!.
-        /// </summary>
+        /// <summary>Do not use string.Format while initializing this class!.</summary>
         internal LogDebugReceiver()
         {
             Mode = LogReceiverMode.Continuous;
@@ -48,15 +42,11 @@ namespace Cave.Logging
 
         #region Public Fields
 
-        /// <summary>
-        /// Log to <see cref="Debug"/>. This setting is false by default.
-        /// </summary>
-        public bool LogToDebug = false;
+        /// <summary>Log to <see cref="Debug"/>. This setting is false by default.</summary>
+        public bool LogToDebug;
 
-        /// <summary>
-        /// Log to <see cref="Trace"/>. This setting is false by default.
-        /// </summary>
-        public bool LogToTrace = false;
+        /// <summary>Log to <see cref="Trace"/>. This setting is false by default.</summary>
+        public bool LogToTrace;
 
         #endregion Public Fields
     }

@@ -2,21 +2,15 @@
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Provides an immutable log message.
-    /// </summary>
+    /// <summary>Provides an immutable log message.</summary>
     public class LogMessage
     {
         #region Private Fields
 
-        /// <summary>
-        /// Gets the arguments.
-        /// </summary>
+        /// <summary>Gets the arguments.</summary>
         readonly object[] arguments;
 
-        /// <summary>
-        /// Gets the content.
-        /// </summary>
+        /// <summary>Gets the content.</summary>
         readonly XT content;
 
         XT completeContent;
@@ -25,14 +19,10 @@ namespace Cave.Logging
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogMessage"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
         public LogMessage() { }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogMessage"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
         /// <param name="source">The source.</param>
         /// <param name="dateTime">The date time.</param>
         /// <param name="level">The level.</param>
@@ -41,20 +31,10 @@ namespace Cave.Logging
         /// <param name="arguments">The arguments.</param>
         public LogMessage(string source, DateTime dateTime, LogLevel level, Exception exception, XT content, object[] arguments)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (content == null)
-            {
-                throw new ArgumentNullException(nameof(content));
-            }
-
             DateTime = dateTime;
             Level = level;
-            Source = source;
-            this.content = content;
+            Source = source ?? throw new ArgumentNullException(nameof(source));
+            this.content = content ?? throw new ArgumentNullException(nameof(content));
             Exception = exception;
             this.arguments = arguments;
         }
@@ -63,9 +43,7 @@ namespace Cave.Logging
 
         #region Properties
 
-        /// <summary>
-        /// Gets the content including arguments.
-        /// </summary>
+        /// <summary>Gets the content including arguments.</summary>
         /// <value>The content.</value>
         public XT Content
         {
@@ -90,24 +68,16 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Gets the date time.
-        /// </summary>
+        /// <summary>Gets the date time.</summary>
         public DateTime DateTime { get; }
 
-        /// <summary>
-        /// Gets the exception.
-        /// </summary>
+        /// <summary>Gets the exception.</summary>
         public Exception Exception { get; }
 
-        /// <summary>
-        /// Gets the level.
-        /// </summary>
+        /// <summary>Gets the level.</summary>
         public LogLevel Level { get; }
 
-        /// <summary>
-        /// Gets the source.
-        /// </summary>
+        /// <summary>Gets the source.</summary>
         public string Source { get; }
 
         #endregion Properties

@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace Cave.Logging
 {
-    /// <summary>
-    /// Automatically collects the latest and keeps a specified number of <see cref="LogMessage"/> items from the logging system.
-    /// </summary>
+    /// <summary>Automatically collects the latest and keeps a specified number of <see cref="LogMessage"/> items from the logging system.</summary>
     public class LogCollector : LogReceiver
     {
         #region Fields
@@ -17,9 +15,7 @@ namespace Cave.Logging
 
         #region Properties
 
-        /// <summary>
-        /// Gets the count of items collected and not retrieved.
-        /// </summary>
+        /// <summary>Gets the count of items collected and not retrieved.</summary>
         public int ItemCount
         {
             get
@@ -31,9 +27,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Gets or sets the maximum item count of <see cref="LogMessage"/> items collected.
-        /// </summary>
+        /// <summary>Gets or sets the maximum item count of <see cref="LogMessage"/> items collected.</summary>
         public int MaximumItemCount
         {
             get => maximumItemCount;
@@ -51,9 +45,7 @@ namespace Cave.Logging
 
         #region Overrides
 
-        /// <summary>
-        /// Returns LogCollector[ItemCount,Level].
-        /// </summary>
+        /// <summary>Returns LogCollector[ItemCount,Level].</summary>
         /// <returns></returns>
         public override string ToString() => "LogCollector[" + ItemCount + "," + Level + "]";
 
@@ -69,9 +61,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Clears the list of <see cref="LogMessage"/> items.
-        /// </summary>
+        /// <summary>Clears the list of <see cref="LogMessage"/> items.</summary>
         public void Clear()
         {
             lock (items)
@@ -80,9 +70,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Retrieves all present <see cref="LogMessage"/> items and clears the collector.
-        /// </summary>
+        /// <summary>Retrieves all present <see cref="LogMessage"/> items and clears the collector.</summary>
         /// <returns></returns>
         public LogMessage[] Retrieve()
         {
@@ -94,9 +82,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Provides a list of <see cref="LogMessage"/> items.
-        /// </summary>
+        /// <summary>Provides a list of <see cref="LogMessage"/> items.</summary>
         public LogMessage[] ToArray()
         {
             lock (items)
@@ -105,9 +91,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>
-        /// Retrieves a <see cref="LogMessage"/> items from the collector.
-        /// </summary>
+        /// <summary>Retrieves a <see cref="LogMessage"/> items from the collector.</summary>
         /// <returns></returns>
         public bool TryGet(out LogMessage msg)
         {
@@ -131,9 +115,7 @@ namespace Cave.Logging
         /// <inheritdoc/>
         protected override void Write(DateTime dateTime, LogLevel level, string source, XT content) => Write(new LogMessage(source, dateTime, level, null, content, null));
 
-        /// <summary>
-        /// Provides the callback function used to transmit the logging notifications.
-        /// </summary>
+        /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
         /// <param name="msg">The message.</param>
         public override void Write(LogMessage msg)
         {

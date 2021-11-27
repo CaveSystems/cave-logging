@@ -3,37 +3,27 @@ using System.Text;
 
 namespace Cave
 {
-    /// <summary>
-    /// Provides very simple html style extended text attributes.
-    /// </summary>
-    public class XTItem
+    /// <summary>Provides very simple html style extended text attributes.</summary>
+    public class XTItem : IEquatable<XTItem>
     {
         #region Static
 
-        /// <summary>
-        /// Provides a new line item.
-        /// </summary>
+        /// <summary>Provides a new line item.</summary>
         public static readonly XTItem NewLine = new(XTColor.Default, XTStyle.Default, Environment.NewLine);
 
-        /// <summary>
-        /// Implements the operator !=.
-        /// </summary>
+        /// <summary>Implements the operator !=.</summary>
         /// <param name="x1">The first item.</param>
         /// <param name="x2">The second item.</param>
         /// <returns>The result of the operator.</returns>
         public static bool operator !=(XTItem x1, XTItem x2) => x1?.ToString() != x2?.ToString();
 
-        /// <summary>
-        /// Implements the operator +.
-        /// </summary>
+        /// <summary>Implements the operator +.</summary>
         /// <param name="x1">The first item to add.</param>
         /// <param name="x2">The second item to add.</param>
         /// <returns>The result of the operator.</returns>
         public static XT operator +(XTItem x1, XTItem x2) => new(x1, x2);
 
-        /// <summary>
-        /// Implements the operator ==.
-        /// </summary>
+        /// <summary>Implements the operator ==.</summary>
         /// <param name="x1">The first item.</param>
         /// <param name="x2">The second item.</param>
         /// <returns>The result of the operator.</returns>
@@ -43,28 +33,20 @@ namespace Cave
 
         #region Public Fields
 
-        /// <summary>
-        /// Gets the Color of the item.
-        /// </summary>
+        /// <summary>Gets the Color of the item.</summary>
         public readonly XTColor Color;
 
-        /// <summary>
-        /// Gets the Style of the item.
-        /// </summary>
+        /// <summary>Gets the Style of the item.</summary>
         public readonly XTStyle Style;
 
-        /// <summary>
-        /// Gets the text of the item.
-        /// </summary>
+        /// <summary>Gets the text of the item.</summary>
         public readonly string Text;
 
         #endregion Public Fields
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XTItem"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="XTItem"/> class.</summary>
         /// <param name="color">Color of the item.</param>
         /// <param name="style">Style of the item.</param>
         /// <param name="text">Text.</param>
@@ -75,9 +57,7 @@ namespace Cave
             Text = text;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XTItem"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="XTItem"/> class.</summary>
         /// <param name="color">Color of the item.</param>
         /// <param name="text">Text.</param>
         public XTItem(XTColor color, string text)
@@ -87,9 +67,7 @@ namespace Cave
             Text = text;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="XTItem"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="XTItem"/> class.</summary>
         /// <param name="text">The text.</param>
         public XTItem(string text)
         {
@@ -102,25 +80,16 @@ namespace Cave
 
         #region Overrides
 
-        /// <summary>
-        /// Determines whether the specified <see cref="object"/>, is equal to this instance.
-        /// </summary>
-        /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
-        /// <returns><c>true</c> if the specified <see cref="object"/> is equal to this instance; otherwise, <c>false</c>.</returns>
-        public override bool Equals(object obj) =>
-            obj is XTItem other
-                ? (other.Color == Color) && (other.Style == Style) && (other.Text == Text)
-                : false;
+        /// <inheritdoc/>
+        public override bool Equals(object obj) => obj is XTItem other && Equals(other);
 
-        /// <summary>
-        /// Returns a hash code for this instance.
-        /// </summary>
-        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
+        /// <inheritdoc/>
+        public bool Equals(XTItem other) => (other.Color == Color) && (other.Style == Style) && (other.Text == Text);
+
+        /// <inheritdoc/>
         public override int GetHashCode() => Text.GetHashCode() ^ Style.GetHashCode() ^ Color.GetHashCode();
 
-        /// <summary>
-        /// Gets the full data text repesentation of the item containing style color and text.
-        /// </summary>
+        /// <summary>Gets the full data text repesentation of the item containing style color and text.</summary>
         /// <returns>Returns a parsable string.</returns>
         public override string ToString()
         {

@@ -8,9 +8,7 @@ using Cave.Logging;
 
 namespace Cave.Syslog
 {
-    /// <summary>
-    /// Provides udp logging to a syslog server.
-    /// </summary>
+    /// <summary>Provides udp logging to a syslog server.</summary>
     public class LogUdpSyslog : LogReceiver, IDisposable
     {
         #region Static
@@ -48,23 +46,17 @@ namespace Cave.Syslog
 
         #region Public Fields
 
-        /// <summary>
-        /// Retrieves the Facility used to send the syslog messages. The default facility is local0.
-        /// </summary>
+        /// <summary>Retrieves the Facility used to send the syslog messages. The default facility is local0.</summary>
         public SyslogFacility Facility = SyslogFacility.Local0;
 
-        /// <summary>
-        /// Retrieves the destination address used to send log items to.
-        /// </summary>
+        /// <summary>Retrieves the destination address used to send log items to.</summary>
         public IPEndPoint Target = new(IPAddress.Loopback, 514);
 
         #endregion Public Fields
 
         #region Constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogUdpSyslog"/> class.</summary>
         /// <remarks>This is the default instance logging to localhost.</remarks>
         public LogUdpSyslog()
         {
@@ -72,47 +64,41 @@ namespace Cave.Syslog
             Target = new IPEndPoint(IPAddress.Loopback, 514);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogUdpSyslog"/> class.</summary>
         /// <param name="target"><see cref="IPEndPoint"/>: target server.</param>
         public LogUdpSyslog(IPEndPoint target)
             : this() =>
             Target = target;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogUdpSyslog"/> class.</summary>
         /// <param name="address">Target ip address.</param>
         /// <param name="port">Target port.</param>
         public LogUdpSyslog(IPAddress address, int port)
             : this() =>
             Target = new IPEndPoint(address, port);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LogUdpSyslog"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="LogUdpSyslog"/> class.</summary>
         /// <param name="connection"><see cref="ConnectionString"/> of the form udp://server:port.</param>
         public LogUdpSyslog(ConnectionString connection)
             : this(GetIPAddress(connection), connection.GetPort(514))
         {
             if (connection.Protocol == null)
             {
-                throw new ArgumentNullException("connection", "Protocol (udp) has to be given!");
+                throw new ArgumentNullException(nameof(connection), "Protocol (udp) has to be given!");
             }
 
             switch (connection.Protocol.ToUpperInvariant())
             {
                 case "UDP":
-                Version = SyslogMessageVersion.RFC3164;
-                break;
+                    Version = SyslogMessageVersion.RFC3164;
+                    break;
 
                 case "TCP":
                 case "TCPS":
-                Version = SyslogMessageVersion.RFC5424;
-                throw new NotImplementedException("Not jet completed!");
+                    Version = SyslogMessageVersion.RFC5424;
+                    throw new NotImplementedException("Not jet completed!");
                 default:
-                throw new NotSupportedException(string.Format("Syslog protocol version '{0}' unknown or not supported!", connection.Protocol));
+                    throw new NotSupportedException(string.Format("Syslog protocol version '{0}' unknown or not supported!", connection.Protocol));
             }
         }
 
@@ -120,18 +106,14 @@ namespace Cave.Syslog
 
         #region Properties
 
-        /// <summary>
-        /// Gets or sets the maximum message length used.
-        /// </summary>
+        /// <summary>Gets or sets the maximum message length used.</summary>
         public int MaximumMessageLength
         {
             get => maximumMessageLength;
             set => maximumMessageLength = Math.Max(480, Math.Min(65400, value));
         }
 
-        /// <summary>
-        /// Gets or sets the syslog protocol version to be used to send messages. Valid values: [0..1].
-        /// </summary>
+        /// <summary>Gets or sets the syslog protocol version to be used to send messages. Valid values: [0..1].</summary>
         public SyslogMessageVersion Version
         {
             get => version;
@@ -142,11 +124,11 @@ namespace Cave.Syslog
                     case SyslogMessageVersion.RFC3164:
                     case SyslogMessageVersion.RFC5424:
                     case SyslogMessageVersion.RSYSLOG:
-                    version = value;
-                    return;
+                        version = value;
+                        return;
 
                     default:
-                    throw new NotSupportedException(string.Format("Syslog protocol version '{0}' unknown or not supported!", value));
+                        throw new NotSupportedException(string.Format("Syslog protocol version '{0}' unknown or not supported!", value));
                 }
             }
         }
@@ -155,9 +137,7 @@ namespace Cave.Syslog
 
         #region Overrides
 
-        /// <summary>
-        /// Writes the specified log message.
-        /// </summary>
+        /// <summary>Writes the specified log message.</summary>
         /// <param name="dateTime">The date time.</param>
         /// <param name="level">The level.</param>
         /// <param name="source">The source.</param>
@@ -180,9 +160,7 @@ namespace Cave.Syslog
             }
         }
 
-        /// <summary>
-        /// Disposes the <see cref="LogUdpSyslog"/> instance and releases the socket used.
-        /// </summary>
+        /// <summary>Disposes the <see cref="LogUdpSyslog"/> instance and releases the socket used.</summary>
         public override void Close()
         {
             if (Closed)
@@ -197,9 +175,7 @@ namespace Cave.Syslog
 
         #region IDisposable Member
 
-        /// <summary>
-        /// Releases the unmanaged resources used by this instance and optionally releases the managed resources.
-        /// </summary>
+        /// <summary>Releases the unmanaged resources used by this instance and optionally releases the managed resources.</summary>
         /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
@@ -218,9 +194,7 @@ namespace Cave.Syslog
 
         #region Overrides
 
-        /// <summary>
-        /// Obtains an identification string for the object.
-        /// </summary>
+        /// <summary>Obtains an identification string for the object.</summary>
         public override string ToString() => "Syslog<" + Target + ">[" + version + "]";
 
         #endregion Overrides

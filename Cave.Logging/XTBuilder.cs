@@ -3,17 +3,13 @@ using System.Collections.Generic;
 
 namespace Cave
 {
-    /// <summary>
-    /// Provides building of an eXtended Text.
-    /// </summary>
+    /// <summary>Provides building of an eXtended Text.</summary>
     /// <seealso cref="IXT"/>
     public sealed class XTBuilder : IXT
     {
         #region Static
 
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="XTBuilder"/> to <see cref="XT"/>.
-        /// </summary>
+        /// <summary>Performs an implicit conversion from <see cref="XTBuilder"/> to <see cref="XT"/>.</summary>
         /// <param name="xb">The XTBuilder.</param>
         /// <returns>The result of the conversion.</returns>
         public static implicit operator XT(XTBuilder xb) => xb.ToXT();
@@ -28,9 +24,7 @@ namespace Cave
 
         #region Properties
 
-        /// <summary>
-        /// Gets the items.
-        /// </summary>
+        /// <summary>Gets the items.</summary>
         /// <value>The items.</value>
         public XTItem[] Items => items.ToArray();
 
@@ -38,9 +32,7 @@ namespace Cave
 
         #region IXT Members
 
-        /// <summary>
-        /// Provides an eXtended Text string for this object.
-        /// </summary>
+        /// <summary>Provides an eXtended Text string for this object.</summary>
         /// <returns>Returns a new XT instance with the description of this object.</returns>
         public XT ToXT() => Items;
 
@@ -48,9 +40,7 @@ namespace Cave
 
         #region Overrides
 
-        /// <summary>
-        /// Returns a <see cref="string"/> that represents this instance.
-        /// </summary>
+        /// <summary>Returns a <see cref="string"/> that represents this instance.</summary>
         /// <returns>A <see cref="string"/> that represents this instance.</returns>
         public override string ToString() => ToXT().ToString();
 
@@ -58,9 +48,7 @@ namespace Cave
 
         #region Members
 
-        /// <summary>
-        /// Appends the specified object.
-        /// </summary>
+        /// <summary>Appends the specified object.</summary>
         /// <param name="obj">The object.</param>
         public void Append(IXT obj)
         {
@@ -72,16 +60,12 @@ namespace Cave
             Append(obj.ToXT());
         }
 
-        /// <summary>
-        /// Appends text with the specified color.
-        /// </summary>
+        /// <summary>Appends text with the specified color.</summary>
         /// <param name="color">The color.</param>
         /// <param name="text">The text.</param>
         public void Append(XTColor color, string text) => items.Add(new XTItem(color, text));
 
-        /// <summary>
-        /// Appends the specified item.
-        /// </summary>
+        /// <summary>Appends the specified item.</summary>
         /// <param name="item">The item.</param>
         public void Append(XTItem item)
         {
@@ -93,9 +77,7 @@ namespace Cave
             items.Add(item);
         }
 
-        /// <summary>
-        /// Appends the specified text.
-        /// </summary>
+        /// <summary>Appends the specified text.</summary>
         /// <param name="text">The text.</param>
         public void Append(XT text)
         {
@@ -107,9 +89,7 @@ namespace Cave
             items.AddRange(text.Items);
         }
 
-        /// <summary>
-        /// Appends the specified text.
-        /// </summary>
+        /// <summary>Appends the specified text.</summary>
         /// <param name="text">The text.</param>
         /// <param name="args">The arguments.</param>
         public void Append(string text, params object[] args)
@@ -122,14 +102,10 @@ namespace Cave
             Append(XT.Format(text, args));
         }
 
-        /// <summary>
-        /// Appends the line.
-        /// </summary>
+        /// <summary>Appends the line.</summary>
         public void AppendLine() => items.Add(XTItem.NewLine);
 
-        /// <summary>
-        /// Appends the specified object and a newline.
-        /// </summary>
+        /// <summary>Appends the specified object and a newline.</summary>
         /// <param name="obj">The object.</param>
         public void AppendLine(IXT obj)
         {
@@ -141,9 +117,7 @@ namespace Cave
             AppendLine(obj.ToXT());
         }
 
-        /// <summary>
-        /// Appends the specified item and a newline.
-        /// </summary>
+        /// <summary>Appends the specified item and a newline.</summary>
         /// <param name="item">The item.</param>
         public void AppendLine(XTItem item)
         {
@@ -156,9 +130,7 @@ namespace Cave
             items.Add(XTItem.NewLine);
         }
 
-        /// <summary>
-        /// Appends the specified text and a newline.
-        /// </summary>
+        /// <summary>Appends the specified text and a newline.</summary>
         /// <param name="text">The text.</param>
         public void AppendLine(XT text)
         {
@@ -171,9 +143,7 @@ namespace Cave
             items.Add(XTItem.NewLine);
         }
 
-        /// <summary>
-        /// Appends the specified text and a newline.
-        /// </summary>
+        /// <summary>Appends the specified text and a newline.</summary>
         /// <param name="text">The text.</param>
         /// <param name="args">The arguments.</param>
         public void AppendLine(string text, params object[] args)
