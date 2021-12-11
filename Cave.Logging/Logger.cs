@@ -181,6 +181,10 @@ namespace Cave.Logging
             }
         }
 
+        /// <summary>Closes all receivers, does not flush or wait.</summary>
+        [Obsolete("Use Close()")]
+        public static void CloseAll() => Close();
+
         /// <summary>Waits until all notifications are sent.</summary>
         public static void Flush()
         {
