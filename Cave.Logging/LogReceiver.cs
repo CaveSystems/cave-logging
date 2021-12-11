@@ -48,7 +48,7 @@ namespace Cave.Logging
         public TimeSpan CurrentDelay => new(currentDelayMsec * TimeSpan.TicksPerMillisecond);
 
         /// <inheritdoc/>
-        public string Name { get; private set; }
+        public string Name { get; protected set; }
 
         /// <inheritdoc/>
         public void AddMessages(IEnumerable<LogMessage> messages)
