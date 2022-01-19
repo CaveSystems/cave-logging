@@ -13,6 +13,35 @@ namespace Cave.Logging
 
         #endregion Fields
 
+        #region Protected Methods
+
+        /// <summary>
+        /// Calls the <see cref="MessageReceived"/> event and adds the message to the internal queue if <see cref="LogMessageEventArgs.Handled"/> is not set at
+        /// the event.
+        /// </summary>
+        /// <param name="e">The event arguments</param>
+        protected virtual void OnMessageReceived(LogMessageEventArgs e)
+        {
+            MessageReceived?.Invoke(this, e);
+            if (!e.Handled)
+            {
+                lock (items)
+                {
+                    items.Enqueue(e.Message);
+                    CleanItems();
+                }
+            }
+        }
+
+        #endregion Protected Methods
+
+        #region Public Events
+
+        /// <summary>Event to be called on each incoming message before the message is added to the queue.</summary>
+        public event EventHandler<LogMessageEventArgs> MessageReceived;
+
+        #endregion Public Events
+
         #region Properties
 
         /// <summary>Gets the count of items collected and not retrieved.</summary>
@@ -27,7 +56,7 @@ namespace Cave.Logging
             }
         }
 
-        /// <summary>Gets or sets the maximum item count of <see cref="LogMessage"/> items collected.</summary>
+        /// <summary>Gets or sets the maximum item count of <see cref="LogMessage"/> items collected. Default = 100.</summary>
         public int MaximumItemCount
         {
             get => maximumItemCount;
@@ -119,11 +148,8 @@ namespace Cave.Logging
         /// <param name="msg">The message.</param>
         public override void Write(LogMessage msg)
         {
-            lock (items)
-            {
-                items.Enqueue(msg);
-                CleanItems();
-            }
+            var e = new LogMessageEventArgs(msg);
+            OnMessageReceived(e);
         }
 
         #endregion ILogReceiver Member
