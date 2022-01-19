@@ -23,6 +23,7 @@ namespace Cave.Logging
         static readonly Set<ILogReceiver> receiverSet = new();
         static readonly UncheckedRingBuffer<LogMessage> ringBuffer = new();
         static readonly Thread thread;
+        static volatile bool isWaiting;
 
         #endregion Private Fields
 
@@ -32,13 +33,19 @@ namespace Cave.Logging
         {
             while (true)
             {
+                isWaiting = ringBuffer.Available == 0;
+                if (isWaiting)
+                {
+                    Thread.Sleep(1);
+                    continue;
+                }
+
                 LinkedList<LogMessage> items = new();
                 while (ringBuffer.TryRead(out var message))
                 {
                     items.AddLast(message);
                 }
 
-                Thread.Sleep(1);
                 lock (receiverSet)
                 {
                     foreach (var receiver in receiverSet)
@@ -188,20 +195,29 @@ namespace Cave.Logging
         /// <summary>Waits until all notifications are sent.</summary>
         public static void Flush()
         {
-            while (ringBuffer.Available != 0)
+            while (true)
             {
                 Thread.Sleep(1);
                 lock (receiverSet)
                 {
+                    // anything present in ringbuffer means we cannot be idle - do not move this out of the lock we need to check this within the lock because
+                    // the MasterWorker may have taken all items from the ringbuffer and is currently sending them to the receivers
+                    if (!isWaiting || ringBuffer.Available != 0)
+                    {
+                        continue;
+                    }
+
+                    // check if there are any receivers
                     if (receiverSet.Count == 0)
                     {
-                        //no receivers, break
+                        //no receivers =>  we are idle
                         break;
                     }
 
+                    // check if all receivers are idle
                     if (receiverSet.All(w => w.Idle))
                     {
-                        // all idle
+                        // all receivers idle => we are idle
                         break;
                     }
                 }
