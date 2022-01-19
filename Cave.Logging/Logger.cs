@@ -188,29 +188,23 @@ namespace Cave.Logging
         /// <summary>Waits until all notifications are sent.</summary>
         public static void Flush()
         {
-            while (true)
+            while (ringBuffer.Available != 0)
             {
                 Thread.Sleep(1);
                 lock (receiverSet)
                 {
                     if (receiverSet.Count == 0)
                     {
-                        return;
+                        //no receivers, break
+                        break;
                     }
 
-                    if (receiverSet.Any(w => !w.Idle))
+                    if (receiverSet.All(w => w.Idle))
                     {
-                        continue;
-                    }
-
-                    if (ringBuffer.Available == 0)
-                    {
-                        continue;
+                        // all idle
+                        break;
                     }
                 }
-
-                // all idle
-                break;
             }
         }
 
@@ -381,7 +375,7 @@ namespace Cave.Logging
             lock (receiverSet)
             {
                 // remove if present
-                receiverSet.Remove(logReceiver);
+                receiverSet.TryRemove(logReceiver);
             }
         }
 
