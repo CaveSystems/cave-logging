@@ -53,6 +53,7 @@ namespace Cave.Logging
         /// <inheritdoc/>
         public void AddMessages(IEnumerable<LogMessage> messages)
         {
+            if (messages == null) throw new ArgumentNullException(nameof(messages));
             if (!Monitor.TryEnter(this, 1000))
             {
                 var logger = new Logger(GetType());
@@ -63,7 +64,10 @@ namespace Cave.Logging
 
             foreach (var msg in messages)
             {
-                messageQueue.AddLast(msg);
+                if (msg != null)
+                {
+                    messageQueue.AddLast(msg);
+                }
             }
 
             Monitor.Pulse(this);
@@ -84,14 +88,15 @@ namespace Cave.Logging
         void OutputWorker()
         {
             var delayWarningSent = false;
-            try
+            var nextWarningUtc = DateTime.MinValue;
+            var discardedCount = 0;
+            var errorCount = 0;
+            while (!Closed)
             {
-                var nextWarningUtc = DateTime.MinValue;
-                var discardedCount = 0;
-                while (!Closed)
-                {
-                    LinkedList<LogMessage> msgs = null;
+                LinkedList<LogMessage> queue = null;
 
+                try
+                {
                     // wait for messages
                     lock (this)
                     {
@@ -99,8 +104,8 @@ namespace Cave.Logging
                         {
                             if (messageQueue.Count > 0)
                             {
-                                msgs = messageQueue;
-                                messageQueue = new LinkedList<LogMessage>();
+                                queue = messageQueue;
+                                messageQueue = new();
                                 break;
                             }
 
@@ -130,8 +135,10 @@ namespace Cave.Logging
                         }
                     }
 
-                    foreach (var msg in msgs)
+                    while (queue.Count > 0)
                     {
+                        var msg = queue.First.Value;
+                        queue.RemoveFirst();
                         var delayTicks = (DateTime.UtcNow - msg.DateTime.ToUniversalTime()).Ticks;
                         currentDelayMsec = (int)(delayTicks / TimeSpan.TicksPerMillisecond);
 
@@ -150,16 +157,16 @@ namespace Cave.Logging
                             }
                             else
                             {
-                                // no continous logging -> warn user
-                                if ((msgs.Count > LateMessageThreshold) && (DateTime.UtcNow > nextWarningUtc))
+                                // no continuous logging -> warn user
+                                if ((queue.Count > LateMessageThreshold) && (DateTime.UtcNow > nextWarningUtc))
                                 {
-                                    var warning = string.Format("LogReceiver {0} has a backlog of {1} messages (current delay {2})!", Name, msgs.Count, TimeSpan.FromMilliseconds(currentDelayMsec).FormatTime());
+                                    var warning = $"LogReceiver {Name} has a backlog of {queue.Count} messages (current delay {TimeSpan.FromMilliseconds(currentDelayMsec).FormatTime()})!";
 
                                     // warn all
                                     log.Warning(warning);
 
                                     // warn self (direct write)
-                                    Write(new LogMessage(Name, DateTime.Now, LogLevel.Warning, null, warning, null));
+                                    Write(new(Name, DateTime.Now, LogLevel.Warning, null, warning, null));
 
                                     // calc next
                                     nextWarningUtc = DateTime.UtcNow + TimeBetweenWarnings;
@@ -185,21 +192,24 @@ namespace Cave.Logging
                     {
                         if (DateTime.UtcNow > nextWarningUtc)
                         {
-                            var warning = string.Format("LogReceiver {0} discarded {1} late messages!", Name, discardedCount);
+                            var warning = $"LogReceiver {Name} discarded {discardedCount} late messages!";
                             Write(new LogMessage(Name, DateTime.Now, LogLevel.Warning, null, warning, null));
                             discardedCount = 0;
                             nextWarningUtc = DateTime.UtcNow + TimeBetweenWarnings;
                         }
                     }
+                    errorCount = 0;
                 }
-            }
-            catch (Exception ex)
-            {
-                log.Emergency(ex, "{0} encountered a fatal exception!", Name);
-            }
-            finally
-            {
-                Close();
+                catch (Exception ex)
+                {
+                    discardedCount += queue.Count + 1;
+                    log.Emergency(ex, "LogReceiver {0} encountered a fatal exception!", Name);
+                    if (errorCount++ > 5)
+                    {
+                        Close();
+                        return;
+                    }
+                }
             }
         }
 
