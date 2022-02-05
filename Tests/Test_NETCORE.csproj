@@ -6,7 +6,7 @@
         <ApplicationIcon />
         <OutputType>Exe</OutputType>
         <RootNamespace>Tests</RootNamespace>
-        <AssemblyName>Tests</AssemblyName>
+        <AssemblyName>Test</AssemblyName>
         <NoWarn>CS1591;CA1806;CA1825;</NoWarn>
         <IsTestProject>true</IsTestProject>
         <StartupObject>Tests.Program</StartupObject>
