@@ -183,10 +183,11 @@ namespace Cave
                             case sbyte @sbyte:
                                 newItem = Format(item, @sbyte);
                                 break;
-
+                            
                             case string @string:
+                            default:
                             {
-                                var x = new XT(@string).Items;
+                                var x = new XT(StringExtensions.ToString(obj)).Items;
                                 var n = 0;
                                 while (n < x.Length)
                                 {
@@ -195,8 +196,16 @@ namespace Cave
                                         break;
                                     }
 
-                                    var y = new XTItem(item.Color, item.Style, x[n].Text);
-                                    result.Add(y);
+                                    if ((item.Color == XTColor.Default) && (item.Style == XTStyle.Default))
+                                    {
+                                        var y = new XTItem(XTColor.Cyan, XTStyle.Default, x[n].Text);
+                                        result.Add(y);
+                                    }
+                                    else
+                                    {
+                                        var y = new XTItem(item.Color, item.Style, x[n].Text);
+                                        result.Add(y);
+                                    }
                                     n++;
                                 }
 
@@ -227,10 +236,6 @@ namespace Cave
 
                                 continue;
                             }
-
-                            default:
-                                newItem = new XTItem(item.Color, item.Style, StringExtensions.ToString(obj));
-                                break;
                         }
 
                         result.Add(newItem);
