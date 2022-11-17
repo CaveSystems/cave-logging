@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net20;net35;net40;net45;net50</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net20;net35;net40;net45;net50;net60</TargetFrameworks>
         <!--project-->
         <RootNamespace>Cave.Logging</RootNamespace>
         <AssemblyOriginatorKeyFile>Cave.Logging.snk</AssemblyOriginatorKeyFile>
@@ -18,7 +18,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cave.Extensions" Version="2.1.6" />
+        <PackageReference Include="Cave.Extensions" Version="2.1.13" />
         <PackageReference Include="Cave.IO" Version="2.1.4" />
     </ItemGroup>
 </Project>

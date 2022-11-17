@@ -90,13 +90,10 @@ namespace Cave.Logging
                         }
                     }
 
-                    if (item.Text.Contains("\n"))
+                    foreach (var part in item.Text.SplitNewLine())
                     {
+                        writer.Write(part);
                         writer.Write("<br/>");
-                    }
-                    else
-                    {
-                        writer.Write(item.Text);
                     }
                 }
 

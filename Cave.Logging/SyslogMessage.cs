@@ -78,7 +78,7 @@ namespace Cave.Logging
                 processName = Process.GetCurrentProcess().MainModule.ModuleName;
                 if (processID == 0)
                 {
-#if NET50
+#if NET5_0_OR_GREATER
                     processID = (uint)Environment.ProcessId;
 #else
                     processID = (uint)Process.GetCurrentProcess().Id;

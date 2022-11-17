@@ -399,7 +399,6 @@ dotnet_diagnostic.ide0070.severity = suggestion
 dotnet_diagnostic.ca2201.severity = silent
 dotnet_diagnostic.ca2215.severity = suggestion
 dotnet_diagnostic.ca2229.severity = suggestion
-dotnet_diagnostic.ca2249.severity = silent
 
 # Standard properties
 end_of_line = crlf

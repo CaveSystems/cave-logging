@@ -20,7 +20,7 @@ namespace Cave.Logging
     {
         #region Private Fields
 
-        static readonly object idleLock = new object();
+        static readonly object idleLock = new();
         static readonly Set<ILogReceiver> receiverSet = new();
         static readonly UncheckedRingBuffer<LogMessage> ringBuffer = new();
         static readonly Thread thread;

@@ -183,7 +183,7 @@ namespace Cave
                             case sbyte @sbyte:
                                 newItem = Format(item, @sbyte);
                                 break;
-                            
+
                             case string @string:
                             default:
                             {

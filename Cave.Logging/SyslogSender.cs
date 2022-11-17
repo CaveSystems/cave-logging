@@ -11,7 +11,7 @@ namespace Cave.Syslog
     {
         #region Private Fields
 
-#if NETSTANDARD1_0_OR_GREATER || NET50
+#if NETSTANDARD1_0_OR_GREATER || NET5_0_OR_GREATER
         static readonly byte[] empty = Array.Empty<byte>();
 #else
         static readonly byte[] empty = new byte[0];

@@ -1,5 +1,4 @@
-﻿using System;
-using Cave;
+﻿using Cave;
 using Cave.Logging;
 using NUnit.Framework;
 
@@ -40,8 +39,10 @@ namespace Tests
         public void LogCollectorTest2()
         {
             var logger = new Logger("Test2");
-            var col = new LogCollector();
-            col.MaximumItemCount = 200;
+            var col = new LogCollector
+            {
+                MaximumItemCount = 200
+            };
             Assert.AreEqual(LogLevel.Information, col.Level);
             for (var i = 0; i < 200; i++)
             {
@@ -66,8 +67,10 @@ namespace Tests
         public void LogCollectorTest3()
         {
             var logger = new Logger("Test3");
-            var col = new LogCollector();
-            col.MaximumItemCount = 300;
+            var col = new LogCollector
+            {
+                MaximumItemCount = 300
+            };
             Assert.AreEqual(LogLevel.Information, col.Level);
             for (var i = 0; i < 200; i++)
             {
