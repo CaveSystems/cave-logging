@@ -15,10 +15,16 @@
         <SignAssembly>true</SignAssembly>
         <NeutralLanguage />
         <DelaySign>false</DelaySign>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cave.Extensions" Version="2.1.13" />
-        <PackageReference Include="Cave.IO" Version="2.1.4" />
+        <PackageReference Include="Cave.Backports" Version="3.0.0" />
+        <PackageReference Include="Cave.Extensions" Version="3.0.1" />
+        <PackageReference Include="Cave.IO" Version="3.0.0" />
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 </Project>

@@ -1,0 +1,26 @@
+using System;
+
+namespace Cave;
+
+/// <summary>Provides available logging colors.</summary>
+[Flags]
+public enum LogStyle : uint
+{
+    /// <summary>No change</summary>
+    Unchanged = 0,
+
+    /// <summary>Reset style (=will reset color to system default)</summary>
+    Reset = 1 << 0,
+
+    /// <summary>Bold font</summary>
+    Bold = 1 << 1,
+
+    /// <summary>Italic font</summary>
+    Italic = 1 << 2,
+
+    /// <summary>Underline</summary>
+    Underline = 1 << 3,
+
+    /// <summary>Strikeout</summary>
+    Strikeout = 1 << 4,
+}

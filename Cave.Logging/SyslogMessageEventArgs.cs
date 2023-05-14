@@ -1,23 +1,22 @@
 using System;
 
-namespace Cave.Logging
+namespace Cave.Logging;
+
+/// <summary>Provides event data for handling syslog messages.</summary>
+public sealed class SyslogMessageEventArgs : EventArgs
 {
-    /// <summary>Provides event data for handling syslog messages.</summary>
-    public sealed class SyslogMessageEventArgs : EventArgs
-    {
-        #region Public Fields
+    #region Public Fields
 
-        /// <summary>Provides the <see cref="SyslogMessage"/>.</summary>
-        public readonly SyslogMessage Message;
+    /// <summary>Provides the <see cref="SyslogMessage"/>.</summary>
+    public readonly SyslogMessage Message;
 
-        #endregion Public Fields
+    #endregion Public Fields
 
-        #region Constructors
+    #region Constructors
 
-        /// <summary>Creates a new <see cref="SyslogMessageEventArgs"/> instance.</summary>
-        /// <param name="msg"></param>
-        public SyslogMessageEventArgs(SyslogMessage msg) => Message = msg;
+    /// <summary>Creates a new <see cref="SyslogMessageEventArgs"/> instance.</summary>
+    /// <param name="msg"></param>
+    public SyslogMessageEventArgs(SyslogMessage msg) => Message = msg;
 
-        #endregion Constructors
-    }
+    #endregion Constructors
 }

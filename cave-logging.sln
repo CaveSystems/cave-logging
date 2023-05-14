@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28705.295
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cave.Logging", "Cave.Logging\Cave.Logging.csproj", "{BE200FC7-E8DD-4DED-B947-F1B6807334CB}"
 EndProject
@@ -26,7 +26,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test_NET2x", "Tests\Test_NE
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test_NET4x", "Tests\Test_NET4x.csproj", "{BB54C1AA-89D8-4C4B-BC5C-F7CD44DA324A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test_NETCORE", "Tests\Test_NETCORE.csproj", "{3537CBAE-B36A-4381-88B6-4F802269AC6F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test_NET5+", "Tests\Test_NET5+.csproj", "{3537CBAE-B36A-4381-88B6-4F802269AC6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
