@@ -1,64 +1,22 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Text;
 
 namespace Cave.Logging;
 
 /// <summary>Use this class to write messages directly to a utf-8 logfile.</summary>
 public sealed class LogFile : LogFileBase
 {
-    #region Private Fields
-
-    Logger logger;
-    StreamWriter writer;
-
-    #endregion Private Fields
-
-    #region Properties
-
-    /// <summary>Gets the number of notifications logged.</summary>
-    public int Counter { get; set; }
-
-    #endregion Properties
+    Stream? stream;
 
     #region Overrides
-
-    /// <summary>Writes the specified log message.</summary>
-    /// <param name="dateTime">The date time.</param>
-    /// <param name="level">The level.</param>
-    /// <param name="source">The source.</param>
-    /// <param name="content">The content.</param>
-    protected override void Write(DateTime dateTime, LogLevel level, string source, LogText content)
-    {
-        var text =
-            dateTime.ToString(StringExtensions.InterOpDateTimeFormat) + " " +
-            level + " " +
-            source + ": " +
-            content.Text;
-        lock (this)
-        {
-            if (writer == null)
-            {
-                return;
-            }
-
-            writer.WriteLine(text);
-            writer.Flush();
-            Counter++;
-        }
-    }
 
     /// <summary>Closes the <see cref="LogReceiver"/>.</summary>
     public override void Close()
     {
-        lock (this)
+        lock (SyncRoot)
         {
-            if (writer != null)
-            {
-                writer.Close();
-                writer = null;
-            }
+            Writer.Close();
         }
 
         base.Close();
@@ -94,22 +52,21 @@ public sealed class LogFile : LogFileBase
 
     void Init(string fileName)
     {
-        if (writer != null)
+        if (stream != null)
         {
             throw new InvalidOperationException("LogFile already opened!");
         }
 
-        var fullFilePath = Path.GetFullPath(fileName);
-        logger = new Logger($"LogFile:{Path.GetFileName(fileName)}");
-        logger.Debug("Prepare logging to file <cyan>{0}", fullFilePath);
-        Directory.CreateDirectory(Path.GetDirectoryName(fullFilePath));
-        Stream stream = File.Open(fullFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+        var fullFilePath = Path.GetFullPath(fileName) ?? throw new ArgumentNullException(nameof(fileName));
+        log.Debug($"Prepare logging to file <cyan>{fullFilePath}");
+        var folder = Path.GetDirectoryName(fullFilePath);
+        if (folder is not null) Directory.CreateDirectory(folder);
+        stream = File.Open(fullFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
         if (stream.CanSeek)
         {
             stream.Seek(0, SeekOrigin.End);
         }
-
-        writer = new StreamWriter(stream, Encoding.UTF8);
+        Writer = new LogFileWriter(stream);
     }
 
     /// <summary>Opens the specified logfile.</summary>

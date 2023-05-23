@@ -9,13 +9,13 @@ public abstract class LogFileBase : LogReceiver
 {
     #region Constructors
 
-    #region constructors
-
     /// <summary>Initializes a new instance of the <see cref="LogFileBase"/> class.</summary>
     /// <param name="fileName">Name of the file.</param>
-    protected LogFileBase(string fileName) => FileName = fileName;
-
-    #endregion constructors
+    protected LogFileBase(string fileName)
+    {
+        log.Verbose($"Prepare logging to file {fileName}");
+        FileName = fileName;
+    }
 
     #endregion Constructors
 
@@ -48,7 +48,7 @@ public abstract class LogFileBase : LogReceiver
         return fileName;
     }
 
-    static string GetFullPath(string basePath, string additionalPath, LogFileFlags flags)
+    static string GetFullPath(string basePath, string? additionalPath, LogFileFlags flags)
     {
         var fileName = GetFileName(flags);
         var ver = AssemblyVersionInfo.Program;
@@ -72,7 +72,7 @@ public abstract class LogFileBase : LogReceiver
             throw new ArgumentOutOfRangeException(nameof(keepOldFilesCount));
         }
 
-        var logger = new Logger("LogFile");
+        var logger = new Logger(typeof(LogFileBase));
         logger.Info("RotationStart");
         var fullFilePath = fileName;
         var fileCount = 0;
@@ -98,7 +98,7 @@ public abstract class LogFileBase : LogReceiver
             }
         }
 
-        logger.Info("RotationComplete {0} files.", fileCount);
+        logger.Info($"Rotation complete: {fileCount} files.");
     }
 
     /// <summary>Returns the log file name for the local machine.</summary>

@@ -1,11 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Globalization;
-using System.Linq;
 using System.Text;
-using Cave.CodeGen;
 
 namespace Cave.Logging;
 
@@ -27,9 +24,14 @@ namespace Cave.Logging;
 /// </list>
 /// <example>This is a &lt;red&gt;red &lt;bold&gt; text &lt;default&gt;!</example>
 /// </summary>
-public sealed class LogText : ILogText, IEquatable<LogText>
+public record LogText : ILogText, IEquatable<LogText>
 {
     #region Static
+
+    public static LogText[] Empty { get; } = new LogText[0];
+
+    /// <summary>Provides a new line item.</summary>
+    public static readonly LogText NewLine = new("\n");
 
     /// <summary>Unboxes a token.</summary>
     /// <param name="token">Token to unbox.</param>
@@ -55,15 +57,15 @@ public sealed class LogText : ILogText, IEquatable<LogText>
     public static Color[] PaletteColors =>
         new[]
         {
-            Color.Black,
-            Color.Gray,
-            Color.Blue,
-            Color.Green,
-            Color.Cyan,
-            Color.Red,
-            Color.Magenta,
-            Color.Yellow,
-            Color.White
+            System.Drawing.Color.Black,
+            System.Drawing.Color.Gray,
+            System.Drawing.Color.Blue,
+            System.Drawing.Color.Green,
+            System.Drawing.Color.Cyan,
+            System.Drawing.Color.Red,
+            System.Drawing.Color.Magenta,
+            System.Drawing.Color.Yellow,
+            System.Drawing.Color.White
         };
 
     /// <summary>Gets all defined <see cref="Color"/> s.</summary>
@@ -81,71 +83,6 @@ public sealed class LogText : ILogText, IEquatable<LogText>
             ConsoleColor.White
         };
 
-    /// <summary>Implements the operator +.</summary>
-    /// <param name="x1">The first item to add.</param>
-    /// <param name="x2">The second item to add.</param>
-    /// <returns>The result of the operator.</returns>
-    public static LogText Add(LogText x1, LogText x2) => new(x1, x2);
-
-    /// <summary>Formats the specified double.</summary>
-    /// <param name="source">The source.</param>
-    /// <param name="d">The double.</param>
-    /// <returns>Returns a new LogTextItem.</returns>
-    public static LogTextItem Format(LogTextItem source, double d)
-    {
-        var value = (long)Math.Round((d % 1) * 100000);
-        var color = source.Color;
-        if ((int)color < 100)
-        {
-            color = value > 0 ? LogColor.Cyan : value < 0 ? LogColor.Magenta : LogColor.White;
-        }
-        return new LogTextItem($"{d:N}", color, source.Style);
-    }
-
-    /// <summary>Formats the specified decimal.</summary>
-    /// <param name="source">The source.</param>
-    /// <param name="d">The decimal.</param>
-    /// <returns>Returns a new LogTextItem.</returns>
-    public static LogTextItem Format(LogTextItem source, decimal d)
-    {
-        var value = (long)Math.Round((d % 1) * 100000);
-        var color = source.Color;
-        if ((int)color < 100)
-        {
-            color = value > 0 ? LogColor.Cyan : value < 0 ? LogColor.Magenta : LogColor.White;
-        }
-        return new LogTextItem($"{d:N}", color, source.Style);
-    }
-
-    /// <summary>Formats the specified value.</summary>
-    /// <param name="source">The source.</param>
-    /// <param name="value">The value.</param>
-    /// <returns>Returns a new LogTextItem.</returns>
-    public static LogTextItem Format(LogTextItem source, long value)
-    {
-        var color = source.Color;
-        if ((int)color < 100)
-        {
-            color = value > 0 ? LogColor.Cyan : value < 0 ? LogColor.Magenta : LogColor.White;
-        }
-        return new LogTextItem($"{value:N}", color, source.Style);
-    }
-
-    /// <summary>Formats the specified value.</summary>
-    /// <param name="source">The source.</param>
-    /// <param name="value">The value.</param>
-    /// <returns>Returns a new LogTextItem.</returns>
-    public static LogTextItem Format(LogTextItem source, int value)
-    {
-        var color = source.Color;
-        if ((int)color < 100)
-        {
-            color = value > 0 ? LogColor.Cyan : value < 0 ? LogColor.Magenta : LogColor.White;
-        }
-
-        return new LogTextItem($"{value}", color, source.Style);
-    }
-
     /// <summary>Gets the <see cref="LogColor"/> for the specified string.</summary>
     /// <param name="color">The color name.</param>
     /// <returns>Returns the color.</returns>
@@ -158,7 +95,7 @@ public sealed class LogText : ILogText, IEquatable<LogText>
 
         if (!Unbox(color).TryParse<LogColor>(out var result))
         {
-            result = LogColor.Unchanged;
+            result = LogColor.Default;
         }
         return result;
     }
@@ -183,69 +120,12 @@ public sealed class LogText : ILogText, IEquatable<LogText>
     /// <summary>Checks whether a specified string is a valid <see cref="LogColor"/>.</summary>
     /// <param name="color">Name of the color.</param>
     /// <returns>Returns true if the specified string is a valid color.</returns>
-    public static bool IsColor(string color)
-    {
-        var name = Unbox(color).ToLower();
-        return name switch
-        {
-            "default" or "black" or "gray" or "blue" or "green" or "cyan" or "red" or "magenta" or "yellow" or "white" => true,
-            _ => false,
-        };
-    }
+    public static bool IsColor(string color) => Unbox(color).TryParse<LogColor>(out var result);
 
     /// <summary>Checks whether a specified string is a valid <see cref="LogStyle"/>.</summary>
     /// <param name="style">The style name.</param>
     /// <returns>Returns true if the specified string is a valid style name.</returns>
-    public static bool IsStyle(string style)
-    {
-        var name = Unbox(style).ToLower();
-        return name switch
-        {
-            "default" or "bold" or "italic" or "underline" or "stikeout" => true,
-            _ => false,
-        };
-    }
-
-    /// <summary>Implements the operator !=.</summary>
-    /// <param name="x1">The first item.</param>
-    /// <param name="x2">The second item.</param>
-    /// <returns>The result of the operator.</returns>
-    public static bool operator !=(LogText x1, LogText x2) => x1?.ToString() != x2?.ToString();
-
-    /// <summary>Implements the operator +.</summary>
-    /// <param name="x1">The first item to add.</param>
-    /// <param name="x2">The second item to add.</param>
-    /// <returns>The result of the operator.</returns>
-    public static LogText operator +(LogText x1, LogText x2) => new(x1, x2);
-
-    /// <summary>Implements the operator +.</summary>
-    /// <param name="x1">The first item to add.</param>
-    /// <param name="x2">The second item to add.</param>
-    /// <returns>The result of the operator.</returns>
-    public static LogText operator +(LogText x1, LogTextItem x2)
-    {
-        var items = new List<LogTextItem>();
-        items.AddRange(x1.Items);
-        items.Add(x2);
-        return new LogText(items.ToArray());
-    }
-
-    /// <summary>Implements the operator +.</summary>
-    /// <param name="x1">The first item to add.</param>
-    /// <param name="x2">The second item to add.</param>
-    /// <returns>The result of the operator.</returns>
-    public static LogText operator +(LogTextItem x1, LogText x2)
-    {
-        var items = new List<LogTextItem> { x1 };
-        items.AddRange(x2.Items);
-        return new LogText(items.ToArray());
-    }
-
-    /// <summary>Implements the operator ==.</summary>
-    /// <param name="x1">The first item.</param>
-    /// <param name="x2">The second item.</param>
-    /// <returns>The result of the operator.</returns>
-    public static bool operator ==(LogText x1, LogText x2) => x1?.ToString() == x2?.ToString();
+    public static bool IsStyle(string style) => Unbox(style).TryParse<LogStyle>(out var result);
 
     /// <summary>Converts the specified <see cref="LogColor"/> to a <see cref="Color"/>.</summary>
     /// <exception cref="ArgumentOutOfRangeException">An Exception is thrown if an invalid color string is given.</exception>
@@ -297,95 +177,71 @@ public sealed class LogText : ILogText, IEquatable<LogText>
     /// <param name="color">Color of the text.</param>
     /// <param name="style">The style.</param>
     /// <param name="text">The text.</param>
-    public LogText(IFormattable text, LogColor color = 0, LogStyle style = 0)
-        : this(new LogTextItem(text, color, style))
+    public LogText(string text, LogColor color = 0, LogStyle style = 0)
     {
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="LogText"/> class.</summary>
-    /// <param name="items">The items.</param>
-    public LogText(params LogTextItem[] items) => Items = items.AsReadOnly();
-
-    /// <summary>Initializes a new instance of the <see cref="LogText"/> class.</summary>
-    /// <param name="items">The items.</param>
-    public LogText(params LogText[] items)
-    {
-        Items = items.SelectMany(i => i.Items).ToList().AsReadOnly();
+        Text = text;
+        Color = color;
+        Style = style;
     }
 
     #endregion Constructors
 
-    #region Properties
+    /// <inheritdoc />
+    public string Text { get; }
 
-    /// <summary>Gets all <see cref="LogText"/> Items at this instance.</summary>
-    public ICollection<LogTextItem> Items { get; }
+    /// <inheritdoc />
+    public LogColor Color { get; }
 
-    /// <summary>Gets the plain text without any style and color information.</summary>
-    public string ToString(IFormatProvider provider)
-    {
-        var result = new StringBuilder();
-        foreach (var item in Items)
-        {
-            result.Append(item.Formattable.ToString(null, provider));
-        }
-
-        return result.ToString();
-    }
-
-    #endregion Properties
+    /// <inheritdoc />
+    public LogStyle Style { get; }
 
     #region IEquatable<LogText> Members
 
     /// <inheritdoc />
-    public bool Equals(LogText other) => Items.SequenceEqual(other.Items);
+    public virtual bool Equals(LogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
 
     #endregion IEquatable<LogText> Members
 
-    #region IXT Members
-
-    /// <inheritdoc/>
-    public LogText ToLogText() => this;
-
-    #endregion IXT Members
-
     #region Overrides
-
-    /// <summary>Determines whether the specified <see cref="object"/>, is equal to this instance.</summary>
-    /// <param name="obj">The <see cref="object"/> to compare with this instance.</param>
-    /// <returns><c>true</c> if the specified <see cref="object"/> is equal to this instance; otherwise, <c>false</c>.</returns>
-    public override bool Equals(object obj) => obj is LogText other && Equals(other);
 
     /// <summary>Returns a hash code for this instance.</summary>
     /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-    public override int GetHashCode() => UserHashingFunction.Combine(Items);
+    public override int GetHashCode() => DefaultHashingFunction.Combine(Text, Color, Style);
 
-    /// <summary>Gets the plain text without any style and color information using <see cref="ToString(IFormatProvider)"/> for <see cref="CultureInfo.CurrentCulture"/>.</summary>
-    public override string ToString() => ToString(CultureInfo.CurrentCulture);
+    /// <summary>Gets the plain text without any style and color information using <see cref="ToString()"/> for <see cref="CultureInfo.CurrentCulture"/>.</summary>
+    public override string ToString()
+    {
+        StringBuilder sb = new();
+        if (Style != default) sb.Append(ToString(Style));
+        if (Color != default) sb.Append(ToString(Color));
+        sb.Append(Text);
+        return sb.ToString();
+    }
 
     #endregion Overrides
 
     #region Members
 
-    /*
-    void ParseData()
+    /// <summary>Parses the specified text</summary>
+    /// <param name="text">Text to parse.</param>
+    /// <returns>Returns a list of <see cref="ILogText"/> items.</returns>
+    /// <exception cref="Exception"></exception>
+    public static IList<ILogText> Parse(string text)
     {
-        if (data == null)
+        if (text == null)
         {
             throw new Exception("Data is unset!");
         }
 
-        var plainText = new StringBuilder();
-        var lines = data.SplitNewLine();
-        var items = new List<LogTextItem>();
-        items.Clear();
+        var lines = text.SplitNewLine();
+        var items = new List<ILogText>();
         for (var i = 0; i < lines.Length; i++)
         {
             var color = LogColor.Default;
-            var style = LogStyle.Default;
+            var style = LogStyle.Unchanged;
             if (i > 0)
             {
-                plainText.AppendLine();
-                items.Add(LogTextItem.NewLine);
+                items.Add(LogText.NewLine);
             }
 
             var currentLine = lines[i];
@@ -450,8 +306,7 @@ public sealed class LogText : ILogText, IEquatable<LogText>
                     currentText = currentLine.Substring(textStart);
                     if (currentText.Length > 0)
                     {
-                        plainText.Append(currentText);
-                        items.Add(new LogTextItem(color, style, currentText));
+                        items.Add(new LogText(currentText, color, style));
                     }
 
                     break;
@@ -460,8 +315,7 @@ public sealed class LogText : ILogText, IEquatable<LogText>
                 currentText = currentLine.Substring(textStart, tokenStart - textStart);
                 if (currentText.Length > 0)
                 {
-                    plainText.Append(currentText);
-                    items.Add(new LogTextItem(color, style, currentText));
+                    items.Add(new LogText(currentText, color, style));
                 }
 
                 var token = currentLine.Substring(tokenStart, ++tokenEnd - tokenStart);
@@ -472,9 +326,9 @@ public sealed class LogText : ILogText, IEquatable<LogText>
                 else if (IsStyle(token))
                 {
                     var newStyle = GetStyle(token);
-                    if (newStyle == LogStyle.Default)
+                    if (newStyle == LogStyle.Reset)
                     {
-                        style = LogStyle.Default;
+                        style = LogStyle.Reset;
                     }
                     else
                     {
@@ -484,29 +338,20 @@ public sealed class LogText : ILogText, IEquatable<LogText>
                 else
                 {
                     // invalid token or parameter, ignore
-                    plainText.Append(token);
-                    items.Add(new LogTextItem(color, style, token));
+                    items.Add(new LogText(token, color, style));
                 }
 
                 textStart = tokenEnd;
             }
         }
 
-        if (data.EndsWith("\r") || data.EndsWith("\n"))
+        if (text.EndsWith("\r") || text.EndsWith("\n"))
         {
-            items.Add(LogTextItem.NewLine);
-            plainText.AppendLine();
+            items.Add(LogText.NewLine);
         }
 
-        if ((items.Count > 0) && (items[items.Count - 1].Color != LogColor.Default))
-        {
-            items.Add(new LogTextItem(LogColor.Default, string.Empty));
-            data += "<default>";
-        }
-
-        text = plainText.ToString();
-        this.items = items.ToArray();
+        return items;
     }
-    */
+
     #endregion Members
 }

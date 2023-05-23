@@ -9,17 +9,19 @@ public sealed class LogMessage
     #region Constructors
 
     /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
-    /// <param name="sender">Sender of the message.</param>
+    /// <param name="senderName">Sender name of the message.</param>
+    /// <param name="senderType">Sender type of the message (optional).</param>
     /// <param name="level">The level.</param>
     /// <param name="exception">The exception.</param>
-    /// <param name="message">The message.</param>
+    /// <param name="content">The message content.</param>
     /// <param name="member">Optional: method or property name of the sender.</param>
     /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
     /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    public LogMessage(string sender, LogLevel level, Exception? exception, LogText? message, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
+    public LogMessage(string senderName, Type? senderType, LogLevel level, IFormattable content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
-        Sender = sender;
-        Message = message;
+        SenderName = senderName;
+        SenderType = senderType;
+        Content = content;
         Exception = exception;
         Level = level;
         SourceMember = member;
@@ -32,10 +34,12 @@ public sealed class LogMessage
     #region Properties
 
     /// <summary>Gets the sender.</summary>
-    public string Sender { get; }
+    public string SenderName { get; }
+
+    public Type? SenderType { get; }
 
     /// <summary>Gets the date time.</summary>
-    public DateTime DateTime { get; } = DateTime.Now;
+    public DateTime DateTime { get; } = MonotonicTime.Now;
 
     /// <summary>Gets the level.</summary>
     public LogLevel Level { get; }
@@ -43,8 +47,8 @@ public sealed class LogMessage
     /// <summary>Gets the exception.</summary>
     public Exception? Exception { get; }
 
-    /// <summary>Gets the message.</summary>
-    public LogText? Message { get; }
+    /// <summary>Gets the message content.</summary>
+    public IFormattable? Content { get; }
 
     /// <summary>Gets the method or property name of the sender.</summary>
     /// <remarks>This might be null when running obfuscated binaries.</remarks>
@@ -59,4 +63,7 @@ public sealed class LogMessage
     public int SourceLine { get; }
 
     #endregion Properties
+
+    /// <summary>Gets the current age of the message.</summary>
+    public TimeSpan Age => MonotonicTime.UtcNow - DateTime.ToUniversalTime();
 }

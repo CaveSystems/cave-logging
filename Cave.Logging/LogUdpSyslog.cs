@@ -9,7 +9,7 @@ using Cave.Logging;
 namespace Cave.Syslog;
 
 /// <summary>Provides udp logging to a syslog server.</summary>
-public class LogUdpSyslog : LogReceiver, IDisposable
+public class LogUdpSyslog : LogReceiverBase, IDisposable
 {
     #region Static
 
@@ -37,9 +37,7 @@ public class LogUdpSyslog : LogReceiver, IDisposable
     #region Private Fields
 
     int maximumMessageLength = 2048;
-
-    UdpClient udpClient;
-
+    UdpClient? client;
     SyslogMessageVersion version = SyslogMessageVersion.RFC3164;
 
     #endregion Private Fields
@@ -60,7 +58,7 @@ public class LogUdpSyslog : LogReceiver, IDisposable
     /// <remarks>This is the default instance logging to localhost.</remarks>
     public LogUdpSyslog()
     {
-        udpClient = new UdpClient();
+        client = new UdpClient();
         Target = new IPEndPoint(IPAddress.Loopback, 514);
     }
 
@@ -137,24 +135,20 @@ public class LogUdpSyslog : LogReceiver, IDisposable
 
     #region Overrides
 
-    /// <summary>Writes the specified log message.</summary>
-    /// <param name="dateTime">The date time.</param>
-    /// <param name="level">The level.</param>
-    /// <param name="source">The source.</param>
-    /// <param name="content">The content.</param>
-    protected override void Write(DateTime dateTime, LogLevel level, string source, LogText content)
+    /// <inheritdoc />
+    public override void Write(LogMessage message)
     {
-        var udp = udpClient;
+        var udp = client;
         if (udp == null)
         {
             return;
         }
 
-        var text = source + ": " + content.Text;
-        foreach (var part in text.SplitNewLineAndLength(maximumMessageLength))
+        var text = $"{message.SenderName}: {message.Content}";
+        foreach (var part in text.SplitNewLineAndLength(MaximumMessageLength))
         {
-            var severity = (SyslogSeverity)((int)level & 0x7);
-            var item = new SyslogMessage(version, Facility, severity, dateTime, Logger.HostName, Logger.ProcessName, 0, null, part, null);
+            var severity = (SyslogSeverity)((int)message.Level & 0x7);
+            var item = new SyslogMessage(Version, Facility, severity, message.DateTime, Logger.HostName, Logger.Process?.ProcessName, Logger.Process?.Id ?? 0, null, part, null);
             var data = Encoding.UTF8.GetBytes(item.ToString());
             udp.Send(data, data.Length, Target);
         }
@@ -169,8 +163,8 @@ public class LogUdpSyslog : LogReceiver, IDisposable
         }
 
         base.Close();
-        udpClient?.Close();
-        udpClient = null;
+        client?.Close();
+        client = null;
     }
 
     #region IDisposable Member
@@ -181,8 +175,8 @@ public class LogUdpSyslog : LogReceiver, IDisposable
     {
         if (disposing)
         {
-            udpClient?.Close();
-            udpClient = null;
+            client?.Close();
+            client = null;
         }
 
         base.Dispose(disposing);
@@ -195,7 +189,7 @@ public class LogUdpSyslog : LogReceiver, IDisposable
     #region Overrides
 
     /// <summary>Obtains an identification string for the object.</summary>
-    public override string ToString() => "Syslog<" + Target + ">[" + version + "]";
+    public override string ToString() => "Syslog<" + Target + ">[" + Version + "]";
 
     #endregion Overrides
 }

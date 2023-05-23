@@ -27,7 +27,7 @@ class LogCollectorTest
         {
             Assert.IsTrue(col.TryGet(out var msg));
             Assert.AreEqual(LogLevel.Information, msg.Level);
-            Assert.AreEqual($"Message {i}", msg.Content.Text);
+            Assert.AreEqual($"Message {i}", msg.Content.ToString());
             Assert.AreEqual(new LogText($"Message <cyan>{i}"), msg.Content);
         }
         Assert.IsFalse(col.TryGet(out _));
@@ -55,7 +55,7 @@ class LogCollectorTest
         {
             Assert.IsTrue(col.TryGet(out var msg));
             Assert.AreEqual(LogLevel.Information, msg.Level);
-            Assert.AreEqual($"Message {i}", msg.Content.Text);
+            Assert.AreEqual($"Message {i}", msg.Content.ToString());
             Assert.AreEqual(new LogText($"Message <cyan>{i}"), msg.Content);
         }
         Assert.IsFalse(col.TryGet(out _));
@@ -83,7 +83,7 @@ class LogCollectorTest
         {
             Assert.IsTrue(col.TryGet(out var msg));
             Assert.AreEqual(LogLevel.Information, msg.Level);
-            Assert.AreEqual($"Message {i}", msg.Content.Text);
+            Assert.AreEqual($"Message {i}", msg.Content.ToString());
             Assert.AreEqual(new LogText($"Message <cyan>{i}"), msg.Content);
         }
         Assert.IsFalse(col.TryGet(out _));

@@ -16,11 +16,17 @@ static class LogHelper
 
     /// <summary>Writes a line to the <see cref="Debug"/> output.</summary>
     /// <param name="msg"></param>
-    public static void DebugLine(string msg) => Debug.WriteLine(msg, "Logging");
+    public static void DebugLine(string msg) => Debug.WriteLineIf(LogToDebug, msg, "Logging");
 
     /// <summary>Writes a line to the <see cref="Trace"/> output.</summary>
     /// <param name="msg"></param>
-    public static void TraceLine(string msg) => Trace.WriteLine(msg, "Logging");
+    public static void TraceLine(string msg) => Trace.WriteLineIf(LogToTrace, msg, "Logging");
+
+    /// <summary>Log to <see cref="Debug"/>. This setting is false by default.</summary>
+    public static bool LogToDebug { get; set; }
+
+    /// <summary>Log to <see cref="Trace"/>. This setting is false by default.</summary>
+    public static bool LogToTrace { get; set; }
 
     #endregion Static
 }

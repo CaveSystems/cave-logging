@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cave.Backports" Version="3.0.0" />
+        <PackageReference Include="Cave.Backports" Version="3.0.2" />
         <PackageReference Include="Cave.Extensions" Version="3.0.1" />
         <PackageReference Include="Cave.IO" Version="3.0.0" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
@@ -27,4 +27,5 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
+
 </Project>

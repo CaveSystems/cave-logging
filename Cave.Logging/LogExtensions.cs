@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -14,29 +15,15 @@ public static class LogExtensions
     /// <summary>Retrieves the <see cref="LogText"/> instance as HTML.</summary>
     /// <param name="items">The extended text.</param>
     /// <returns>Returns the html code.</returns>
-    public static string ToHtml(this IEnumerable<ILogText> items, CultureInfo cultureInfo)
+    public static string ToHtml(this IEnumerable<ILogText> items, IFormatProvider formatProvider)
     {
-        var sb = new StringBuilder();
-        sb.Append("<html>");
-        sb.Append("<body>");
-        items.WriteHtml(sb, cultureInfo);
-        sb.Append("</body>");
-        sb.Append("</html>");
-        return sb.ToString();
-    }
-
-    /// <summary>Retrieves the <see cref="LogText"/> instance as HTML.</summary>
-    /// <param name="items">The extended text.</param>
-    /// <returns>Returns the html code.</returns>
-    public static string ToHtml(this IEnumerable<LogText> items, CultureInfo cultureInfo)
-    {
-        var sb = new StringBuilder();
-        sb.Append("<html>");
-        sb.Append("<body>");
-        items.WriteHtml(sb, cultureInfo);
-        sb.Append("</body>");
-        sb.Append("</html>");
-        return sb.ToString();
+        var target = new StringBuilder();
+        target.Append("<html>");
+        target.Append("<body>");
+        items.WriteHtml(target, formatProvider);
+        target.Append("</body>");
+        target.Append("</html>");
+        return target.ToString();
     }
 
     /// <summary>Gets the eXtended Text for a KeyValuePair.</summary>
@@ -44,28 +31,19 @@ public static class LogExtensions
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="item">The item.</param>
     /// <returns>Returns a new <see cref="LogText"/> instance.</returns>
-    public static LogText ToLogText<TKey, TValue>(this KeyValuePair<TKey, TValue> item) => new LogText($"{item.Key}={item.Value}");
+    public static ILogText ToLogText<TKey, TValue>(this KeyValuePair<TKey, TValue> item) => new LogText($"{item.Key}={item.Value}");
 
     /// <summary>Gets the eXtended Text for a KeyValuePair enumeration.</summary>
     /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="items">The items.</param>
     /// <returns>Returns a new <see cref="LogText"/> instance.</returns>
-    public static LogText ToLogText<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
-    {
-        var x = new LogTextBuilder();
-        foreach (var item in items)
-        {
-            x.Append(item.ToLogText());
-        }
-
-        return x;
-    }
+    public static IEnumerable<ILogText> ToLogText<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items) => items.Select(i => i.ToLogText());
 
     /// <summary>Gets the eXtended Text for a value.</summary>
     /// <param name="timeSpan">The time span.</param>
     /// <returns>Returns a new <see cref="LogText"/> instance.</returns>
-    public static LogText ToLogText(this TimeSpan timeSpan) =>
+    public static ILogText ToLogText(this TimeSpan timeSpan) =>
         timeSpan.Ticks > 0
             ? new LogText($"{timeSpan.FormatTime()}", LogColor.Cyan)
             : timeSpan.Ticks < 0
@@ -76,31 +54,31 @@ public static class LogExtensions
     /// <param name="ex">The <see cref="Exception"/>.</param>
     /// <param name="debug">Include debug information (stacktrace, data).</param>
     /// <returns>Returns a new <see cref="LogText"/> instance.</returns>
-    public static LogText ToLogText(this Exception ex, bool debug = false)
+    public static IEnumerable<ILogText> ToLogText(this Exception ex, bool debug = false)
     {
         // ignore AggregateException
-        if (ex is AggregateException)
+        if (ex is AggregateException && ex.InnerException is not null)
         {
             return ToLogText(ex.InnerException, debug);
         }
 
-        if (ex == null)
+        if (ex is null)
         {
-            return new LogText(string.Empty);
+            return new[] { new LogText(string.Empty) };
         }
 
-        var result = new List<LogTextItem>();
-        var spacer = new LogTextItem(LogColor.Unchanged, LogStyle.Default, "  ");
-        result.Add(new LogTextItem(ex.GetType().Name, LogColor.Red, LogStyle.Bold));
+        var result = new List<ILogText>();
+        var spacer = new LogText("  ", LogColor.Default, LogStyle.Unchanged);
+        result.Add(new LogText(ex.GetType().Name, LogColor.Red, LogStyle.Bold));
         if (debug)
         {
-            result.Add(LogTextItem.NewLine);
-            result.Add(new LogTextItem("Message:", LogColor.White, LogStyle.Bold));
-            result.Add(LogTextItem.NewLine);
+            result.Add(LogText.NewLine);
+            result.Add(new LogText("Message:", LogColor.White, LogStyle.Bold));
+            result.Add(LogText.NewLine);
         }
         else
         {
-            result.Add(new LogTextItem(": "));
+            result.Add(new LogText(": "));
         }
 
         foreach (var str in ex.Message.SplitNewLine())
@@ -115,16 +93,16 @@ public static class LogExtensions
                 result.Add(spacer);
             }
 
-            result.Add(new LogTextItem(str, LogColor.Unchanged, LogStyle.Unchanged));
-            result.Add(LogTextItem.NewLine);
+            result.Add(new LogText(str, LogColor.Default, LogStyle.Unchanged));
+            result.Add(LogText.NewLine);
         }
 
         if (debug)
         {
             if (!string.IsNullOrEmpty(ex.Source))
             {
-                result.Add(new LogTextItem("Source:", LogColor.White, LogStyle.Bold));
-                result.Add(LogTextItem.NewLine);
+                result.Add(new LogText("Source:", LogColor.White, LogStyle.Bold));
+                result.Add(LogText.NewLine);
                 foreach (var str in ex.Source.SplitNewLine())
                 {
                     if ((str.Trim().Length == 0) || !ASCII.IsClean(str))
@@ -133,26 +111,26 @@ public static class LogExtensions
                     }
 
                     result.Add(spacer);
-                    result.Add(new LogTextItem(str, LogColor.Unchanged, LogStyle.Unchanged));
-                    result.Add(LogTextItem.NewLine);
+                    result.Add(new LogText(str, LogColor.Default, LogStyle.Unchanged));
+                    result.Add(LogText.NewLine);
                 }
             }
 
             if (ex.Data.Count > 0)
             {
-                result.Add(new LogTextItem("Data:", LogColor.White, LogStyle.Bold));
-                result.Add(LogTextItem.NewLine);
+                result.Add(new LogText("Data:", LogColor.White, LogStyle.Bold));
+                result.Add(LogText.NewLine);
                 foreach (var key in ex.Data.Keys)
                 {
-                    result.Add(new LogTextItem($"  {key}: {ex.Data[key]}\n", LogColor.Unchanged, LogStyle.Unchanged));
-                    result.Add(LogTextItem.NewLine);
+                    result.Add(new LogText($"  {key}: {ex.Data[key]}\n", LogColor.Default, LogStyle.Unchanged));
+                    result.Add(LogText.NewLine);
                 }
             }
 
             if (!string.IsNullOrEmpty(ex.StackTrace))
             {
-                result.Add(new LogTextItem("StackTrace:", LogColor.White, LogStyle.Bold));
-                result.Add(LogTextItem.NewLine);
+                result.Add(new LogText("StackTrace:", LogColor.White, LogStyle.Bold));
+                result.Add(LogText.NewLine);
                 foreach (var str in ex.StackTrace.SplitNewLine())
                 {
                     if ((str.Trim().Length == 0) || !ASCII.IsClean(str))
@@ -161,154 +139,123 @@ public static class LogExtensions
                     }
 
                     result.Add(spacer);
-                    result.Add(new LogTextItem(str, LogColor.Unchanged, LogStyle.Unchanged));
-                    result.Add(LogTextItem.NewLine);
+                    result.Add(new LogText(str, LogColor.Default, LogStyle.Unchanged));
+                    result.Add(LogText.NewLine);
                 }
             }
         }
 
-        if (ex.InnerException != null)
+        if (ex.InnerException is not null)
         {
             if (debug)
             {
-                result.Add(new LogTextItem("---", LogColor.White, LogStyle.Bold));
-                result.Add(LogTextItem.NewLine);
+                result.Add(new LogText("---", LogColor.White, LogStyle.Bold));
+                result.Add(LogText.NewLine);
             }
 
-            result.AddRange(ToLogText(ex.InnerException, debug).Items);
+            result.AddRange(ToLogText(ex.InnerException, debug));
         }
 
         if (ex is ReflectionTypeLoadException exception)
         {
             foreach (var inner in exception.LoaderExceptions)
             {
+                if (inner is null) continue;
                 if (debug)
                 {
-                    result.Add(new LogTextItem("---", LogColor.White, LogStyle.Bold));
-                    result.Add(LogTextItem.NewLine);
+                    result.Add(new LogText("---", LogColor.White, LogStyle.Bold));
+                    result.Add(LogText.NewLine);
                 }
 
-                result.AddRange(ToLogText(inner, debug).Items);
+                result.AddRange(ToLogText(inner, debug));
             }
         }
 
-        while ((result.Count > 0) && (result[result.Count - 1] == LogTextItem.NewLine))
-        {
-            result.RemoveAt(result.Count - 1);
-        }
-
-        return new LogText(result.ToArray());
+        return result;
     }
 
     /// <summary>Writes the <see cref="LogText"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
-    /// <param name="x">The extended text.</param>
-    /// <param name="sb">The StringBuilder.</param>
-    public static void WriteHtml(this LogText x, StringBuilder sb, CultureInfo cultureInfo)
+    /// <param name="logTextItems">The log text items.</param>
+    /// <param name="target">The target to write to.</param>
+    public static void WriteHtml(this IEnumerable<ILogText> logTextItems, StringBuilder target, IFormatProvider formatProvider)
     {
-        var color = LogColor.Unchanged;
+        var color = LogColor.Default;
         var style = LogStyle.Unchanged;
-        foreach (var item in x.Items)
+        foreach (var logText in logTextItems)
         {
-            if (item.Color != color)
+            if (logText.Color != color)
             {
                 // close old span
-                if (color != LogColor.Unchanged)
+                if (color != LogColor.Default)
                 {
-                    sb.Append("</span>");
+                    target.Append("</span>");
                 }
 
                 // set new color
-                color = item.Color;
+                color = logText.Color;
 
                 // open new span
-                if (color != LogColor.Unchanged)
+                if (color != LogColor.Default)
                 {
-                    sb.Append($"<span style=\"color:{color.ToString().ToLower()}\">");
+                    target.Append($"<span style=\"color:{color.ToString().ToLower()}\">");
                 }
             }
 
-            if (item.Style != style)
+            if (logText.Style != style)
             {
                 // close old tags
                 if (style != LogStyle.Unchanged)
                 {
                     if (style.HasFlag(LogStyle.Strikeout))
                     {
-                        sb.Append("</span>");
+                        target.Append("</span>");
                     }
 
                     if (style.HasFlag(LogStyle.Underline))
                     {
-                        sb.Append("</span>");
+                        target.Append("</span>");
                     }
 
                     if (style.HasFlag(LogStyle.Italic))
                     {
-                        sb.Append("</em>");
+                        target.Append("</em>");
                     }
 
                     if (style.HasFlag(LogStyle.Bold))
                     {
-                        sb.Append("</strong>");
+                        target.Append("</strong>");
                     }
                 }
 
                 // set new style
-                style = item.Style;
+                style = logText.Style;
 
                 // open new span
                 if (style.HasFlag(LogStyle.Bold))
                 {
-                    sb.Append("<strong>");
+                    target.Append("<strong>");
                 }
 
                 if (style.HasFlag(LogStyle.Italic))
                 {
-                    sb.Append("<em>");
+                    target.Append("<em>");
                 }
 
                 if (style.HasFlag(LogStyle.Underline))
                 {
-                    sb.Append("<span style=\"text-decoration:underline;\">");
+                    target.Append("<span style=\"text-decoration:underline;\">");
                 }
 
                 if (style.HasFlag(LogStyle.Strikeout))
                 {
-                    sb.Append("<span style=\"text-decoration:line-through;\">");
+                    target.Append("<span style=\"text-decoration:line-through;\">");
                 }
             }
 
-            if (item.Formattable is not null)
+            if (logText.Text is not null)
             {
-                sb.Append(item.Formattable.ToString(null, cultureInfo).ReplaceNewLine("<br/>"));
+                target.Append(logText.Text.ReplaceNewLine("<br/>"));
             }
-        }
-    }
-
-    /// <summary>Writes the <see cref="LogText"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
-    /// <param name="x">The extended text.</param>
-    /// <param name="sb">The StringBuilder.</param>
-    public static void WriteHtml(this ILogText x, StringBuilder sb, CultureInfo cultureInfo) => x.ToLogText().WriteHtml(sb, cultureInfo);
-
-    /// <summary>Writes the <see cref="LogText"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
-    /// <param name="items">The extended text items.</param>
-    /// <param name="sb">The StringBuilder.</param>
-    public static void WriteHtml(this IEnumerable<LogText> items, StringBuilder sb, CultureInfo cultureInfo)
-    {
-        foreach (var item in items)
-        {
-            item.WriteHtml(sb, cultureInfo);
-        }
-    }
-
-    /// <summary>Writes the <see cref="LogText"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
-    /// <param name="items">The extended text items.</param>
-    /// <param name="sb">The StringBuilder.</param>
-    public static void WriteHtml(this IEnumerable<ILogText> items, StringBuilder sb, CultureInfo cultureInfo)
-    {
-        foreach (var item in items)
-        {
-            item.WriteHtml(sb, cultureInfo);
         }
     }
 

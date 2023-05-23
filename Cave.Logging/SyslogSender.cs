@@ -14,11 +14,11 @@ public class SyslogSender : IDisposable
 #if NETSTANDARD1_0_OR_GREATER || NET5_0_OR_GREATER
     static readonly byte[] empty = Array.Empty<byte>();
 #else
-        static readonly byte[] empty = new byte[0];
+    static readonly byte[] empty = new byte[0];
 #endif
     ConnectionString target;
-    TcpClient tcpClient;
-    UdpClient udpClient;
+    TcpClient? tcpClient;
+    UdpClient? udpClient;
     SyslogMessageVersion version = SyslogMessageVersion.Undefined;
 
     #endregion Private Fields

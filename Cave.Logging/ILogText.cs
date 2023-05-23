@@ -1,13 +1,16 @@
+using System;
+
 namespace Cave.Logging;
 
 /// <summary>Provides an interface for structs / objects supporting the ToLogText() method.</summary>
 public interface ILogText
 {
-    #region Members
+    /// <summary>Gets the Color of the item.</summary>
+    LogColor Color { get; }
 
-    /// <summary>Provides an eXtended Text string for this object.</summary>
-    /// <returns>Returns a new LogText instance with the description of this object.</returns>
-    LogText ToLogText();
+    /// <summary>Gets the Style of the item.</summary>
+    LogStyle Style { get; }
 
-    #endregion Members
+    /// <summary>Gets the text of the item.</summary>
+    string Text { get; }
 }

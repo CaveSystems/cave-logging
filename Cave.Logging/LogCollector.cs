@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Cave.Logging;
 
 /// <summary>Automatically collects the latest and keeps a specified number of <see cref="LogMessage"/> items from the logging system.</summary>
-public class LogCollector : LogReceiver
+public class LogCollector : LogReceiverBase
 {
     #region Fields
 
@@ -23,14 +23,6 @@ public class LogCollector : LogReceiver
     protected virtual void OnMessageReceived(LogMessageEventArgs e)
     {
         MessageReceived?.Invoke(this, e);
-        if (!e.Handled)
-        {
-            lock (items)
-            {
-                items.Enqueue(e.Message);
-                CleanItems();
-            }
-        }
     }
 
     #endregion Protected Methods
@@ -38,7 +30,7 @@ public class LogCollector : LogReceiver
     #region Public Events
 
     /// <summary>Event to be called on each incoming message before the message is added to the queue.</summary>
-    public event EventHandler<LogMessageEventArgs> MessageReceived;
+    public event EventHandler<LogMessageEventArgs>? MessageReceived;
 
     #endregion Public Events
 
@@ -141,15 +133,23 @@ public class LogCollector : LogReceiver
 
     #region ILogReceiver Member
 
-    /// <inheritdoc/>
-    protected override void Write(DateTime dateTime, LogLevel level, string source, LogText content) => Write(new LogMessage(source, dateTime, level, null, content, null));
-
     /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
-    /// <param name="msg">The message.</param>
-    public override void Write(LogMessage msg)
+    /// <param name="message">The message.</param>
+    public override void Write(LogMessage message)
     {
-        var e = new LogMessageEventArgs(msg);
+        //never collect messages I sent by myself!
+        if (message.SenderType == GetType()) return;
+
+        var e = new LogMessageEventArgs(message);
         OnMessageReceived(e);
+        if (!e.Handled)
+        {
+            lock (items)
+            {
+                items.Enqueue(e.Message);
+                CleanItems();
+            }
+        }
     }
 
     #endregion ILogReceiver Member

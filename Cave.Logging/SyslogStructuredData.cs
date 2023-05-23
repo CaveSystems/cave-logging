@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace Cave.Logging;
 
 /// <summary>Provides structured data encoding / decoding for syslog messages according to RFC 5424.</summary>
+[SuppressMessage("", "CA1710")]
 public class SyslogStructuredData : ICollection<SyslogStructuredDataPart>, ICollection<string>
 {
     #region Static
@@ -99,7 +101,7 @@ public class SyslogStructuredData : ICollection<SyslogStructuredDataPart>, IColl
     {
         if (Count == 0)
         {
-            return null;
+            return string.Empty;
         }
 
         var result = new StringBuilder();

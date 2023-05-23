@@ -33,7 +33,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// <param name="dateTime1">The first date time.</param>
     /// <param name="dateTime2">The second date time2.</param>
     /// <returns>The result of the operator.</returns>
-    public static bool operator !=(SyslogMessageDateTime dateTime1, SyslogMessageDateTime dateTime2)
+    public static bool operator !=(SyslogMessageDateTime? dateTime1, SyslogMessageDateTime? dateTime2)
     {
         if (dateTime1 is null)
         {
@@ -77,7 +77,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// <param name="dateTime1">The first date time.</param>
     /// <param name="dateTime2">The second date time2.</param>
     /// <returns>The result of the operator.</returns>
-    public static bool operator ==(SyslogMessageDateTime dateTime1, SyslogMessageDateTime dateTime2)
+    public static bool operator ==(SyslogMessageDateTime? dateTime1, SyslogMessageDateTime? dateTime2)
     {
         if (dateTime1 is null)
         {
@@ -272,16 +272,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// </summary>
     /// <param name="obj">An object to compare with the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
-    public int CompareTo(object obj)
-    {
-        var other = obj as SyslogMessageDateTime;
-        if (other == null)
-        {
-            return -1;
-        }
-
-        return CompareTo(other);
-    }
+    public int CompareTo(object? obj) => CompareTo(obj as SyslogMessageDateTime);
 
     #endregion IComparable Members
 
@@ -293,15 +284,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// </summary>
     /// <param name="other">An object to compare with the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
-    public int CompareTo(SyslogMessageDateTime other)
-    {
-        if (other == null)
-        {
-            throw new ArgumentNullException(nameof(other));
-        }
-
-        return Value.CompareTo(other.Value);
-    }
+    public int CompareTo(SyslogMessageDateTime? other) => other is null ? 1 : Value.CompareTo(other.Value);
 
     #endregion IComparable<SyslogMessageDateTime> Members
 
@@ -310,15 +293,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// <summary>Determines whether a SyslogMessageDateTime object represents the same point in time as a specified object.</summary>
     /// <param name="other">The value to compare to the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
-    public bool Equals(SyslogMessageDateTime other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-
-        return Value.Equals(other.Value);
-    }
+    public bool Equals(SyslogMessageDateTime? other) => Equals(Value, other?.Value);
 
     #endregion IEquatable<SyslogMessageDateTime> Members
 
@@ -327,7 +302,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// <summary>Determines whether a SyslogMessageDateTime object represents the same point in time as a specified object.</summary>
     /// <param name="obj">The value to compare to the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
-    public override bool Equals(object obj) => Equals(obj as SyslogMessageDateTime);
+    public override bool Equals(object? obj) => obj is SyslogMessageDateTime dateTime && Equals(dateTime);
 
     /// <summary>Gets the hash code for the <see cref="Value"/>.</summary>
     /// <returns></returns>

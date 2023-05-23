@@ -4,12 +4,12 @@ namespace Cave;
 
 /// <summary>Provides available logging colors.</summary>
 [Flags]
-public enum LogStyle : uint
+public enum LogStyle : byte
 {
     /// <summary>No change</summary>
     Unchanged = 0,
 
-    /// <summary>Reset style (=will reset color to system default)</summary>
+    /// <summary>Reset style (=will reset color and style to system default)</summary>
     Reset = 1 << 0,
 
     /// <summary>Bold font</summary>
@@ -23,4 +23,7 @@ public enum LogStyle : uint
 
     /// <summary>Strikeout</summary>
     Strikeout = 1 << 4,
+
+    /// <summary>Inverse colors (sets bg color instead of fg color)</summary>
+    Inverse = 1 << 5,
 }

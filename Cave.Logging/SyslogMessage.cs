@@ -15,28 +15,28 @@ public struct SyslogMessage : IComparable
     public const string ValidNameChars = "!\"#$%&'()*+,-./0123456789:;<>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
     /// <summary>The content of the message.</summary>
-    public string Content;
+    public string? Content;
 
     /// <summary>The syslog facility.</summary>
     public SyslogFacility Facility;
 
     /// <summary>The server this message belongs to.</summary>
-    public string HostName;
+    public string? HostName;
 
     /// <summary>Senders ID of the message (do not use this as uuid!), this is only present for SyslogMessageVersion.RFC5424.</summary>
-    public string MessageID;
+    public string? MessageID;
 
     /// <summary>The process id this messages belongs to.</summary>
     public uint ProcessID;
 
     /// <summary>The process this messages belongs to.</summary>
-    public string ProcessName;
+    public string? ProcessName;
 
     /// <summary>The syslog severity.</summary>
     public SyslogSeverity Severity;
 
     /// <summary>The structured syslog data.</summary>
-    public SyslogStructuredData StructuredData;
+    public SyslogStructuredData? StructuredData;
 
     /// <summary>Provides access to the time stamp.</summary>
     public SyslogMessageDateTime TimeStamp;
@@ -59,33 +59,8 @@ public struct SyslogMessage : IComparable
     /// <param name="messageID">The message ID.</param>
     /// <param name="content">The content of the message.</param>
     /// <param name="data">The structured syslog data.</param>
-    public SyslogMessage(SyslogMessageVersion version, SyslogFacility facility, SyslogSeverity severity, SyslogMessageDateTime timeStamp, string hostName, string processName, uint processID, string messageID, string content, SyslogStructuredData data)
+    public SyslogMessage(SyslogMessageVersion version, SyslogFacility facility, SyslogSeverity severity, SyslogMessageDateTime? timeStamp, string? hostName, string? processName, int processID, string? messageID, string? content, SyslogStructuredData? data)
     {
-        if (string.IsNullOrEmpty(hostName))
-        {
-            hostName = Environment.MachineName.ToLower();
-        }
-
-        {
-            var index = hostName.IndexOf('.');
-            if (index > -1)
-            {
-                hostName = hostName.Substring(0, index);
-            }
-        }
-        if (string.IsNullOrEmpty(processName))
-        {
-            processName = Process.GetCurrentProcess().MainModule.ModuleName;
-            if (processID == 0)
-            {
-#if NET5_0_OR_GREATER
-                    processID = (uint)Environment.ProcessId;
-#else
-                processID = (uint)Process.GetCurrentProcess().Id;
-#endif
-            }
-        }
-
         if (timeStamp == null)
         {
             timeStamp = DateTime.Now;
@@ -97,8 +72,8 @@ public struct SyslogMessage : IComparable
         TimeStamp = timeStamp;
         HostName = hostName;
         ProcessName = processName;
-        ProcessID = processID;
-        MessageID = messageID;
+        ProcessID = (uint)processID;
+        MessageID = messageID ?? null;
         Content = content;
         StructuredData = data;
     }
@@ -810,7 +785,7 @@ public struct SyslogMessage : IComparable
     /// Compares the current instance with another object of the same type and returns an integer that indicates whether the current instance precedes,
     /// follows or occurs in the same position in the sort order as the other object.
     /// </summary>
-    public int CompareTo(object obj) => obj is SyslogMessage msg ? Equals(msg) ? 0 : TimeStamp.CompareTo(msg.TimeStamp) : ToString().CompareTo(obj?.ToString());
+    public int CompareTo(object? obj) => obj is SyslogMessage msg ? Equals(msg) ? 0 : TimeStamp.CompareTo(msg.TimeStamp) : ToString().CompareTo(obj?.ToString());
 
     #endregion IComparable Member
 
@@ -818,7 +793,7 @@ public struct SyslogMessage : IComparable
 
     /// <summary>Determines whether the specified Object is equal to the SyslogItem.</summary>
     /// <param name="obj">Object to test for equality.</param>
-    public override bool Equals(object obj) => obj is SyslogMessage msg && msg.ToString() == ToString();
+    public override bool Equals(object? obj) => obj is SyslogMessage msg && msg.ToString() == ToString();
 
     #endregion IEquatable Member
 }
