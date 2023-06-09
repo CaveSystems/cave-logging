@@ -13,7 +13,7 @@ public abstract class LogFileBase : LogReceiver
     /// <param name="fileName">Name of the file.</param>
     protected LogFileBase(string fileName)
     {
-        log.Verbose($"Prepare logging to file {fileName}");
+        Log.Verbose($"Prepare logging to file {fileName}");
         FileName = fileName;
     }
 

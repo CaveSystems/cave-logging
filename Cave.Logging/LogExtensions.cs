@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Cave.IO;
 
 namespace Cave.Logging;
 
@@ -14,6 +15,7 @@ public static class LogExtensions
 
     /// <summary>Retrieves the <see cref="LogText"/> instance as HTML.</summary>
     /// <param name="items">The extended text.</param>
+    /// <param name="formatProvider"></param>
     /// <returns>Returns the html code.</returns>
     public static string ToHtml(this IEnumerable<ILogText> items, IFormatProvider formatProvider)
     {
@@ -174,9 +176,73 @@ public static class LogExtensions
         return result;
     }
 
+    /// <summary>Obtains the color of a specified loglevel.</summary>
+    /// <param name="level"></param>
+    /// <returns></returns>
+    public static LogColor GetLogLevelColor(this LogLevel level) => level switch
+    {
+        LogLevel.Emergency or LogLevel.Alert or LogLevel.Critical or LogLevel.Error => LogColor.Red,
+        LogLevel.Warning => LogColor.Yellow,
+        LogLevel.Notice => LogColor.Green,
+        LogLevel.Information => LogColor.Cyan,
+        LogLevel.Debug => LogColor.Gray,
+        _ => LogColor.Blue,
+    };
+
+    /// <summary>
+    /// Gets the plain text of the specified log text items
+    /// </summary>
+    /// <param name="items">Items to get text from.</param>
+    /// <param name="newLineMode">(Optional) new line mode. Default is to keep all newlines with local system newline characters. Set this to <see cref="NewLineMode.Undefined"/> or 0 to remove all newline characters.</param>
+    /// <returns>Returns a new string with the plain text content.</returns>
+    public static string GetPlainText(this IEnumerable<ILogText> items, NewLineMode? newLineMode = null)
+    {
+        StringBuilder sb = new();
+        foreach (var item in items)
+        {
+            if (ReferenceEquals(item, LogText.NewLine))
+            {
+                switch (newLineMode)
+                {
+                    default: continue;
+                    case null: sb.AppendLine(); continue;
+                    case NewLineMode.CR: sb.Append('\r'); continue;
+                    case NewLineMode.LF: sb.Append('\n'); continue;
+                    case NewLineMode.CRLF: sb.Append("\r\n"); continue;
+                }
+            }
+            sb.Append(item.Text);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Gets the plain text of the specified log text items
+    /// </summary>
+    /// <param name="items">Items to get text from.</param>
+    /// <returns>Returns a new array of plain text lines.</returns>
+    public static string[] GetPlainTextLines(this IEnumerable<ILogText> items)
+    {
+        List<string> lines = new(64);
+        StringBuilder sb = new();
+        foreach (var item in items)
+        {
+            if (ReferenceEquals(item, LogText.NewLine))
+            {
+                lines.Add(sb.ToString());
+                sb = new();
+                continue;
+            }
+            sb.Append(item.Text);
+        }
+        if (sb.Length > 0) lines.Add(sb.ToString());
+        return lines.ToArray();
+    }
+
     /// <summary>Writes the <see cref="LogText"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
     /// <param name="logTextItems">The log text items.</param>
     /// <param name="target">The target to write to.</param>
+    /// <param name="formatProvider"></param>
     public static void WriteHtml(this IEnumerable<ILogText> logTextItems, StringBuilder target, IFormatProvider formatProvider)
     {
         var color = LogColor.Default;

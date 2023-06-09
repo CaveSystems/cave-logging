@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cave.Logging;
 
@@ -19,10 +20,30 @@ public class LogCollector : LogReceiverBase
     /// Calls the <see cref="MessageReceived"/> event and adds the message to the internal queue if <see cref="LogMessageEventArgs.Handled"/> is not set at
     /// the event.
     /// </summary>
-    /// <param name="e">The event arguments</param>
-    protected virtual void OnMessageReceived(LogMessageEventArgs e)
+    /// <param name="message">The log message</param>
+    /// <param name="handled">Indicates whether the message was handled or not.</param>
+    protected virtual void OnMessageReceived(LogMessage message, out bool handled)
     {
-        MessageReceived?.Invoke(this, e);
+        var func = MessageReceived;
+        if (func is not null)
+        {
+            var e = new LogMessageEventArgs(message);
+            func?.Invoke(this, e);
+            handled = e.Handled;
+        }
+        else
+        {
+            handled = false;
+        }
+    }
+
+    /// <summary>
+    /// Calls the <see cref="MessagesRemoved"/> event.
+    /// </summary>
+    /// <param name="messages">The messages</param>
+    protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages)
+    {
+        MessagesRemoved?.Invoke(this, new(messages));
     }
 
     #endregion Protected Methods
@@ -31,6 +52,9 @@ public class LogCollector : LogReceiverBase
 
     /// <summary>Event to be called on each incoming message before the message is added to the queue.</summary>
     public event EventHandler<LogMessageEventArgs>? MessageReceived;
+
+    /// <summary>Event to be called on each message removed from the queue by <see cref="MaximumItemCount"/> filter.</summary>
+    public event EventHandler<LogMessagesEventArgs>? MessagesRemoved;
 
     #endregion Public Events
 
@@ -49,15 +73,21 @@ public class LogCollector : LogReceiverBase
     }
 
     /// <summary>Gets or sets the maximum item count of <see cref="LogMessage"/> items collected. Default = 100.</summary>
+    /// <remarks>You can use a zero or negative value to collect unlimited items.</remarks>
     public int MaximumItemCount
     {
         get => maximumItemCount;
         set
         {
+            IEnumerable<LogMessage>? cleaned = null;
             lock (items)
             {
                 maximumItemCount = value;
-                CleanItems();
+                cleaned = CleanMaxItems();
+            }
+            if (cleaned is not null)
+            {
+                OnMessagesRemoved(cleaned);
             }
         }
     }
@@ -74,12 +104,18 @@ public class LogCollector : LogReceiverBase
 
     #region Members
 
-    void CleanItems()
+    IEnumerable<LogMessage>? CleanMaxItems()
     {
-        while (items.Count > maximumItemCount)
+        LinkedList<LogMessage>? list = null;
+        if (maximumItemCount > 0)
         {
-            items.Dequeue();
+            while (items.Count > maximumItemCount)
+            {
+                list ??= new();
+                list.AddLast(items.Dequeue());
+            }
         }
+        return list;
     }
 
     /// <summary>Clears the list of <see cref="LogMessage"/> items.</summary>
@@ -95,12 +131,13 @@ public class LogCollector : LogReceiverBase
     /// <returns></returns>
     public LogMessage[] Retrieve()
     {
+        LogMessage[] result;
         lock (items)
         {
-            var result = items.ToArray();
+            result = items.ToArray();
             items.Clear();
-            return result;
         }
+        return result;
     }
 
     /// <summary>Provides a list of <see cref="LogMessage"/> items.</summary>
@@ -125,8 +162,8 @@ public class LogCollector : LogReceiverBase
             }
 
             msg = items.Dequeue();
-            return true;
         }
+        return true;
     }
 
     #endregion Members
@@ -137,17 +174,18 @@ public class LogCollector : LogReceiverBase
     /// <param name="message">The message.</param>
     public override void Write(LogMessage message)
     {
-        //never collect messages I sent by myself!
-        if (message.SenderType == GetType()) return;
-
-        var e = new LogMessageEventArgs(message);
-        OnMessageReceived(e);
-        if (!e.Handled)
+        OnMessageReceived(message, out var handled);
+        if (!handled)
         {
+            IEnumerable<LogMessage>? cleaned = null;
             lock (items)
             {
-                items.Enqueue(e.Message);
-                CleanItems();
+                items.Enqueue(message);
+                cleaned = CleanMaxItems();
+            }
+            if (cleaned is not null)
+            {
+                OnMessagesRemoved(cleaned);
             }
         }
     }

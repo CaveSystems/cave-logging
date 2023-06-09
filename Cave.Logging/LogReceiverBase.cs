@@ -1,22 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Cave.IO;
 
 namespace Cave.Logging;
 
 /// <summary>Provides the abstract log receiver implementation.</summary>
 public abstract class LogReceiverBase : ILogReceiver
 {
+    class MessageQueue : LinkedList<IList<LogMessage>> { }
+
     #region Private Fields
 
-    Thread? outputThread;
-    bool isIdle;
-    LinkedList<IList<LogMessage>> messageQueue = new();
+    readonly IRingBuffer<IList<LogMessage>> ringBuffer = new UncheckedRingBuffer<IList<LogMessage>>();
+    Thread? receiverThread;
     volatile int messageQueueCount;
     volatile int currentDelayMsec;
+    volatile bool isIdle;
+    volatile bool delayWarningSent;
 
     #endregion Private Fields
 
+    /// <summary>Gets the protected logger instance.</summary>
     protected Logger Log { get; }
 
     /// <inheritdoc/>
@@ -27,15 +32,15 @@ public abstract class LogReceiverBase : ILogReceiver
     /// </summary>
     protected virtual void StartThread()
     {
-        if (outputThread is null)
+        if (receiverThread is null)
         {
-            outputThread = new Thread(OutputWorker)
+            receiverThread = new Thread(ReceiverWorker)
             {
                 Name = Name,
                 IsBackground = true,
                 Priority = ThreadPriority.Highest
             };
-            outputThread.Start();
+            receiverThread.Start();
         }
     }
 
@@ -59,24 +64,6 @@ public abstract class LogReceiverBase : ILogReceiver
     /// <inheritdoc/>
     public string Name { get; protected set; }
 
-    /// <inheritdoc/>
-    void ILogReceiver.AddMessages(IList<LogMessage> messages)
-    {
-        if (messages == null) throw new ArgumentNullException(nameof(messages));
-        if (!Monitor.TryEnter(SyncRoot, 1000))
-        {
-            var logger = new Logger(GetType());
-            logger.Emergency($"Deadlock of logger worker queue {Name} detected. Disabling receiver!");
-            Close();
-            return;
-        }
-
-        messageQueue.AddLast(messages);
-        messageQueueCount += messageQueue.Count;
-        Monitor.Pulse(SyncRoot);
-        Monitor.Exit(SyncRoot);
-    }
-
     #endregion ILogReceiver Members
 
     #region Overrides
@@ -88,65 +75,76 @@ public abstract class LogReceiverBase : ILogReceiver
 
     #region Members
 
-    void OutputWorker()
+    IList<LogMessage> WaitForMessages(MessageQueue messageQueue)
+    {
+        while (!Closed)
+        {
+            //idle mode
+            if (messageQueueCount == 0 && ringBuffer.Available == 0)
+            {
+                if (!isIdle)
+                {
+                    // entering idle mode
+                    if (delayWarningSent)
+                    {
+                        Log.Notice($"LogReceiver {Name} backlog has recovered!");
+                        delayWarningSent = false;
+                        continue;
+                    }
+                    isIdle = true;
+                }
+                Thread.Sleep(1);
+                continue;
+            }
+
+            //pump
+            MoveMessages(messageQueue);
+
+            //handle
+            if (messageQueue.Count > 0)
+            {
+                var list = messageQueue.First!.Value;
+                messageQueue.RemoveFirst();
+                messageQueueCount -= list.Count;
+                return list;
+            }
+        }
+        return new LogMessage[0];
+    }
+
+    void MoveMessages(MessageQueue messageQueue)
+    {
+        if (ringBuffer.Available > 0)
+        {
+            isIdle = false;
+            while (ringBuffer.TryRead(out var list))
+            {
+                messageQueueCount += list.Count;
+                messageQueue.AddLast(list);
+            }
+        }
+    }
+
+    void ReceiverWorker()
     {
         Log.Verbose($"Thread:{Thread.CurrentThread.Name} started.");
-        var delayWarningSent = false;
         var nextWarningUtc = DateTime.MinValue;
         var discardedCount = 0;
         var errorCount = 0;
+        MessageQueue messageQueue = new();
+
         while (!Closed)
         {
-            IList<LogMessage>? list = null;
-
             try
             {
-                // wait for messages
-                lock (SyncRoot)
-                {
-                    while (true)
-                    {
-                        if (messageQueue.Count > 0)
-                        {
-                            list = messageQueue.First!.Value;
-                            messageQueue.RemoveFirst();
-                            messageQueueCount -= list.Count;
-                            break;
-                        }
-
-                        // entering idle mode
-                        if (delayWarningSent)
-                        {
-                            Log.Notice($"LogReceiver {Name} backlog has recovered!");
-                            delayWarningSent = false;
-                            continue;
-                        }
-
-                        isIdle = true;
-
-                        // wait for pulse
-                        while (true)
-                        {
-                            Monitor.Wait(SyncRoot, 1000);
-                            if (Closed)
-                            {
-                                return;
-                            }
-
-                            break;
-                        }
-
-                        isIdle = false;
-                    }
-                }
-
+                var list = WaitForMessages(messageQueue);
                 for (var i = 0; i < list.Count; i++)
                 {
+                    MoveMessages(messageQueue);
                     if (list[i] is not LogMessage message) continue;
-                    currentDelayMsec = (int)(message.Age.Ticks / TimeSpan.TicksPerMillisecond);
 
                     // is this message late ?
-                    if (currentDelayMsec > LateMessageMilliseconds)
+                    if (IsLate(message))
                     {
                         // yes, opportune logging ?
                         if (Mode == LogReceiverMode.Opportune)
@@ -156,8 +154,12 @@ public abstract class LogReceiverBase : ILogReceiver
                             continue;
                         }
 
-                        // no continuous logging -> warn user
-                        if (!delayWarningSent && (messageQueueCount + list.Count > LateMessageThreshold) && (MonotonicTime.UtcNow > nextWarningUtc))
+                        // no continuous logging -> shall we warn user?
+                        if (LateMessageThreshold <= 0)
+                        {
+                            //no warning                            
+                        }
+                        else if (!delayWarningSent && (messageQueueCount + list.Count > LateMessageThreshold) && (MonotonicTime.UtcNow > nextWarningUtc))
                         {
                             var backlog = messageQueueCount + list.Count;
                             var delay = CurrentDelay.FormatTime();
@@ -210,6 +212,13 @@ public abstract class LogReceiverBase : ILogReceiver
         }
     }
 
+    bool IsLate(LogMessage message)
+    {
+        if (LateMessageMilliseconds <= 0) return false;
+        currentDelayMsec = (int)(message.Age.Ticks / TimeSpan.TicksPerMillisecond);
+        return currentDelayMsec > LateMessageMilliseconds;
+    }
+
     #endregion Members
 
     #region ILogReceiver Member
@@ -226,7 +235,7 @@ public abstract class LogReceiverBase : ILogReceiver
     public bool Closed { get; set; }
 
     /// <inheritdoc />
-    public bool Idle { get { lock (SyncRoot) { return isIdle; } } }
+    public bool Idle => isIdle && (ringBuffer.Available == 0);
 
     /// <inheritdoc />
     public int LateMessageMilliseconds { get; set; } = 10000;
@@ -243,6 +252,8 @@ public abstract class LogReceiverBase : ILogReceiver
     /// <inheritdoc />
     public TimeSpan TimeBetweenWarnings { get; set; }
 
+    IRingBuffer<IList<LogMessage>> ILogReceiver.RingBuffer => ringBuffer;
+
     /// <inheritdoc />
     public virtual void Close() => Dispose();
 
@@ -254,9 +265,6 @@ public abstract class LogReceiverBase : ILogReceiver
     }
 
     #endregion ILogReceiver Member
-
-    /// <inheritdoc />
-    public object SyncRoot { get; } = new();
 
     /// <inheritdoc />
     public abstract void Write(LogMessage message);

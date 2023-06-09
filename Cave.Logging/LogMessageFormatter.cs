@@ -29,7 +29,7 @@ public class LogMessageFormatter : ILogMessageFormatter
     /// <summary>
     /// Default message format using colors.
     /// </summary>
-    public const string DefaultColored = "<cyan>{DateTime}<default>: {LevelColor}{Level}<default> <cyan>{Sender}<default>>\n";
+    public const string DefaultColored = "{LevelColor}{DateTime}<default>: {Level}<default> <cyan>{Sender}<default>> '{Content}'\n";
 
     /// <summary>
     /// Short message format without colors and style.
@@ -39,7 +39,7 @@ public class LogMessageFormatter : ILogMessageFormatter
     /// <summary>
     /// Short message format using colors.
     /// </summary>
-    public const string ShortColored = "<inverse><cyan>{ShortLevel}{DateTime} {Sender}<default>> {Content}\n";
+    public const string ShortColored = "<inverse>{LevelColor}{ShortLevel}{DateTime} {Sender}<default>> {Content}\n";
 
     /// <inheritdoc/>
     public IFormatProvider FormatProvider { get; set; } = CultureInfo.CurrentCulture;
@@ -84,6 +84,7 @@ public class LogMessageFormatter : ILogMessageFormatter
                 "debugexception" => formatter.DebugException,
                 "exception" => formatter.ExceptionMessage,
                 "level" => formatter.Level,
+                "levelcolor" => formatter.LevelColor,
                 "shortlevel" => formatter.ShortLevel,
                 "levelnumber" => formatter.LevelNumber,
                 _ => null,
@@ -185,6 +186,8 @@ public class LogMessageFormatter : ILogMessageFormatter
     void ExceptionMessage(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.Exception?.Message ?? "-"));
 
     void Level(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{message.Level}"));
+
+    void LevelColor(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(string.Empty, message.Level.GetLogLevelColor()));
 
     void ShortLevel(IList<ILogText> list, LogMessage message, string? format)
         => list.Add(new LogText(message.Level.ToString().Substring(0, 1)));

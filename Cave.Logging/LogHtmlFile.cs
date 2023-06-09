@@ -104,7 +104,7 @@ public class LogHtmlFile : LogFileBase
     /// <summary>Closes the <see cref="LogReceiver"/>.</summary>
     public override void Close()
     {
-        lock (SyncRoot)
+        lock (this)
         {
             if (writer != null)
             {

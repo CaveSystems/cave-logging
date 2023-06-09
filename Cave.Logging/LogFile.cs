@@ -14,7 +14,7 @@ public sealed class LogFile : LogFileBase
     /// <summary>Closes the <see cref="LogReceiver"/>.</summary>
     public override void Close()
     {
-        lock (SyncRoot)
+        lock (this)
         {
             Writer.Close();
         }
@@ -58,7 +58,7 @@ public sealed class LogFile : LogFileBase
         }
 
         var fullFilePath = Path.GetFullPath(fileName) ?? throw new ArgumentNullException(nameof(fileName));
-        log.Debug($"Prepare logging to file <cyan>{fullFilePath}");
+        Log.Debug($"Prepare logging to file <cyan>{fullFilePath}");
         var folder = Path.GetDirectoryName(fullFilePath);
         if (folder is not null) Directory.CreateDirectory(folder);
         stream = File.Open(fullFilePath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);

@@ -5,20 +5,10 @@
 /// </summary>
 public abstract class LogReceiver : LogReceiverBase
 {
-    protected readonly Logger log;
-
     /// <summary>
     /// Provides formatting for log messages.
     /// </summary>
     public ILogMessageFormatter MessageFormatter { get; set; } = new LogMessageFormatter();
-
-    /// <summary>
-    /// Creates a new instance of the <see cref="LogReceiver"/> instance.
-    /// </summary>
-    public LogReceiver()
-    {
-        log = new Logger(GetType());
-    }
 
     /// <summary>
     /// Provides writing to the backend.

@@ -55,9 +55,13 @@ public class Logger
             IList<LogMessage> messages;
             {
                 List<LogMessage> list = new(count);
-                while (ringBuffer.TryRead(out var message) && list.Count < count)
+                for (var i = 0; i < count; i++)
                 {
-                    list.Add(message);
+                    if (ringBuffer.TryRead(out var message))
+                    {
+                        list.Add(message);
+                    }
+                    else break;
                 }
                 messages = list.AsReadOnly();
             }
@@ -67,10 +71,7 @@ public class Logger
             {
                 foreach (var receiver in receiverSet)
                 {
-                    var ticks = Environment.TickCount;
-                    receiver.AddMessages(messages);
-                    var duration = Environment.TickCount - ticks;
-                    if (duration > 1) log.Alert($"LogReceiver {receiver} needed {duration}ms to accept messages!");
+                    receiver.RingBuffer.Write(messages);
                 }
             }
 
@@ -239,9 +240,8 @@ public class Logger
                     continue;
                 }
                 // any receivers not idle means we need to wait
-                if (ringBuffer.Available == 0 && receiverSet.All(w => w.Idle))
+                if ((ringBuffer.Available == 0) && receiverSet.All(w => w.Idle))
                 {
-
                     // all receivers idle
                     return;
                 }
@@ -279,7 +279,11 @@ public class Logger
     /// <summary>Writes a <see cref="LogMessage"/> instance to the logging system.</summary>
     /// <param name="message">Message to send</param>
     [MethodImpl((MethodImplOptions)0x0100)]
-    public static void Send(LogMessage message) => ringBuffer.Write(message);
+    public static void Send(LogMessage message)
+    {
+        isIdle = false;
+        ringBuffer.Write(message);
+    }
 
     /// <summary>Unregisters a receiver.</summary>
     public static void Unregister(ILogReceiver logReceiver)

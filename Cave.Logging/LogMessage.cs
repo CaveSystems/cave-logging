@@ -1,12 +1,47 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Cave.Logging;
 
 /// <summary>Provides an immutable log message.</summary>
+[DebuggerDisplay("LogMessage: {ToString()}")]
 public sealed class LogMessage
 {
+    /// <summary>
+    /// Gets or sets the default formatter used at <see cref="ToString"/>. This is a global setting.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="ILogReceiver"/> implementations should not rely on <see cref="ToString"/>. Instead the personal instance of
+    /// <see cref="LogMessageFormatter"/> at <see cref="LogReceiver.MessageFormatter"/> should be used to format messages for the implemented
+    /// receiver.
+    /// </remarks>
+    public static LogMessageFormatter ToStringFormatter { get; set; } = new LogMessageFormatter();
+
     #region Constructors
+
+    /// <summary>Initializes an old instance of the <see cref="LogMessage"/> class.</summary>
+    /// <param name="dateTime">The date and time the message was created.</param>
+    /// <param name="senderName">Sender name of the message.</param>
+    /// <param name="senderType">Sender type of the message (optional).</param>
+    /// <param name="level">The level.</param>
+    /// <param name="exception">The exception.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="member">Optional: method or property name of the sender.</param>
+    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
+    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
+    public LogMessage(DateTime dateTime, string senderName, Type senderType, LogLevel level, IFormattable content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
+    {
+        DateTime = dateTime;
+        SenderName = senderName;
+        SenderType = senderType;
+        Content = content;
+        Exception = exception;
+        Level = level;
+        SourceMember = member;
+        SourceFile = file;
+        SourceLine = line;
+    }
 
     /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
     /// <param name="senderName">Sender name of the message.</param>
@@ -19,6 +54,7 @@ public sealed class LogMessage
     /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
     public LogMessage(string senderName, Type? senderType, LogLevel level, IFormattable content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
+        DateTime = MonotonicTime.Now;
         SenderName = senderName;
         SenderType = senderType;
         Content = content;
@@ -33,13 +69,14 @@ public sealed class LogMessage
 
     #region Properties
 
-    /// <summary>Gets the sender.</summary>
+    /// <summary>Gets the sender name.</summary>
     public string SenderName { get; }
 
+    /// <summary>Gets the sender type.</summary>
     public Type? SenderType { get; }
 
     /// <summary>Gets the date time.</summary>
-    public DateTime DateTime { get; } = MonotonicTime.Now;
+    public DateTime DateTime { get; }
 
     /// <summary>Gets the level.</summary>
     public LogLevel Level { get; }
@@ -66,4 +103,10 @@ public sealed class LogMessage
 
     /// <summary>Gets the current age of the message.</summary>
     public TimeSpan Age => MonotonicTime.UtcNow - DateTime.ToUniversalTime();
+
+    /// <inheritdoc/>
+    public override string ToString() => ToStringFormatter.FormatMessage(this).GetPlainText();
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => DefaultHashingFunction.Combine(SenderName, SenderType, DateTime, Level, Exception, Content, SourceMember, SourceFile, SourceLine);
 }

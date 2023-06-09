@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cave.IO;
 
 namespace Cave.Logging;
 
@@ -7,6 +8,10 @@ namespace Cave.Logging;
 public interface ILogReceiver : IDisposable
 {
     #region Properties
+
+    /// <summary>Ringbuffer the loggingsystem will drop messages at.</summary>
+    /// <remarks>Implement explicit. Should not be called by user.</remarks>
+    IRingBuffer<IList<LogMessage>> RingBuffer { get; }
 
     /// <summary>Gets a value indicating whether the <see cref="ILogReceiver"/> was already closed or not.</summary>
     bool Closed { get; }
@@ -55,16 +60,8 @@ public interface ILogReceiver : IDisposable
     /// <remarks>Implement explicit. Should not be called by user.</remarks>
     void Start();
 
-    /// <summary>Adds messages to the receiver.</summary>
-    /// <param name="messages">The messages to add.</param>
-    /// <remarks>Implement explicit. Should not be called by user.</remarks>
-    void AddMessages(IList<LogMessage> messages);
-
     /// <summary>Closes the <see cref="ILogReceiver"/>.</summary>
     void Close();
 
     #endregion Members
-
-    /// <summary>Gets the synchronization root for this receiver.</summary>
-    object SyncRoot { get; }
 }
