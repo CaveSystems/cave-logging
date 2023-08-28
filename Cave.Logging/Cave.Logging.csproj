@@ -1,13 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <!--
-            netstandard1.6;
-            netstandard2.0;netstandard2.1;
-            net5.0;net6.0;net7.0;
-            netcoreapp3.0;netcoreapp3.1;
-            netcoreapp2.0;netcoreapp2.1;netcoreapp2.2;
-
-        -->
         <TargetFrameworks>
             net20;net35;
             net40;
@@ -15,6 +7,9 @@
             net46;net461;net462;
             net47;net471;net472;
             net48;
+            net5.0;net6.0;net7.0;
+            netcoreapp2.0;netcoreapp2.1;netcoreapp2.2;
+            netcoreapp3.0;netcoreapp3.1;
         </TargetFrameworks>
         <!--project-->
         <RootNamespace>Cave.Logging</RootNamespace>
@@ -34,9 +29,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cave.Backports" Version="3.0.4" />
-        <PackageReference Include="Cave.Extensions" Version="3.0.2" />
-        <PackageReference Include="Cave.IO" Version="3.0.2" />
+        <PackageReference Include="Cave.Backports" Version="3.0.6" />
+        <PackageReference Include="Cave.Extensions" Version="3.0.7" />
+        <PackageReference Include="Cave.IO" Version="3.0.3" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
