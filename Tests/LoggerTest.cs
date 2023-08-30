@@ -29,7 +29,7 @@ class LoggerTest
             Parallel.For(0, 1000, n => new Logger().Info($"Test {i}.{n}"));
             Logger.Flush();
             var count = col.ItemCount;
-            var items = col.ToArray().Select(l => int.Parse(l.Content.ToString().Substring(5))).ToList();
+            var items = col.ToArray().Select(l => int.Parse(l.Content.ToString().AfterFirst('.'))).ToList();
             var missing = new Counter(0, 1000).Except(items).ToList();
             Assert.AreEqual(1000, count);
             Assert.AreEqual(1000, items.Count);
