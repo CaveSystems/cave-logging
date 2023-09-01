@@ -1,6 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;net20;net35;net40;net45;net50;net60</TargetFrameworks>
+        <TargetFrameworks>
+            net20;net35;
+            net40;
+            net45;net451;net452;
+            net46;net461;net462;
+            net47;net471;net472;
+            net481;
+            net5.0;net6.0;net7.0;
+            netcoreapp2.0;netcoreapp2.1;netcoreapp2.2;
+            netcoreapp3.0;netcoreapp3.1;
+        </TargetFrameworks>
         <!--project-->
         <RootNamespace>Cave.Logging</RootNamespace>
         <AssemblyOriginatorKeyFile>Cave.Logging.snk</AssemblyOriginatorKeyFile>
@@ -15,10 +25,16 @@
         <SignAssembly>true</SignAssembly>
         <NeutralLanguage />
         <DelaySign>false</DelaySign>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cave.Extensions" Version="2.1.13" />
-        <PackageReference Include="Cave.IO" Version="2.1.4" />
+        <PackageReference Include="Cave.Extensions" Version="3.0.8" />
+        <PackageReference Include="Cave.IO" Version="3.0.3" />
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
+
 </Project>
