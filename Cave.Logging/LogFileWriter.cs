@@ -3,23 +3,45 @@ using System.IO;
 
 namespace Cave.Logging;
 
-class LogFileWriter : LogWriterBase, IDisposable
+class LogFileWriter : LogWriter, IDisposable
 {
+    #region Private Fields
+
     StreamWriter? writer;
+
+    #endregion Private Fields
+
+    #region Public Constructors
+
     public LogFileWriter(Stream stream)
     {
         writer = new StreamWriter(stream);
     }
+
+    #endregion Public Constructors
+
+    #region Public Methods
+
     public override void Close()
     {
         base.Close();
         writer?.Close();
         writer = null;
     }
-    public override void ChangeColor(LogColor color) { }
-    public override void ChangeStyle(LogStyle style) { }
-    public override void NewLine() => writer?.WriteLine();
-    public override void Reset() => writer?.Flush();
-    public override void Write(string text) => writer?.WriteLine(text);
+
     public void Dispose() => Close();
+
+    public override void Write(ILogText text)
+    {
+        if (text.Equals(LogText.NewLine))
+        {
+            writer?.WriteLine(text.Text);
+        }
+        else
+        {
+            writer?.Write(text.Text);
+        }
+    }
+
+    #endregion Public Methods
 }

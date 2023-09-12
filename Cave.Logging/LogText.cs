@@ -26,8 +26,6 @@ namespace Cave.Logging;
 /// </summary>
 public record LogText : ILogText, IEquatable<LogText>
 {
-    #region Static
-
     /// <summary>Provides an empty log message instance</summary>
     public static LogText[] Empty { get; } = new LogText[0];
 
@@ -170,10 +168,6 @@ public record LogText : ILogText, IEquatable<LogText>
     /// <returns>Returns the style token.</returns>
     public static string ToString(LogStyle style) => "<" + style + ">";
 
-    #endregion Static
-
-    #region Constructors
-
     /// <summary>Initializes a new instance of the <see cref="LogText"/> class.</summary>
     /// <param name="color">Color of the text.</param>
     /// <param name="style">The style.</param>
@@ -185,25 +179,20 @@ public record LogText : ILogText, IEquatable<LogText>
         Style = style;
     }
 
-    #endregion Constructors
-
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public string Text { get; }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public LogColor Color { get; }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public LogStyle Style { get; }
 
-    #region IEquatable<LogText> Members
-
-    /// <inheritdoc />
+    /// <inheritdoc/>
     public virtual bool Equals(LogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
 
-    #endregion IEquatable<LogText> Members
-
-    #region Overrides
+    /// <inheritdoc/>
+    public virtual bool Equals(ILogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
 
     /// <summary>Returns a hash code for this instance.</summary>
     /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
@@ -219,10 +208,6 @@ public record LogText : ILogText, IEquatable<LogText>
         return sb.ToString();
     }
 
-    #endregion Overrides
-
-    #region Members
-
     /// <summary>Parses the specified text</summary>
     /// <param name="text">Text to parse.</param>
     /// <returns>Returns a list of <see cref="ILogText"/> items.</returns>
@@ -234,125 +219,121 @@ public record LogText : ILogText, IEquatable<LogText>
             throw new Exception("Data is unset!");
         }
 
-        var lines = text.SplitNewLine();
         var items = new List<ILogText>();
-        for (var i = 0; i < lines.Length; i++)
+        if (text.Contains("\r")) text = text.ReplaceNewLine("\n");
+
+        var color = LogColor.Default;
+        var style = LogStyle.Unchanged;
+
+        var textStart = 0;
+        while (true)
         {
-            var color = LogColor.Default;
-            var style = LogStyle.Unchanged;
-            if (i > 0)
+            // find a complete token
+            var tokenStart = text.IndexOfAny(new[] { '\n', '<', '{' }, textStart);
+            var tokenEnd = -1;
+
+            // while we got a valid start
+            while (tokenStart > -1)
             {
-                items.Add(LogText.NewLine);
-            }
-
-            var currentLine = lines[i];
-            var textStart = 0;
-            while (true)
-            {
-                // find a complete token
-                var tokenStart = currentLine.IndexOfAny(new[]
+                // get end
+                switch (text[tokenStart])
                 {
-                    '<',
-                    '{'
-                }, textStart);
-                var tokenEnd = -1;
-
-                // while we got a valid start
-                while (tokenStart > -1)
-                {
-                    // get end
-                    switch (currentLine[tokenStart])
-                    {
-                        case '<':
-                            tokenEnd = currentLine.IndexOf('>', tokenStart);
-                            break;
-
-                        case '{':
-                            tokenEnd = currentLine.IndexOf('}', tokenStart);
-                            break;
-                    }
-
-                    // check for another start in between
-                    var nextTokenStart = currentLine.IndexOfAny(new[]
-                    {
-                        '<',
-                        '{'
-                    }, tokenStart + 1);
-
-                    // no additional start ? -> exit loop
-                    if (nextTokenStart < 0)
-                    {
-                        break;
-                    }
-
-                    // additional token, if current does not end, end it.
-                    if (tokenEnd < 0)
-                    {
-                        tokenEnd = nextTokenStart - 1;
-                        break;
-                    }
-
-                    if (nextTokenStart > tokenEnd)
-                    {
-                        break;
-                    }
-
-                    // additional start -> skip the first
-                    tokenStart = nextTokenStart;
+                    case '\n': tokenEnd = tokenStart; break;
+                    case '<': tokenEnd = text.IndexOf('>', tokenStart); break;
+                    case '{': tokenEnd = text.IndexOf('}', tokenStart); break;
                 }
 
-                string currentText;
-                if ((tokenStart < 0) || (tokenEnd < 0))
-                {
-                    currentText = currentLine.Substring(textStart);
-                    if (currentText.Length > 0)
-                    {
-                        items.Add(new LogText(currentText, color, style));
-                    }
+                // check for another start in between
+                var nextTokenStart = text.IndexOfAny(new[] { '\n', '<', '{' }, tokenStart + 1);
 
+                // no additional start ? -> exit loop
+                if (nextTokenStart < 0)
+                {
                     break;
                 }
 
-                currentText = currentLine.Substring(textStart, tokenStart - textStart);
+                // additional token, if current does not end, end it.
+                if (tokenEnd < 0)
+                {
+                    tokenEnd = nextTokenStart - 1;
+                    break;
+                }
+
+                if (nextTokenStart > tokenEnd)
+                {
+                    break;
+                }
+
+                // additional start -> skip the first
+                tokenStart = nextTokenStart;
+            }
+
+            string currentText;
+            if ((tokenStart < 0) || (tokenEnd < 0))
+            {
+                currentText = text.Substring(textStart);
                 if (currentText.Length > 0)
                 {
                     items.Add(new LogText(currentText, color, style));
                 }
 
-                var token = currentLine.Substring(tokenStart, ++tokenEnd - tokenStart);
-                if (IsColor(token))
+                break;
+            }
+
+            currentText = text.Substring(textStart, tokenStart - textStart);
+            if (currentText.Length > 0)
+            {
+                items.Add(new LogText(currentText, color, style));
+            }
+
+            var token = text.Substring(tokenStart, ++tokenEnd - tokenStart);
+            if (token == "\n")
+            {
+                color = LogColor.Default;
+                style = LogStyle.Reset;
+                items.Add(LogText.NewLine);
+            }
+            else if (IsColor(token))
+            {
+                color = GetColor(token);
+            }
+            else if (IsStyle(token))
+            {
+                var newStyle = GetStyle(token);
+                if (newStyle == LogStyle.Reset)
                 {
-                    color = GetColor(token);
-                }
-                else if (IsStyle(token))
-                {
-                    var newStyle = GetStyle(token);
-                    if (newStyle == LogStyle.Reset)
-                    {
-                        style = LogStyle.Reset;
-                    }
-                    else
-                    {
-                        style |= newStyle;
-                    }
+                    style = LogStyle.Reset;
                 }
                 else
                 {
-                    // invalid token or parameter, ignore
-                    items.Add(new LogText(token, color, style));
+                    style |= newStyle;
                 }
+            }
+            else
+            {
+                // invalid token or parameter, ignore
+                items.Add(new LogText(token, color, style));
+            }
 
-                textStart = tokenEnd;
+            textStart = tokenEnd;
+        }
+
+        //add color and style changes to a new item if there are any
+        if (items.Count > 0)
+        {
+            var lastItem = items[^1];
+            if (!lastItem.Equals(LogText.NewLine) && (lastItem.Color != color || lastItem.Style != style))
+            {
+                items.Add(new LogText("", color, style));
             }
         }
-
-        if (text.EndsWith("\r") || text.EndsWith("\n"))
+        else
         {
-            items.Add(LogText.NewLine);
+            if (color != 0 || style != 0)
+            {
+                items.Add(new LogText("", color, style));
+            }
         }
-
         return items;
     }
-
-    #endregion Members
 }

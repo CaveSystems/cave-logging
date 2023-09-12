@@ -3,8 +3,10 @@ using System;
 namespace Cave.Logging;
 
 /// <summary>Provides an interface for structs / objects supporting the ToLogText() method.</summary>
-public interface ILogText
+public interface ILogText : IEquatable<ILogText>
 {
+    #region Public Properties
+
     /// <summary>Gets the Color of the item.</summary>
     LogColor Color { get; }
 
@@ -13,4 +15,6 @@ public interface ILogText
 
     /// <summary>Gets the text of the item.</summary>
     string Text { get; }
+
+    #endregion Public Properties
 }
