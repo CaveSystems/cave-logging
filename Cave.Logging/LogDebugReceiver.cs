@@ -6,22 +6,34 @@ namespace Cave.Logging;
 /// <summary>Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and <see cref="System.Diagnostics.Trace"/>.</summary>
 public sealed class LogDebugReceiver : LogReceiver
 {
-    class MyWriter : LogWriterBase
+    #region Private Classes
+
+    class MyWriter : LogWriter
     {
+        #region Private Fields
+
         StringBuilder buffer = new();
 
-        public override void ChangeColor(LogColor color) { }
-        public override void ChangeStyle(LogStyle style) { }
-        public override void NewLine()
+        #endregion Private Fields
+
+        #region Public Methods
+
+        public override void Write(ILogText text)
         {
-            var msg = buffer.ToString();
-            LogHelper.DebugLine(msg);
-            LogHelper.TraceLine(msg);
-            buffer = new();
+            if (text.Equals(LogText.NewLine))
+            {
+                var msg = buffer.ToString();
+                LogHelper.DebugLine(msg);
+                LogHelper.TraceLine(msg);
+                buffer = new();
+            }
+            buffer.Append(text);
         }
-        public override void Reset() { }
-        public override void Write(string text) => buffer.Append(text);
+
+        #endregion Public Methods
     }
+
+    #endregion Private Classes
 
     #region Internal Constructors
 
@@ -35,7 +47,19 @@ public sealed class LogDebugReceiver : LogReceiver
 
     #endregion Internal Constructors
 
-    /// <inheritdoc />
+    #region Public Properties
+
+    /// <summary>Log to <see cref="Debug"/>. This setting is false by default.</summary>
+    public bool LogToDebug { get => LogHelper.LogToDebug; set => LogHelper.LogToDebug = value; }
+
+    /// <summary>Log to <see cref="Trace"/>. This setting is false by default.</summary>
+    public bool LogToTrace { get => LogHelper.LogToTrace; set => LogHelper.LogToTrace = value; }
+
+    #endregion Public Properties
+
+    #region Public Methods
+
+    /// <inheritdoc/>
     public override void Write(LogMessage message)
     {
         if (LogToDebug || LogToTrace)
@@ -44,13 +68,5 @@ public sealed class LogDebugReceiver : LogReceiver
         }
     }
 
-    #region Public Fields
-
-    /// <summary>Log to <see cref="Debug"/>. This setting is false by default.</summary>
-    public bool LogToDebug { get => LogHelper.LogToDebug; set => LogHelper.LogToDebug = value; }
-
-    /// <summary>Log to <see cref="Trace"/>. This setting is false by default.</summary>
-    public bool LogToTrace { get => LogHelper.LogToTrace; set => LogHelper.LogToTrace = value; }
-
-    #endregion Public Fields
+    #endregion Public Methods
 }

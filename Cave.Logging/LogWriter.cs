@@ -1,43 +1,38 @@
 ﻿namespace Cave.Logging;
 
-/// <summary>
-/// Provides the log writer base class.
-/// </summary>
-public abstract class LogWriterBase : ILogWriter
+/// <summary>Provides the log writer base class.</summary>
+public abstract class LogWriter : ILogWriter
 {
-    sealed class LogWriterEmpty : LogWriterBase
+    #region Private Classes
+
+    sealed class LogWriterEmpty : LogWriter
     {
-        public override void ChangeColor(LogColor color) { }
-        public override void ChangeStyle(LogStyle style) { }
-        public override void NewLine() { }
-        public override void Reset() { }
-        public override void Write(string text) { }
+        #region Public Methods
+
+        public override void Write(ILogText text) { }
+
+        #endregion Public Methods
     }
+
+    #endregion Private Classes
+
+    #region Public Properties
+
+    /// <summary>Gets the empty (no-op) log writer instance.</summary>
+    public static ILogWriter Empty { get; } = new LogWriterEmpty();
 
     /// <inheritdoc/>
     public bool IsClosed { get; private set; }
 
-    /// <summary>
-    /// Gets the empty (no-op) log writer instance.
-    /// </summary>
-    public static LogWriterBase Empty { get; } = new LogWriterEmpty();
+    #endregion Public Properties
 
-    /// <inheritdoc/>
-    public abstract void Reset();
-
-    /// <inheritdoc/>
-    public abstract void ChangeColor(LogColor color);
-
-    /// <inheritdoc/>
-    public abstract void ChangeStyle(LogStyle style);
-
-    /// <inheritdoc/>
-    public abstract void Write(string text);
-
-    /// <inheritdoc/>
-    public abstract void NewLine();
+    #region Public Methods
 
     /// <inheritdoc/>
     public virtual void Close() => IsClosed = true;
 
+    /// <inheritdoc/>
+    public abstract void Write(ILogText text);
+
+    #endregion Public Methods
 }

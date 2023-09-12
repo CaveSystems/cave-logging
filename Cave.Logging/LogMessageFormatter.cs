@@ -166,19 +166,19 @@ public class LogMessageFormatter : ILogMessageFormatter
     public const string Default = "{DateTime}: {Level} {Sender}> '{Content}'\n";
 
     /// <summary>Default message format using colors.</summary>
-    public const string DefaultColored = "{LevelColor}{DateTime}<default>: {Level}<default> <cyan>{Sender}<default>> '{Content}'\n";
+    public const string DefaultColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}<reset>> '{Content}'\n";
 
     /// <summary>Extended message format without colors and style.</summary>
     public const string Extended = "{DateTime}: {Level} {Sender}> '{Content}' @{SourceFile}({SourceLine}): {SourceMember}\n";
 
     /// <summary>Extended message format using colors.</summary>
-    public const string ExtendedColored = "<cyan>{DateTime}<default>: {LevelColor}{Level}<default> <cyan>{Sender}<default>> '{LevelColor}{Content}<default>' @<blue>{SourceFile}<default>(<blue>{SourceLine}<default>): <blue>{SourceMember}\n";
+    public const string ExtendedColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}<reset>> '{Content}' @<inverse><blue>{SourceFile}({SourceLine}): {SourceMember}\n";
 
     /// <summary>Short message format without colors and style.</summary>
-    public const string Short = "{ShortLevel}{DateTime} {Sender}> {Content}\n";
+    public const string Short = "{ShortLevel} {DateTime} {Sender}> {Content}\n";
 
     /// <summary>Short message format using colors.</summary>
-    public const string ShortColored = "<inverse>{LevelColor}{ShortLevel}{DateTime} {Sender}<default>> {Content}\n";
+    public const string ShortColored = "<inverse>{LevelColor}{ShortLevel} {DateTime} {Sender}<reset>> {Content}\n";
 
     #endregion Public Fields
 
@@ -212,7 +212,7 @@ public class LogMessageFormatter : ILogMessageFormatter
     #region Public Methods
 
     /// <inheritdoc/>
-    public IList<ILogText> FormatMessage(LogMessage message)
+    public virtual IList<ILogText> FormatMessage(LogMessage message)
     {
         List<ILogText> result = new();
         foreach (var item in items)

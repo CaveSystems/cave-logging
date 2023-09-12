@@ -1,45 +1,23 @@
 ﻿namespace Cave.Logging;
 
-/// <summary>
-/// Provides an interface for writing log data. The writer keeps the current state for style and color.
-/// </summary>
+/// <summary>Provides an interface for writing log data. The writer keeps the current state for style and color.</summary>
 public interface ILogWriter
 {
-    /// <summary>
-    /// Change the state to the specified color.
-    /// </summary>
-    /// <param name="color">New color.</param>
-    void ChangeColor(LogColor color);
+    #region Public Properties
 
-    /// <summary>
-    /// Change the state to the specified style.
-    /// </summary>
-    /// <param name="style">New style</param>
-    void ChangeStyle(LogStyle style);
+    /// <summary>Gets a value indicating whether this instance is closed.</summary>
+    bool IsClosed { get; }
 
-    /// <summary>
-    /// Print a newline.
-    /// </summary>
-    void NewLine();
+    #endregion Public Properties
 
-    /// <summary>
-    /// Reset the writer state (style, color, in line)
-    /// </summary>
-    void Reset();
+    #region Public Methods
 
-    /// <summary>
-    /// Writes a text
-    /// </summary>
-    /// <param name="text"></param>
-    void Write(string text);
-
-    /// <summary>
-    /// Closes the writer.
-    /// </summary>
+    /// <summary>Closes the writer.</summary>
     void Close();
 
-    /// <summary>
-    /// Gets a value indicating
-    /// </summary>
-    bool IsClosed { get; }
+    /// <summary>Writes a text</summary>
+    /// <param name="text"></param>
+    void Write(ILogText text);
+
+    #endregion Public Methods
 }
