@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "netcore_3.1", "Tests\netcor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "netcore_2.0-2.2", "Tests\netcore_2.0-2.2.csproj", "{A1D84C9A-62B7-46CE-9BAC-7DAB7203A36F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogHtmlFileSample", "Samples\LogHtmlFileSample\LogHtmlFileSample.csproj", "{4B52709F-422F-4E28-BFF0-13ACD9FD2933}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{A1D84C9A-62B7-46CE-9BAC-7DAB7203A36F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1D84C9A-62B7-46CE-9BAC-7DAB7203A36F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1D84C9A-62B7-46CE-9BAC-7DAB7203A36F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B52709F-422F-4E28-BFF0-13ACD9FD2933}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B52709F-422F-4E28-BFF0-13ACD9FD2933}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B52709F-422F-4E28-BFF0-13ACD9FD2933}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B52709F-422F-4E28-BFF0-13ACD9FD2933}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -81,6 +87,7 @@ Global
 		{56E030F0-D8C5-4801-A853-9E386939120D} = {29A6F9DB-847E-4A26-9D8F-CE61229D58EE}
 		{869308C4-9D48-4E1B-BE5E-F208E1873EB7} = {29A6F9DB-847E-4A26-9D8F-CE61229D58EE}
 		{A1D84C9A-62B7-46CE-9BAC-7DAB7203A36F} = {29A6F9DB-847E-4A26-9D8F-CE61229D58EE}
+		{4B52709F-422F-4E28-BFF0-13ACD9FD2933} = {8FBD0F3F-4F34-49C1-A659-DB6423722831}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CB1E0BB3-3974-4FB8-B182-EBB8034A45D5}

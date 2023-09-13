@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using Cave.IO;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Cave.Logging;
 
@@ -7,15 +10,15 @@ class LogFileWriter : LogWriter, IDisposable
 {
     #region Private Fields
 
-    StreamWriter? writer;
+    DataWriter? writer;
 
     #endregion Private Fields
 
     #region Public Constructors
 
-    public LogFileWriter(Stream stream)
+    public LogFileWriter(DataWriter writer)
     {
-        writer = new StreamWriter(stream);
+        this.writer = writer;
     }
 
     #endregion Public Constructors
@@ -31,15 +34,18 @@ class LogFileWriter : LogWriter, IDisposable
 
     public void Dispose() => Close();
 
-    public override void Write(ILogText text)
+    public override void Write(LogMessage message, IEnumerable<ILogText> items)
     {
-        if (text.Equals(LogText.NewLine))
+        foreach (var item in items)
         {
-            writer?.WriteLine(text.Text);
-        }
-        else
-        {
-            writer?.Write(text.Text);
+            if (item.Equals(LogText.NewLine))
+            {
+                writer?.WriteLine(item.Text);
+            }
+            else
+            {
+                writer?.Write(item.Text);
+            }
         }
     }
 

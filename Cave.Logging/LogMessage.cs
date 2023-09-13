@@ -8,17 +8,7 @@ namespace Cave.Logging;
 [DebuggerDisplay("LogMessage: {ToString()}")]
 public sealed class LogMessage
 {
-    /// <summary>
-    /// Gets or sets the default formatter used at <see cref="ToString"/>. This is a global setting.
-    /// </summary>
-    /// <remarks>
-    /// <see cref="ILogReceiver"/> implementations should not rely on <see cref="ToString"/>. Instead the personal instance of
-    /// <see cref="LogMessageFormatter"/> at <see cref="LogReceiver.MessageFormatter"/> should be used to format messages for the implemented
-    /// receiver.
-    /// </remarks>
-    public static LogMessageFormatter ToStringFormatter { get; set; } = new LogMessageFormatter();
-
-    #region Constructors
+    #region Public Constructors
 
     /// <summary>Initializes an old instance of the <see cref="LogMessage"/> class.</summary>
     /// <param name="dateTime">The date and time the message was created.</param>
@@ -65,31 +55,37 @@ public sealed class LogMessage
         SourceLine = line;
     }
 
-    #endregion Constructors
+    #endregion Public Constructors
 
-    #region Properties
+    #region Public Properties
+
+    /// <summary>Gets or sets the default formatter used at <see cref="ToString"/>. This is a global setting.</summary>
+    /// <remarks>
+    /// <see cref="LogReceiver"/> implementations should not rely on <see cref="ToString"/>. Instead the personal instance of <see cref="LogMessageFormatter"/>
+    /// at <see cref="LogReceiver.MessageFormatter"/> should be used to format messages for the implemented receiver.
+    /// </remarks>
+    public static LogMessageFormatter ToStringFormatter { get; set; } = new LogMessageFormatter();
+
+    /// <summary>Gets the current age of the message.</summary>
+    public TimeSpan Age => MonotonicTime.UtcNow - DateTime.ToUniversalTime();
+
+    /// <summary>Gets the message content.</summary>
+    public IFormattable? Content { get; }
+
+    /// <summary>Gets the date time.</summary>
+    public DateTime DateTime { get; }
+
+    /// <summary>Gets the exception.</summary>
+    public Exception? Exception { get; }
+
+    /// <summary>Gets the level.</summary>
+    public LogLevel Level { get; }
 
     /// <summary>Gets the sender name.</summary>
     public string SenderName { get; }
 
     /// <summary>Gets the sender type.</summary>
     public Type? SenderType { get; }
-
-    /// <summary>Gets the date time.</summary>
-    public DateTime DateTime { get; }
-
-    /// <summary>Gets the level.</summary>
-    public LogLevel Level { get; }
-
-    /// <summary>Gets the exception.</summary>
-    public Exception? Exception { get; }
-
-    /// <summary>Gets the message content.</summary>
-    public IFormattable? Content { get; }
-
-    /// <summary>Gets the method or property name of the sender.</summary>
-    /// <remarks>This might be null when running obfuscated binaries.</remarks>
-    public string? SourceMember { get; }
 
     /// <summary>Gets file path at which the message was created at the time of compile.</summary>
     /// <remarks>This might be null when running obfuscated binaries.</remarks>
@@ -99,14 +95,19 @@ public sealed class LogMessage
     /// <remarks>This might be null when running obfuscated binaries.</remarks>
     public int SourceLine { get; }
 
-    #endregion Properties
+    /// <summary>Gets the method or property name of the sender.</summary>
+    /// <remarks>This might be null when running obfuscated binaries.</remarks>
+    public string? SourceMember { get; }
 
-    /// <summary>Gets the current age of the message.</summary>
-    public TimeSpan Age => MonotonicTime.UtcNow - DateTime.ToUniversalTime();
+    #endregion Public Properties
+
+    #region Public Methods
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => DefaultHashingFunction.Combine(SenderName, SenderType, DateTime, Level, Exception, Content, SourceMember, SourceFile, SourceLine);
 
     /// <inheritdoc/>
     public override string ToString() => ToStringFormatter.FormatMessage(this).GetPlainText();
 
-    /// <inheritdoc/>
-    public override int GetHashCode() => DefaultHashingFunction.Combine(SenderName, SenderType, DateTime, Level, Exception, Content, SourceMember, SourceFile, SourceLine);
+    #endregion Public Methods
 }

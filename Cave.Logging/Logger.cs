@@ -12,18 +12,18 @@ using Cave.IO;
 namespace Cave.Logging;
 
 /// <summary>
-/// This is a full featured asynchronous logging facility for general status monitoring and logging for end users in production products. Messages logged
-/// are queued and then distributed by a background thread to provide full speed even with slow loggers (file, database, network).
+/// This is a full featured asynchronous logging facility for general status monitoring and logging for end users in production products. Messages logged are
+/// queued and then distributed by a background thread to provide full speed even with slow loggers (file, database, network).
 /// </summary>
 public class Logger
 {
     #region Private Fields
 
-    static volatile bool isIdle;
+    static readonly Fifo<LogMessage> fifo = new();
     static readonly object idleLock = new();
-    static readonly Set<ILogReceiver> receiverSet = new();
-    static readonly UncheckedRingBuffer<LogMessage> ringBuffer = new();
+    static readonly Set<LogReceiver> receiverSet = new();
     static readonly Thread thread;
+    static volatile bool isIdle;
 
     #endregion Private Fields
 
@@ -36,7 +36,7 @@ public class Logger
         {
             lock (idleLock)
             {
-                while (ringBuffer.Available == 0)
+                while (fifo.Available == 0)
                 {
                     isIdle = true;
                     Monitor.PulseAll(idleLock);
@@ -51,15 +51,15 @@ public class Logger
             Thread.BeginCriticalRegion();
 
             //read from ringbuffer
-            var count = ringBuffer.Available;
+            var count = fifo.Available;
             IList<LogMessage> messages;
             {
                 List<LogMessage> list = new(count);
                 for (var i = 0; i < count; i++)
                 {
-                    if (ringBuffer.TryRead(out var message))
+                    if (fifo.TryDequeue(out var message))
                     {
-                        list.Add(message);
+                        list.Add(message!);
                     }
                     else break;
                 }
@@ -71,7 +71,10 @@ public class Logger
             {
                 foreach (var receiver in receiverSet)
                 {
-                    receiver.RingBuffer.Write(messages);
+                    if (receiver.Started)
+                    {
+                        receiver.Fifo.Enqueue(messages);
+                    }
                 }
             }
 
@@ -106,7 +109,7 @@ public class Logger
 
     #endregion Private Methods
 
-    #region Constructors
+    #region Public Constructors
 
     /// <summary>Starts the logging system.</summary>
     static Logger()
@@ -141,8 +144,10 @@ public class Logger
 
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param senderName="senderName">Name of the log source.</param>
-    /// <remarks>This method is the slowest when creating a logger. This should not be called thousands of times.
-    /// Faster variants are: <see cref="Logger.Create(object)"/> or new Logger(Type)</remarks>
+    /// <remarks>
+    /// This method is the slowest when creating a logger. This should not be called thousands of times. Faster variants are: <see
+    /// cref="Logger.Create(object)"/> or new Logger(Type)
+    /// </remarks>
     [MethodImpl(MethodImplOptions.NoInlining)]
     public Logger(string? senderName = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
@@ -160,9 +165,6 @@ public class Logger
         SenderType = senderType;
     }
 
-    /// <remarks>This method is fast way to create a logger.</remarks>
-    public static Logger Create(object sender) => new Logger(sender.GetType());
-
     #endregion Public Constructors
 
     #region Public Properties
@@ -179,26 +181,14 @@ public class Logger
     /// <summary>Gets or sets a value indicating whether the logging system logs to <see cref="Trace"/>. This setting is false by default.</summary>
     public static bool LogToTrace { get => DebugReceiver?.LogToTrace == false; set => SetLogToTrace(value); }
 
-    /// <summary>Gets or sets the number of messages lost due ring buffer overflows.</summary>
-    public static long LostCount => ringBuffer.LostCount;
-
     /// <summary>Gets or sets my process.</summary>
     public static Process? Process { get; set; }
 
     /// <summary>Gets or sets the number of messages read by receivers.</summary>
-    public static long ReadCount => ringBuffer.ReadCount;
-
-    /// <summary>Gets or sets the current read position at the ring buffer.</summary>
-    public static int ReadPosition => ringBuffer.ReadPosition;
-
-    /// <summary>Gets or sets the number of rejected messages.</summary>
-    public static long RejectedCount => ringBuffer.RejectedCount;
+    public static long ReadCount => fifo.ReadCount;
 
     /// <summary>Gets or sets the number of messages written to the ring buffer.</summary>
-    public static long WriteCount => ringBuffer.WriteCount;
-
-    /// <summary>Gets or sets the write position at the ring buffer.</summary>
-    public static int WritePosition => ringBuffer.WritePosition;
+    public static long WriteCount => fifo.WriteCount;
 
     /// <summary>Gets or sets the senderName of the log source.</summary>
     /// <value>The senderName of the log source.</value>
@@ -215,7 +205,7 @@ public class Logger
     /// <summary>Closes all receivers, does not flush or wait.</summary>
     public static void Close()
     {
-        ILogReceiver[] receivers;
+        LogReceiver[] receivers;
         lock (receiverSet)
         {
             receivers = receiverSet.ToArray();
@@ -228,30 +218,48 @@ public class Logger
         }
     }
 
+    /// <remarks>This method is fast way to create a logger.</remarks>
+    public static Logger Create(object sender) => new Logger(sender.GetType());
+
     /// <summary>Waits until all notifications are sent.</summary>
     public static void Flush()
     {
         lock (idleLock)
         {
+            var deadlockWatch = StopWatch.StartNew();
             while (true)
             {
-                if (!Monitor.Wait(idleLock) || !isIdle)
+                var read = ReadCount;
+                var written = WriteCount;
+                if (!Monitor.Wait(idleLock, 1000) || !isIdle)
                 {
+                    deadlockWatch.Reset();
                     continue;
                 }
                 // any receivers not idle means we need to wait
-                if ((ringBuffer.Available == 0) && receiverSet.All(w => w.Idle))
+                if ((fifo.Available == 0) && receiverSet.All(w => w.Idle))
                 {
                     // all receivers idle
                     return;
+                }
+                if (read == ReadCount && written == WriteCount)
+                {
+                    if (deadlockWatch.ElapsedMilliSeconds > 10000)
+                    {
+                        throw new Exception($"Assuming deadlock of receiver: {receiverSet.Where(r => !r.Idle).Join(',')}");
+                    }
+                }
+                else
+                {
+                    deadlockWatch.Reset();
                 }
             }
         }
     }
 
-    /// <summary>Registers and starts an <see cref="ILogReceiver"/>.</summary>
-    /// <param senderName="logReceiver">The <see cref="ILogReceiver"/> to register.</param>
-    public static void Register(ILogReceiver logReceiver)
+    /// <summary>Registers and starts an <see cref="LogReceiver"/>.</summary>
+    /// <param senderName="logReceiver">The <see cref="LogReceiver"/> to register.</param>
+    public static void Register(LogReceiver logReceiver)
     {
         if (logReceiver == null)
         {
@@ -272,8 +280,6 @@ public class Logger
 
             receiverSet.Add(logReceiver);
         }
-
-        logReceiver.Start();
     }
 
     /// <summary>Writes a <see cref="LogMessage"/> instance to the logging system.</summary>
@@ -282,11 +288,11 @@ public class Logger
     public static void Send(LogMessage message)
     {
         isIdle = false;
-        ringBuffer.Write(message);
+        fifo.Enqueue(message);
     }
 
     /// <summary>Unregisters a receiver.</summary>
-    public static void Unregister(ILogReceiver logReceiver)
+    public static void Unregister(LogReceiver logReceiver)
     {
         if (logReceiver == null)
         {
@@ -299,38 +305,6 @@ public class Logger
             receiverSet.TryRemove(logReceiver);
         }
     }
-
-    /// <summary>Transmits a message.</summary>
-    /// <param name="level">The level.</param>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    public void Send(LogLevel level, IFormattable content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, level, content, exception, member, file, line));
-
-    /// <summary>Transmits a message.</summary>
-    /// <param name="level">The level.</param>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    public void Send(LogLevel level, string? content, Exception exception, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, level, $"{content}", exception, member, file, line));
-
-    /// <summary>Transmits a message.</summary>
-    /// <param name="level">The level.</param>
-    /// <param name="exception">The exception.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    public void Send(LogLevel level, Exception exception, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, level, $"", exception, member, file, line));
 
     /// <summary>(1) Transmits a <see cref="LogLevel.Alert"/> message.</summary>
     /// <param name="exception">The exception.</param>
@@ -506,7 +480,6 @@ public class Logger
     public void Info(Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
         => Send(new(SenderName, SenderType, LogLevel.Information, $"", exception, member, file, line));
 
-
     /// <summary>(5) Transmits a <see cref="LogLevel.Notice"/> message.</summary>
     /// <param name="exception">The exception.</param>
     /// <param name="content">The message content.</param>
@@ -535,6 +508,38 @@ public class Logger
     [MethodImpl((MethodImplOptions)0x0100)]
     public void Notice(Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
         => Send(new(SenderName, SenderType, LogLevel.Notice, $"", exception, member, file, line));
+
+    /// <summary>Transmits a message.</summary>
+    /// <param name="level">The level.</param>
+    /// <param name="exception">The exception.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="member">Optional: method or property name of the sender.</param>
+    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
+    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
+    [MethodImpl((MethodImplOptions)0x0100)]
+    public void Send(LogLevel level, IFormattable content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
+        => Send(new(SenderName, SenderType, level, content, exception, member, file, line));
+
+    /// <summary>Transmits a message.</summary>
+    /// <param name="level">The level.</param>
+    /// <param name="exception">The exception.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="member">Optional: method or property name of the sender.</param>
+    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
+    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
+    [MethodImpl((MethodImplOptions)0x0100)]
+    public void Send(LogLevel level, string? content, Exception exception, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
+        => Send(new(SenderName, SenderType, level, $"{content}", exception, member, file, line));
+
+    /// <summary>Transmits a message.</summary>
+    /// <param name="level">The level.</param>
+    /// <param name="exception">The exception.</param>
+    /// <param name="member">Optional: method or property name of the sender.</param>
+    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
+    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
+    [MethodImpl((MethodImplOptions)0x0100)]
+    public void Send(LogLevel level, Exception exception, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
+        => Send(new(SenderName, SenderType, level, $"", exception, member, file, line));
 
     /// <summary>(8) Transmits a <see cref="LogLevel.Verbose"/> message.</summary>
     /// <param name="exception">The exception.</param>

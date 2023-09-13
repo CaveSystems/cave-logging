@@ -1,4 +1,6 @@
-﻿namespace Cave.Logging;
+﻿using System.Collections.Generic;
+
+namespace Cave.Logging;
 
 /// <summary>Provides the log writer base class.</summary>
 public abstract class LogWriter : ILogWriter
@@ -9,7 +11,7 @@ public abstract class LogWriter : ILogWriter
     {
         #region Public Methods
 
-        public override void Write(ILogText text) { }
+        public override void Write(LogMessage message, IEnumerable<ILogText> items) { }
 
         #endregion Public Methods
     }
@@ -32,7 +34,7 @@ public abstract class LogWriter : ILogWriter
     public virtual void Close() => IsClosed = true;
 
     /// <inheritdoc/>
-    public abstract void Write(ILogText text);
+    public abstract void Write(LogMessage message, IEnumerable<ILogText> items);
 
     #endregion Public Methods
 }

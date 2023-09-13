@@ -110,8 +110,11 @@ class Program
     }
 
 #if ALTERNATE_CODE
+
     static void WaitExit() { }
+
 #else
+
     static void WaitExit()
     {
         Console.Write("--- press enter to exit ---");
@@ -120,5 +123,6 @@ class Program
             ;
         }
     }
+
 #endif
 }
