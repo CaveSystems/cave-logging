@@ -1,6 +1,6 @@
 ﻿using Cave.Logging;
 
-namespace LogCollectorSample;
+namespace LogHtmlFileSample;
 
 class Program
 {
@@ -14,62 +14,39 @@ class Program
 
     #region Private Methods
 
-    static void Collector_MessageReceived(object? sender, LogMessageEventArgs e)
-    {
-        //you can filter messages you want to collect by checking e.Message
-        //and define whether the collector should store the message
-        //e.Handled = false or if the collector already did
-        //its job with e.Handled = true
-
-        //in this sample we filter by sender
-        //all messages from FilteredSender shall be filtered
-        e.Handled = e.Message.SenderName == "FilteredSender";
-    }
-
     static void Main(string[] args)
     {
-        var collector1 = LogCollector.StartNew();
-        //define custom message received filter
-        collector1.MessageReceived += Collector_MessageReceived;
-        //set loglevel of collector or warnings and above
-        collector1.Level = LogLevel.Warning;
-        //this collector shall use continous logging
-        collector1.Mode = LogReceiverMode.Continuous;
-        //keep all messages
-        collector1.MaximumItemCount = int.MaxValue;
-        //count collector start message
-        MessagesSent++;
-
-        //no filter at second collector
-        var collector2 = LogCollector.StartNew();
-        collector2.Level = LogLevel.Verbose;
-        collector2.MaximumItemCount = int.MaxValue;
-        //count collector start message
-        MessagesSent++;
+        Console.WriteLine("Prepare logging...");
+        var file1 = LogHtmlFile.StartLogFile("testlog.info.html");
+        var file2 = LogHtmlFile.StartLogFile("testlog.verbose.html");
+        file2.Level = LogLevel.Verbose;
 
         //prepare 3 logger instances for the test
         var sender1 = new Logger("Sender1");
         var sender2 = new Logger("Sender2");
-        var senderF = new Logger("SenderFiltered");
+        var sender3 = new Logger("Sender3");
+
         //create 3 tasks waiting for start signal to send messages
+        Console.WriteLine("Start threads...");
         var task1 = Task.Factory.StartNew(() => SendMessages(sender1));
         var task2 = Task.Factory.StartNew(() => SendMessages(sender2));
-        var task3 = Task.Factory.StartNew(() => SendMessages(senderF));
+        var task3 = Task.Factory.StartNew(() => SendMessages(sender3));
         //wait until all threads are ready
         while (SendersReady < 3) Thread.Sleep(1);
+
+        Console.WriteLine("Start threads...");
         //set start event for all threads
         StartEvent.Set();
+
+        Console.WriteLine("Waiting for threads...");
         //wait until all threads are complete
         Task.WaitAll(task1, task2, task3);
 
+        Console.WriteLine("Waiting for logger...");
         //wait for all loggers
         Logger.Flush();
 
-        //look at collector
-        if (collector2.ItemCount != MessagesSent) throw new Exception("ItemCount does not match sent count!");
-        var expected = collector2.ToArray().Where(i => i.Level <= LogLevel.Warning && i.SenderName != "FilteredSender").ToList();
-        if (!expected.SequenceEqual(collector1.ToArray())) throw new Exception("Collected items do not match!");
-
+        Console.WriteLine("Done.");
         //close logging system
         Logger.Close();
     }

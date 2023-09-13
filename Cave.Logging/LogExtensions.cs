@@ -11,14 +11,15 @@ namespace Cave.Logging;
 /// <summary>Provides extension functions for <see cref="LogText"/>.</summary>
 public static class LogExtensions
 {
-    #region Static
+    #region Public Methods
 
     /// <summary>Obtains the color of a specified loglevel.</summary>
     /// <param name="level"></param>
     /// <returns></returns>
     public static LogColor GetLogLevelColor(this LogLevel level) => level switch
     {
-        LogLevel.Emergency or LogLevel.Alert or LogLevel.Critical or LogLevel.Error => LogColor.Red,
+        LogLevel.Emergency or LogLevel.Alert or LogLevel.Critical => LogColor.Magenta,
+        LogLevel.Error => LogColor.Red,
         LogLevel.Warning => LogColor.Yellow,
         LogLevel.Notice => LogColor.Green,
         LogLevel.Information => LogColor.Cyan,
@@ -324,5 +325,5 @@ public static class LogExtensions
         }
     }
 
-    #endregion Static
+    #endregion Public Methods
 }

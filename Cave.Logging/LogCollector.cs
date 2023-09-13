@@ -5,20 +5,38 @@ using System.Linq;
 namespace Cave.Logging;
 
 /// <summary>Automatically collects the latest and keeps a specified number of <see cref="LogMessage"/> items from the logging system.</summary>
-public class LogCollector : LogReceiverBase
+public class LogCollector : LogReceiver
 {
-    #region Fields
+    #region Private Fields
 
     readonly Queue<LogMessage> items = new();
+
     volatile int maximumItemCount = 100;
 
-    #endregion Fields
+    #endregion Private Fields
+
+    #region Private Methods
+
+    IEnumerable<LogMessage>? CleanMaxItems()
+    {
+        LinkedList<LogMessage>? list = null;
+        if (maximumItemCount > 0)
+        {
+            while (items.Count > maximumItemCount)
+            {
+                list ??= new();
+                list.AddLast(items.Dequeue());
+            }
+        }
+        return list;
+    }
+
+    #endregion Private Methods
 
     #region Protected Methods
 
     /// <summary>
-    /// Calls the <see cref="MessageReceived"/> event and adds the message to the internal queue if <see cref="LogMessageEventArgs.Handled"/> is not set at
-    /// the event.
+    /// Calls the <see cref="MessageReceived"/> event and adds the message to the internal queue if <see cref="LogMessageEventArgs.Handled"/> is not set at the event.
     /// </summary>
     /// <param name="message">The log message</param>
     /// <param name="handled">Indicates whether the message was handled or not.</param>
@@ -37,9 +55,7 @@ public class LogCollector : LogReceiverBase
         }
     }
 
-    /// <summary>
-    /// Calls the <see cref="MessagesRemoved"/> event.
-    /// </summary>
+    /// <summary>Calls the <see cref="MessagesRemoved"/> event.</summary>
     /// <param name="messages">The messages</param>
     protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages)
     {
@@ -58,7 +74,7 @@ public class LogCollector : LogReceiverBase
 
     #endregion Public Events
 
-    #region Properties
+    #region Public Properties
 
     /// <summary>Gets the count of items collected and not retrieved.</summary>
     public int ItemCount
@@ -92,31 +108,12 @@ public class LogCollector : LogReceiverBase
         }
     }
 
-    #endregion Properties
+    #endregion Public Properties
 
-    #region Overrides
+    #region Public Methods
 
-    /// <summary>Returns LogCollector[ItemCount,Level].</summary>
-    /// <returns></returns>
-    public override string ToString() => "LogCollector[" + ItemCount + "," + Level + "]";
-
-    #endregion Overrides
-
-    #region Members
-
-    IEnumerable<LogMessage>? CleanMaxItems()
-    {
-        LinkedList<LogMessage>? list = null;
-        if (maximumItemCount > 0)
-        {
-            while (items.Count > maximumItemCount)
-            {
-                list ??= new();
-                list.AddLast(items.Dequeue());
-            }
-        }
-        return list;
-    }
+    /// <summary>Starts a new instance of the <see cref="LogCollector"/> class.</summary>
+    public static LogCollector StartNew() => Start(new LogCollector());
 
     /// <summary>Clears the list of <see cref="LogMessage"/> items.</summary>
     public void Clear()
@@ -149,6 +146,10 @@ public class LogCollector : LogReceiverBase
         }
     }
 
+    /// <summary>Returns LogCollector[ItemCount,Level].</summary>
+    /// <returns></returns>
+    public override string ToString() => "LogCollector[" + ItemCount + "," + Level + "]";
+
     /// <summary>Retrieves a <see cref="LogMessage"/> items from the collector.</summary>
     /// <returns></returns>
     public bool TryGet(out LogMessage? msg)
@@ -165,10 +166,6 @@ public class LogCollector : LogReceiverBase
         }
         return true;
     }
-
-    #endregion Members
-
-    #region ILogReceiver Member
 
     /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
     /// <param name="message">The message.</param>
@@ -190,5 +187,5 @@ public class LogCollector : LogReceiverBase
         }
     }
 
-    #endregion ILogReceiver Member
+    #endregion Public Methods
 }

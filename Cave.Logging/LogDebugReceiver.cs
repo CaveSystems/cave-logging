@@ -1,33 +1,33 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
 namespace Cave.Logging;
 
-/// <summary>Provides a <see cref="ILogReceiver"/> implementation for sending notifications to <see cref="System.Diagnostics.Debug"/> and <see cref="System.Diagnostics.Trace"/>.</summary>
+/// <summary>Provides a <see cref="LogReceiver"/> implementation for sending notifications to <see cref="Debug"/> and <see cref="Trace"/>.</summary>
 public sealed class LogDebugReceiver : LogReceiver
 {
     #region Private Classes
 
     class MyWriter : LogWriter
     {
-        #region Private Fields
-
-        StringBuilder buffer = new();
-
-        #endregion Private Fields
-
         #region Public Methods
 
-        public override void Write(ILogText text)
+        public override void Write(LogMessage message, IEnumerable<ILogText> items)
         {
-            if (text.Equals(LogText.NewLine))
+            StringBuilder buffer = new();
+            foreach (var item in items)
             {
-                var msg = buffer.ToString();
-                LogHelper.DebugLine(msg);
-                LogHelper.TraceLine(msg);
-                buffer = new();
+                if (item.Equals(LogText.NewLine))
+                {
+                    var msg = buffer.ToString();
+                    LogHelper.DebugLine(msg);
+                    LogHelper.TraceLine(msg);
+                    buffer = new();
+                    continue;
+                }
+                buffer.Append(item);
             }
-            buffer.Append(text);
         }
 
         #endregion Public Methods

@@ -26,6 +26,7 @@ class LoggerTest
             col.LateMessageThreshold = -1;
             col.LateMessageMilliseconds = -1;
             col.MaximumItemCount = -1;
+            col.Start();
             Parallel.For(0, 1000, n => new Logger().Info($"Test {i}.{n}"));
             Logger.Flush();
             var count = col.ItemCount;

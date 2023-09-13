@@ -19,7 +19,7 @@ class LogCollectorTest
     public void LogCollectorTest1()
     {
         var logger = new Logger("Test1");
-        var col = new LogCollector();
+        var col = LogCollector.StartNew();
         int removed = 0;
         col.MessagesRemoved += (s, e) => removed++;
         Assert.AreEqual(100, col.MaximumItemCount);
@@ -53,6 +53,7 @@ class LogCollectorTest
             MaximumItemCount = 200
         };
         col.MessagesRemoved += (s, e) => Assert.Fail();
+        col.Start();
         Assert.AreEqual(LogLevel.Information, col.Level);
         for (var i = 0; i < 200; i++)
         {
@@ -86,6 +87,7 @@ class LogCollectorTest
             MaximumItemCount = 300
         };
         col.MessagesRemoved += (s, e) => Assert.Fail();
+        col.Start();
         Assert.AreEqual(LogLevel.Information, col.Level);
         for (var i = 0; i < 200; i++)
         {

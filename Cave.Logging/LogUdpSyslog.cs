@@ -9,9 +9,19 @@ using Cave.Logging;
 namespace Cave.Syslog;
 
 /// <summary>Provides udp logging to a syslog server.</summary>
-public class LogUdpSyslog : LogReceiverBase, IDisposable
+public class LogUdpSyslog : LogReceiver
 {
-    #region Static
+    #region Private Fields
+
+    UdpClient? client;
+
+    int maximumMessageLength = 2048;
+
+    SyslogMessageVersion version = SyslogMessageVersion.RFC3164;
+
+    #endregion Private Fields
+
+    #region Private Methods
 
     static IPAddress GetIPAddress(ConnectionString connection)
     {
@@ -32,15 +42,24 @@ public class LogUdpSyslog : LogReceiverBase, IDisposable
         throw new InvalidDataException(string.Format("Cannot find a valid IPv4 / v6 IPAddress for server {0}!", connection.Server));
     }
 
-    #endregion Static
+    #endregion Private Methods
 
-    #region Private Fields
+    #region Protected Methods
 
-    int maximumMessageLength = 2048;
-    UdpClient? client;
-    SyslogMessageVersion version = SyslogMessageVersion.RFC3164;
+    /// <summary>Releases the unmanaged resources used by this instance and optionally releases the managed resources.</summary>
+    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            client?.Close();
+            client = null;
+        }
 
-    #endregion Private Fields
+        base.Dispose(disposing);
+    }
+
+    #endregion Protected Methods
 
     #region Public Fields
 
@@ -52,7 +71,7 @@ public class LogUdpSyslog : LogReceiverBase, IDisposable
 
     #endregion Public Fields
 
-    #region Constructors
+    #region Public Constructors
 
     /// <summary>Initializes a new instance of the <see cref="LogUdpSyslog"/> class.</summary>
     /// <remarks>This is the default instance logging to localhost.</remarks>
@@ -100,9 +119,9 @@ public class LogUdpSyslog : LogReceiverBase, IDisposable
         }
     }
 
-    #endregion Constructors
+    #endregion Public Constructors
 
-    #region Properties
+    #region Public Properties
 
     /// <summary>Gets or sets the maximum message length used.</summary>
     public int MaximumMessageLength
@@ -131,11 +150,27 @@ public class LogUdpSyslog : LogReceiverBase, IDisposable
         }
     }
 
-    #endregion Properties
+    #endregion Public Properties
 
-    #region Overrides
+    #region Public Methods
 
-    /// <inheritdoc />
+    /// <summary>Disposes the <see cref="LogUdpSyslog"/> instance and releases the socket used.</summary>
+    public override void Close()
+    {
+        if (Closed)
+        {
+            return;
+        }
+
+        base.Close();
+        client?.Close();
+        client = null;
+    }
+
+    /// <summary>Obtains an identification string for the object.</summary>
+    public override string ToString() => "Syslog<" + Target + ">[" + Version + "]";
+
+    /// <inheritdoc/>
     public override void Write(LogMessage message)
     {
         var udp = client;
@@ -154,42 +189,5 @@ public class LogUdpSyslog : LogReceiverBase, IDisposable
         }
     }
 
-    /// <summary>Disposes the <see cref="LogUdpSyslog"/> instance and releases the socket used.</summary>
-    public override void Close()
-    {
-        if (Closed)
-        {
-            return;
-        }
-
-        base.Close();
-        client?.Close();
-        client = null;
-    }
-
-    #region IDisposable Member
-
-    /// <summary>Releases the unmanaged resources used by this instance and optionally releases the managed resources.</summary>
-    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            client?.Close();
-            client = null;
-        }
-
-        base.Dispose(disposing);
-    }
-
-    #endregion IDisposable Member
-
-    #endregion Overrides
-
-    #region Overrides
-
-    /// <summary>Obtains an identification string for the object.</summary>
-    public override string ToString() => "Syslog<" + Target + ">[" + Version + "]";
-
-    #endregion Overrides
+    #endregion Public Methods
 }
