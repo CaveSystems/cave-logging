@@ -3,9 +3,6 @@ namespace Cave.Logging;
 /// <summary>Provides available logging colors.</summary>
 public enum LogColor : sbyte
 {
-    /// <summary>Reset color to system default</summary>
-    Default = 0,
-
     /// <summary>black</summary>
     Black = 100,
 

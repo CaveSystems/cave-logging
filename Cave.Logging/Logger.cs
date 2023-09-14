@@ -20,7 +20,7 @@ public class Logger
     #region Private Fields
 
     static readonly Fifo<LogMessage> fifo = new();
-    static readonly object idleLock = new();
+    static readonly AutoResetEvent messageTrigger = new(false);
     static readonly Set<LogReceiver> receiverSet = new();
     static readonly Thread thread;
     static volatile bool isIdle;
@@ -34,18 +34,12 @@ public class Logger
         var log = new Logger(typeof(Logger));
         while (true)
         {
-            lock (idleLock)
+            isIdle = true;
+            while (isIdle && fifo.Available == 0)
             {
-                while (fifo.Available == 0)
-                {
-                    isIdle = true;
-                    Monitor.PulseAll(idleLock);
-                    Monitor.Exit(idleLock);
-                    Thread.Sleep(1);
-                    Monitor.Enter(idleLock);
-                    isIdle = false;
-                }
+                messageTrigger.WaitOne();
             }
+            isIdle = false;
 
             Thread.BeginThreadAffinity();
             Thread.BeginCriticalRegion();
@@ -222,37 +216,31 @@ public class Logger
     public static Logger Create(object sender) => new Logger(sender.GetType());
 
     /// <summary>Waits until all notifications are sent.</summary>
-    public static void Flush()
+    public static void Flush() => Flush(10000, false);
+
+    /// <summary>Waits until all notifications are sent.</summary>
+    public static void Flush(int maxWaitMilliseconds = 10000, bool throwTimeoutException = false)
     {
-        lock (idleLock)
+        var deadlockWatch = StopWatch.StartNew();
+        while (true)
         {
-            var deadlockWatch = StopWatch.StartNew();
-            while (true)
+            if (!isIdle)
             {
-                var read = ReadCount;
-                var written = WriteCount;
-                if (!Monitor.Wait(idleLock, 1000) || !isIdle)
-                {
-                    deadlockWatch.Reset();
-                    continue;
-                }
-                // any receivers not idle means we need to wait
-                if ((fifo.Available == 0) && receiverSet.All(w => w.Idle))
-                {
-                    // all receivers idle
-                    return;
-                }
-                if (read == ReadCount && written == WriteCount)
-                {
-                    if (deadlockWatch.ElapsedMilliSeconds > 10000)
-                    {
-                        throw new Exception($"Assuming deadlock of receiver: {receiverSet.Where(r => !r.Idle).Join(',')}");
-                    }
-                }
-                else
-                {
-                    deadlockWatch.Reset();
-                }
+                while (!isIdle) Thread.Sleep(1);
+                deadlockWatch.Reset();
+            }
+            // any receivers not idle means we need to wait
+            if ((fifo.Available == 0) && receiverSet.All(w => w.Idle))
+            {
+                // all receivers idle
+                if (isIdle) return;
+            }
+
+            if (maxWaitMilliseconds > 0 && deadlockWatch.ElapsedMilliSeconds > maxWaitMilliseconds)
+            {
+                Trace.WriteLine($"Waiting for receivers: {receiverSet.Where(r => !r.Idle).Join(',')}");
+                if (throwTimeoutException) throw new TimeoutException();
+                deadlockWatch.Reset();
             }
         }
     }
@@ -287,8 +275,13 @@ public class Logger
     [MethodImpl((MethodImplOptions)0x0100)]
     public static void Send(LogMessage message)
     {
-        isIdle = false;
+        var wasIdle = isIdle;
         fifo.Enqueue(message);
+        if (wasIdle)
+        {
+            isIdle = false;
+            messageTrigger.Set();
+        }
     }
 
     /// <summary>Unregisters a receiver.</summary>

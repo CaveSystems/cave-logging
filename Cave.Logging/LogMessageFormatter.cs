@@ -163,10 +163,10 @@ public class LogMessageFormatter : ILogMessageFormatter
     #region Public Fields
 
     /// <summary>Default message format without colors and style.</summary>
-    public const string Default = "{DateTime}: {Level} {Sender}> '{Content}'\n";
+    public const string Default = "{DateTime}: {Level} {Sender}> {Content}\n";
 
     /// <summary>Default message format using colors.</summary>
-    public const string DefaultColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}<reset>> '{Content}'\n";
+    public const string DefaultColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}<reset>> {Content}\n";
 
     /// <summary>Extended message format without colors and style.</summary>
     public const string Extended = "{DateTime}: {Level} {Sender}> '{Content}' @{SourceFile}({SourceLine}): {SourceMember}\n";

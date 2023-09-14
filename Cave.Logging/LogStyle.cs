@@ -1,6 +1,6 @@
 using System;
 
-namespace Cave;
+namespace Cave.Logging;
 
 /// <summary>Provides available logging colors.</summary>
 [Flags]

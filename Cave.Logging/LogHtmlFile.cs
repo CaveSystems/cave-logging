@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 
 namespace Cave.Logging;
 
@@ -71,7 +69,7 @@ public class LogHtmlFile : LogFileBase
     /// <summary>Gets or sets the document style</summary>
     public string DocumentStyle { get; set; } = "<style>table.sortable thead{background-color:#eee;color:#333;font-weight:bold;cursor:pointer}table.sortable tr{background-color:#333;color:#eee;vertical-align:top}" +
         "td.BgBlack{color:Gray;background-color:Black}td.BgGray{color:White;background-color:DarkGray}td.BgBlue{color:White;background-color:DarkBlue}td.BgGreen{color:White;background-color:DarkGreen}td.BgCyan{color:White;background-color:DarkCyan}td.BgRed{color:White;background-color:DarkRed}td.BgMagenta{color:White;background-color:DarkMagenta}td.BgYellow{color:White;background-color:Orange}td.BgWhite{color:White;background-color:Gray}" +
-        "span.Black{color:Black}span.Gray{color:Gray}span.Blue{color:LightBlue}span.Green{color:LightGreen}span.Cyan{color:Cyan}span.Red{color:LightRed}span.Magenta{color:LightMagenta}span.Yellow{color:Yellow}span.White{color:White}" +
+        "span.Black{color:Black}span.Gray{color:LightGray}span.Blue{color:LightBlue}span.Green{color:LightGreen}span.Cyan{color:Cyan}span.Red{color:Red}span.Magenta{color:LightMagenta}span.Yellow{color:Yellow}span.White{color:White}" +
         "table.sortable{border:1px solid black}</style>";
 
     /// <summary>Gets the table header descriptions used.</summary>
@@ -140,14 +138,14 @@ public class LogHtmlFile : LogFileBase
         if (writer == null) return;
 
         // start row
-        var bgcolor = message.Level.GetLogLevelColor();
+        var levelColor = message.Level.GetLogLevelColor();
         writer.Write("<tr>");
 
         // datetime
         writer.Write("<td>" + message.DateTime.ToString(MessageFormatter.DateTimeFormat) + "</td>");
 
         // loglevel
-        writer.Write($"<td class=\"Bg{bgcolor}\">{message.Level}</td>");
+        writer.Write($"<td class=\"Bg{levelColor}\">{message.Level}</td>");
 
         // sender
         writer.Write("<td>");
@@ -163,19 +161,19 @@ public class LogHtmlFile : LogFileBase
         // colored content
         {
             writer.Write("<td>");
-            var color = LogColor.Default;
+            var color = (LogColor)0;
             var items = MessageFormatter.FormatMessage(message);
             foreach (var item in items)
             {
                 if (item.Color != color)
                 {
-                    if (color != LogColor.Default)
+                    if (color != 0)
                     {
                         writer.Write("</span>");
                     }
 
                     color = item.Color;
-                    if (color != LogColor.Default)
+                    if (color != 0)
                     {
                         writer.Write($"<span class=\"{color}\">");
                     }
@@ -191,7 +189,7 @@ public class LogHtmlFile : LogFileBase
                 }
             }
 
-            if (color != LogColor.Default)
+            if (color != 0)
             {
                 writer.Write("</span>");
             }

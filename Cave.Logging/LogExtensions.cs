@@ -133,7 +133,7 @@ public static class LogExtensions
         }
 
         var result = new List<ILogText>();
-        var spacer = new LogText("  ", LogColor.Default, LogStyle.Unchanged);
+        var spacer = new LogText("  ", 0, LogStyle.Unchanged);
         result.Add(new LogText(ex.GetType().Name, LogColor.Red, LogStyle.Bold));
         if (debug)
         {
@@ -158,7 +158,7 @@ public static class LogExtensions
                 result.Add(spacer);
             }
 
-            result.Add(new LogText(str, LogColor.Default, LogStyle.Unchanged));
+            result.Add(new LogText(str, 0, LogStyle.Unchanged));
             result.Add(LogText.NewLine);
         }
 
@@ -176,7 +176,7 @@ public static class LogExtensions
                     }
 
                     result.Add(spacer);
-                    result.Add(new LogText(str, LogColor.Default, LogStyle.Unchanged));
+                    result.Add(new LogText(str, 0, LogStyle.Unchanged));
                     result.Add(LogText.NewLine);
                 }
             }
@@ -187,7 +187,7 @@ public static class LogExtensions
                 result.Add(LogText.NewLine);
                 foreach (var key in ex.Data.Keys)
                 {
-                    result.Add(new LogText($"  {key}: {ex.Data[key!]}\n", LogColor.Default, LogStyle.Unchanged));
+                    result.Add(new LogText($"  {key}: {ex.Data[key!]}\n", 0, LogStyle.Unchanged));
                     result.Add(LogText.NewLine);
                 }
             }
@@ -204,7 +204,7 @@ public static class LogExtensions
                     }
 
                     result.Add(spacer);
-                    result.Add(new LogText(str, LogColor.Default, LogStyle.Unchanged));
+                    result.Add(new LogText(str, 0, LogStyle.Unchanged));
                     result.Add(LogText.NewLine);
                 }
             }
@@ -245,14 +245,14 @@ public static class LogExtensions
     /// <param name="formatProvider"></param>
     public static void WriteHtml(this IEnumerable<ILogText> logTextItems, StringBuilder target, IFormatProvider formatProvider)
     {
-        var color = LogColor.Default;
+        var color = (LogColor)0;
         var style = LogStyle.Unchanged;
         foreach (var logText in logTextItems)
         {
             if (logText.Color != color)
             {
                 // close old span
-                if (color != LogColor.Default)
+                if (color != 0)
                 {
                     target.Append("</span>");
                 }
@@ -261,8 +261,9 @@ public static class LogExtensions
                 color = logText.Color;
 
                 // open new span
-                if (color != LogColor.Default)
+                if (color != 0)
                 {
+                    color = LogColor.Gray;
                     target.Append($"<span style=\"color:{color.ToString().ToLower()}\">");
                 }
             }
