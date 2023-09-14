@@ -37,7 +37,8 @@ public class Logger
             isIdle = true;
             while (isIdle && fifo.Available == 0)
             {
-                messageTrigger.WaitOne();
+                //todo: check if there are still race conditions with isIdle, fifo.Available and messageTrigger
+                if (messageTrigger.WaitOne(1000)) break;
             }
             isIdle = false;
 
@@ -275,9 +276,8 @@ public class Logger
     [MethodImpl((MethodImplOptions)0x0100)]
     public static void Send(LogMessage message)
     {
-        var wasIdle = isIdle;
         fifo.Enqueue(message);
-        if (wasIdle)
+        if (isIdle)
         {
             isIdle = false;
             messageTrigger.Set();
