@@ -94,7 +94,7 @@ public record LogText : ILogText, IEquatable<LogText>
 
         if (!Unbox(color).TryParse<LogColor>(out var result))
         {
-            result = LogColor.Default;
+            result = 0;
         }
         return result;
     }
@@ -222,7 +222,7 @@ public record LogText : ILogText, IEquatable<LogText>
         var items = new List<ILogText>();
         if (text.Contains("\r")) text = text.ReplaceNewLine("\n");
 
-        var color = LogColor.Default;
+        var color = (LogColor)0;
         var style = LogStyle.Unchanged;
 
         var textStart = 0;
@@ -289,9 +289,14 @@ public record LogText : ILogText, IEquatable<LogText>
             var token = text.Substring(tokenStart, ++tokenEnd - tokenStart);
             if (token == "\n")
             {
-                color = LogColor.Default;
+                color = 0;
                 style = LogStyle.Reset;
                 items.Add(LogText.NewLine);
+            }
+            else if (string.Equals(token, "default", StringComparison.OrdinalIgnoreCase))
+            {
+                style = LogStyle.Reset;
+                color = 0;
             }
             else if (IsColor(token))
             {
@@ -303,6 +308,7 @@ public record LogText : ILogText, IEquatable<LogText>
                 if (newStyle == LogStyle.Reset)
                 {
                     style = LogStyle.Reset;
+                    color = 0;
                 }
                 else
                 {

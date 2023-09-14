@@ -89,7 +89,7 @@ class Program
         for (var i = 0; i < 10000; i++)
         {
             var level = (LogLevel)(i % logLevelCount);
-            logger.Send(level, $"<{LogColor.Cyan}>Message<{LogColor.Default}> {i} is an even message: {i % 2 == 0} or an odd message: {i % 2 == 1}");
+            logger.Send(level, $"<cyan>Message {i}<reset> is an even message: {i % 2 == 0} or an odd message: {i % 2 == 1}");
         }
 
         logger.Info($"<red>End SendMessages to Logger {logger.SenderName}");
