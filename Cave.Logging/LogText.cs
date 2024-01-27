@@ -109,7 +109,12 @@ public record LogText : ILogText, IEquatable<LogText>
             throw new ArgumentNullException(nameof(style));
         }
 
-        if (!Unbox(style).TryParse<LogStyle>(out var result))
+        var unboxed = Unbox(style);
+        if (string.Equals(unboxed, "default", StringComparison.OrdinalIgnoreCase))
+        {
+            return LogStyle.Reset;
+        }
+        if (!unboxed.TryParse<LogStyle>(out var result))
         {
             result = LogStyle.Unchanged;
         }
@@ -124,7 +129,11 @@ public record LogText : ILogText, IEquatable<LogText>
     /// <summary>Checks whether a specified string is a valid <see cref="LogStyle"/>.</summary>
     /// <param name="style">The style name.</param>
     /// <returns>Returns true if the specified string is a valid style name.</returns>
-    public static bool IsStyle(string style) => Unbox(style).TryParse<LogStyle>(out var result);
+    public static bool IsStyle(string style)
+    {
+        var unboxed = Unbox(style);
+        return string.Equals(unboxed, "default", StringComparison.OrdinalIgnoreCase) || unboxed.TryParse<LogStyle>(out var result);
+    }
 
     /// <summary>Converts the specified <see cref="LogColor"/> to a <see cref="Color"/>.</summary>
     /// <exception cref="ArgumentOutOfRangeException">An Exception is thrown if an invalid color string is given.</exception>
@@ -292,11 +301,6 @@ public record LogText : ILogText, IEquatable<LogText>
                 color = 0;
                 style = LogStyle.Reset;
                 items.Add(LogText.NewLine);
-            }
-            else if (string.Equals(token, "default", StringComparison.OrdinalIgnoreCase))
-            {
-                style = LogStyle.Reset;
-                color = 0;
             }
             else if (IsColor(token))
             {
