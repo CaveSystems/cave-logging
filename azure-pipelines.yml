@@ -5,6 +5,8 @@
 # trigger: add any branches with releases to build AND change fixedBuildVersion variable!
 trigger:
 - refs/tags/*
+- bugfix/*
+- feature/*
 - master
 - next
 
@@ -67,6 +69,13 @@ steps:
 - task: NuGetToolInstaller@0
   inputs:
     versionSpec: '>=4.9.0'
+
+- task: UseDotNet@2
+  displayName: 'Install .NET sdk 8'
+  inputs:
+    packageType: sdk
+    version: 8.x
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: UseDotNet@2
   displayName: 'Install .NET sdk 7'
