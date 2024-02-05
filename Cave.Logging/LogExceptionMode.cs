@@ -12,7 +12,7 @@ public enum LogExceptionMode
     /// <summary>Log exceptions with full message (messages of all exceptions including inner exeptions).</summary>
     IncludeChildren = 1,
 
-    /// <summary>Log exceptions with the same level the error message is logged with</summary>
+    /// <summary>Log exception message with the same level the error message is logged with</summary>
     SameLevel = 2,
 
     /// <summary>Add a full stacktrace to the exception log</summary>

@@ -79,14 +79,6 @@ public class LogMessageFormatter : ILogMessageFormatter
     void Content(List<ILogText> list, LogMessage message, string? format)
             => list.AddRange(LogText.Parse(message.Content?.ToString(format, FormatProvider) ?? "-"));
 
-    void DebugException(List<ILogText> list, LogMessage message, string? format)
-            => list.AddRange(message.Exception?.ToLogText(true) ?? LogText.Empty);
-
-    void ExceptionMessage(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.Exception?.Message ?? "-"));
-
-    void FullException(List<ILogText> list, LogMessage message, string? format)
-            => list.AddRange(message.Exception?.ToLogText() ?? LogText.Empty);
-
     void Level(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{message.Level}"));
 
     void LevelColor(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(string.Empty, message.Level.GetLogLevelColor()));
@@ -226,6 +218,10 @@ public class LogMessageFormatter : ILogMessageFormatter
             {
                 result.AddRange(LogText.Parse(item.Text));
             }
+        }
+        if (message.Exception is Exception ex && ExceptionMode != LogExceptionMode.None)
+        {
+            result.AddRange(ex.ToLogText(ExceptionMode.HasFlag(LogExceptionMode.StackTrace), ExceptionMode.HasFlag(LogExceptionMode.IncludeChildren)));
         }
         return result.AsReadOnly();
     }

@@ -119,7 +119,14 @@ public static class LogExtensions
     /// <param name="ex">The <see cref="Exception"/>.</param>
     /// <param name="debug">Include debug information (stacktrace, data).</param>
     /// <returns>Returns a new <see cref="LogText"/> instance.</returns>
-    public static IEnumerable<ILogText> ToLogText(this Exception ex, bool debug = false)
+    public static IEnumerable<ILogText> ToLogText(this Exception ex, bool debug = false) => ToLogText(ex, debug, false);
+
+    /// <summary>Converts a exception to a loggable text message.</summary>
+    /// <param name="ex">The <see cref="Exception"/>.</param>
+    /// <param name="debug">Include debug information (stacktrace, data).</param>
+    /// <param name="inner">Include inner exceptions.</param>
+    /// <returns>Returns a new <see cref="LogText"/> instance.</returns>
+    public static IEnumerable<ILogText> ToLogText(this Exception ex, bool debug, bool inner)
     {
         // ignore AggregateException
         if (ex is AggregateException && ex.InnerException is not null)
@@ -210,29 +217,32 @@ public static class LogExtensions
             }
         }
 
-        if (ex.InnerException is not null)
+        if (inner)
         {
-            if (debug)
+            if (ex.InnerException is not null)
             {
-                result.Add(new LogText("---", LogColor.White, LogStyle.Bold));
-                result.Add(LogText.NewLine);
-            }
-
-            result.AddRange(ToLogText(ex.InnerException, debug));
-        }
-
-        if (ex is ReflectionTypeLoadException rtle && rtle.LoaderExceptions != null)
-        {
-            foreach (var inner in rtle.LoaderExceptions)
-            {
-                if (inner is null) continue;
                 if (debug)
                 {
                     result.Add(new LogText("---", LogColor.White, LogStyle.Bold));
                     result.Add(LogText.NewLine);
                 }
 
-                result.AddRange(ToLogText(inner, debug));
+                result.AddRange(ToLogText(ex.InnerException, debug));
+            }
+
+            if (ex is ReflectionTypeLoadException rtle && rtle.LoaderExceptions != null)
+            {
+                foreach (var loader in rtle.LoaderExceptions)
+                {
+                    if (loader is null) continue;
+                    if (debug)
+                    {
+                        result.Add(new LogText("---", LogColor.White, LogStyle.Bold));
+                        result.Add(LogText.NewLine);
+                    }
+
+                    result.AddRange(ToLogText(loader, debug));
+                }
             }
         }
 
