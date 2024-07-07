@@ -155,7 +155,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
             throw new ArgumentException("Invalid message encoding!", nameof(text));
         }
 
-        var str = text.Length == 14 ? text : text.Substring(0, 15).TrimEnd(' ');
+        var str = text.Length == 14 ? text : text[..15].TrimEnd(' ');
         return new SyslogMessageDateTime(DateTime.ParseExact(str, "MMM d HH':'mm':'ss", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.AssumeLocal));
     }
 
@@ -170,7 +170,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
         }
 
         var index = text.IndexOf(' ');
-        var str = index == -1 ? text : text.Substring(0, index);
+        var str = index == -1 ? text : text[..index];
         if (str.Length < 19)
         {
             throw new ArgumentException("Invalid message encoding!", nameof(text));

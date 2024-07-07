@@ -40,7 +40,7 @@ public class SyslogStructuredData : ICollection<SyslogStructuredDataPart>, IColl
 
         if (start < text.Length)
         {
-            result.Add(SyslogStructuredDataPart.Parse(text.Substring(start)));
+            result.Add(SyslogStructuredDataPart.Parse(text[start..]));
         }
 
         return new SyslogStructuredData(result);

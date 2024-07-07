@@ -226,7 +226,7 @@ public struct SyslogMessage : IComparable
             throw new FormatException("Invalid parser for this message type!");
         }
 
-        result.TimeStamp = SyslogMessageDateTime.ParseRFC3164(data.Substring(start));
+        result.TimeStamp = SyslogMessageDateTime.ParseRFC3164(data[start..]);
         start += 14;
         if (data[start] != ' ')
         {
@@ -253,7 +253,7 @@ public struct SyslogMessage : IComparable
                 {
                     if (uint.TryParse(id, out result.ProcessID))
                     {
-                        result.ProcessName = result.ProcessName.Substring(0, startProcessID);
+                        result.ProcessName = result.ProcessName[..startProcessID];
                     }
                 }
             }
@@ -262,7 +262,7 @@ public struct SyslogMessage : IComparable
         }
 
         // copy content
-        var content = data.Substring(start, data.Length - start);
+        var content = data[start..];
         result.Content = content.Replace('\0', ' ').TrimEnd('\r', '\n');
         return result;
     }
@@ -380,12 +380,12 @@ public struct SyslogMessage : IComparable
             }
 
             // get message content
-            var content = data.Substring(start);
+            var content = data[start..];
 
             // remove utf8 bom
             if (content.StartsWith(ASCII.Strings.UTF8BOM))
             {
-                content = content.Substring(ASCII.Strings.UTF8BOM.Length);
+                content = content[ASCII.Strings.UTF8BOM.Length..];
             }
 
             // replace invalid chars and trim end
@@ -506,12 +506,12 @@ public struct SyslogMessage : IComparable
             }
 
             // get message content
-            var content = data.Substring(start);
+            var content = data[start..];
 
             // remove utf8 bom
             if (content.StartsWith(ASCII.Strings.UTF8BOM))
             {
-                content = content.Substring(ASCII.Strings.UTF8BOM.Length);
+                content = content[ASCII.Strings.UTF8BOM.Length..];
             }
 
             // replace invalid chars and trim end

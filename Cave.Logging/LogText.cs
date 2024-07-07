@@ -40,7 +40,7 @@ public record LogText : ILogText, IEquatable<LogText>
         var text = token;
         if (text.StartsWith("<") && text.EndsWith(">"))
         {
-            text = text.Substring(1, text.Length - 2);
+            text = text[1..^1];
         }
 
         return text;
@@ -280,7 +280,7 @@ public record LogText : ILogText, IEquatable<LogText>
             string currentText;
             if ((tokenStart < 0) || (tokenEnd < 0))
             {
-                currentText = text.Substring(textStart);
+                currentText = text[textStart..];
                 if (currentText.Length > 0)
                 {
                     items.Add(new LogText(currentText, color, style));
@@ -289,13 +289,13 @@ public record LogText : ILogText, IEquatable<LogText>
                 break;
             }
 
-            currentText = text.Substring(textStart, tokenStart - textStart);
+            currentText = text[textStart..tokenStart];
             if (currentText.Length > 0)
             {
                 items.Add(new LogText(currentText, color, style));
             }
 
-            var token = text.Substring(tokenStart, ++tokenEnd - tokenStart);
+            var token = text[tokenStart..++tokenEnd];
             if (token == "\n")
             {
                 color = 0;

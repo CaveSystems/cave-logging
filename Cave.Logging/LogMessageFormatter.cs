@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Cave.Logging;
 
@@ -74,7 +76,23 @@ public class LogMessageFormatter : ILogMessageFormatter
     #region Private Methods
 
     void Content(List<ILogText> list, LogMessage message, string? format)
-            => list.AddRange(LogText.Parse(message.Content?.ToString(format, FormatProvider) ?? "-"));
+    {
+        var content = message.Content;
+        if (content is FormattableString formattableString)
+        {
+            var updatedArgs = formattableString.GetArguments().Select(argument => OnFormatArgument(message, argument)).ToArray();
+            content = FormattableStringFactory.Create(formattableString.Format, updatedArgs);
+        }
+
+        if (content is IFormattable formattable)
+        {
+            list.AddRange(LogText.Parse(formattable.ToString(format, FormatProvider)));
+        }
+        else
+        {
+            list.AddRange(LogText.Parse("-"));
+        }
+    }
 
     void Level(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{message.Level}"));
 
@@ -114,7 +132,7 @@ public class LogMessageFormatter : ILogMessageFormatter
         }
         if (i < value.Length)
         {
-            result.Add(new LogFormatItem(value.Substring(i)));
+            result.Add(new LogFormatItem(value[i..]));
         }
         items = result.AsReadOnly();
         format = value;
@@ -131,7 +149,7 @@ public class LogMessageFormatter : ILogMessageFormatter
     }));
 
     void ShortLevel(IList<ILogText> list, LogMessage message, string? format)
-            => list.Add(new LogText(message.Level.ToString().Substring(0, 1)));
+            => list.Add(new LogText(message.Level.ToString()[..1]));
 
     void SourceFile(IList<ILogText> list, LogMessage message, string? format)
             => list.Add(new LogText(message.SourceFile ?? "-"));
@@ -149,25 +167,46 @@ public class LogMessageFormatter : ILogMessageFormatter
 
     #endregion Private Methods
 
+    #region Protected Methods
+
+    /// <summary>Calls the <see cref="FormatArgument"/> function to format each argument of a formattable string.</summary>
+    /// <param name="message">Message to be formatted.</param>
+    /// <param name="argument">Argument of content part to be formatted.</param>
+    /// <returns>Returns the formatted string.</returns>
+    protected virtual string OnFormatArgument(LogMessage message, object? argument)
+    {
+        var formatter = FormatArgument;
+        if (formatter != null) return formatter(message, argument);
+
+        switch (argument)
+        {
+            case bool b: return (b == true ? $"<green>{b}<reset>" : $"<red>{b}<reset>");
+            case null: return $"<inverse><{message.Level.GetLogLevelColor()}>null<reset>";
+        }
+        return $"<{message.Level.GetLogLevelColor()}>{argument}<reset>";
+    }
+
+    #endregion Protected Methods
+
     #region Public Fields
 
     /// <summary>Default message format without colors and style.</summary>
     public const string Default = "{DateTime}: {Level} {Sender}> {Content}\n";
 
     /// <summary>Default message format using colors.</summary>
-    public const string DefaultColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}<reset>> {Content}\n";
+    public const string DefaultColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}><reset> {Content}\n";
 
     /// <summary>Extended message format without colors and style.</summary>
     public const string Extended = "{DateTime}: {Level} {Sender}> '{Content}' @{SourceFile}({SourceLine}): {SourceMember}\n";
 
     /// <summary>Extended message format using colors.</summary>
-    public const string ExtendedColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}<reset>> '{Content}' @<inverse><blue>{SourceFile}({SourceLine}): {SourceMember}\n";
+    public const string ExtendedColored = "<inverse>{LevelColor}{DateTime} {Level} {Sender}><reset> '{Content}' <inverse><blue>@{SourceFile}({SourceLine}): {SourceMember}\n";
 
     /// <summary>Short message format without colors and style.</summary>
     public const string Short = "{ShortLevel} {DateTime} {Sender}> {Content}\n";
 
     /// <summary>Short message format using colors.</summary>
-    public const string ShortColored = "<inverse>{LevelColor}{ShortLevel} {DateTime} {Sender}<reset>> {Content}\n";
+    public const string ShortColored = "<inverse>{LevelColor}{ShortLevel} {DateTime} {Sender}><reset> {Content}\n";
 
     #endregion Public Fields
 
@@ -185,6 +224,9 @@ public class LogMessageFormatter : ILogMessageFormatter
 
     /// <inheritdoc/>
     public LogExceptionMode ExceptionMode { get; set; } = LogExceptionMode.Full;
+
+    /// <summary>Provides per argument formatting for formattable strings.</summary>
+    public Func<LogMessage, object?, string>? FormatArgument { get; set; }
 
     /// <inheritdoc/>
     public IFormatProvider FormatProvider { get; set; } = CultureInfo.CurrentCulture;
