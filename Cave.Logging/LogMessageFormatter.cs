@@ -178,9 +178,16 @@ public class LogMessageFormatter : ILogMessageFormatter
         var formatter = FormatArgument;
         if (formatter != null) return formatter(message, argument);
 
+        if (!UseArgumentColors)
+        {
+            if (argument is IFormattable f) return f.ToString(null, FormatProvider);
+            return argument?.ToString() ?? string.Empty;
+        }
         switch (argument)
         {
-            case bool b: return (b == true ? $"<green>{b}<reset>" : $"<red>{b}<reset>");
+            case IFormattable f: return $"<{message.Level.GetLogLevelColor()}>{f.ToString(null, FormatProvider)}<reset>";
+            case bool b: return (b == true ? $"<green>{b.ToString(FormatProvider)}<reset>" : $"<red>{b.ToString(FormatProvider)}<reset>");
+            case IConvertible c: return c.ToDouble(FormatProvider) > 0 ? $"<green>{c.ToString(FormatProvider)}<reset>" : $"<red>{c.ToString(FormatProvider)}<reset>";
             case null: return $"<inverse><{message.Level.GetLogLevelColor()}>null<reset>";
         }
         return $"<{message.Level.GetLogLevelColor()}>{argument}<reset>";
@@ -237,6 +244,9 @@ public class LogMessageFormatter : ILogMessageFormatter
         get => format;
         set => ParseFormat(value, out format, out items);
     }
+
+    /// <summary>Use colors for argument formatting</summary>
+    public bool UseArgumentColors { get; set; } = true;
 
     #endregion Public Properties
 

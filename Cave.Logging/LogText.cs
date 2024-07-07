@@ -293,6 +293,7 @@ public record LogText : ILogText, IEquatable<LogText>
             if (currentText.Length > 0)
             {
                 items.Add(new LogText(currentText, color, style));
+                if (style == LogStyle.Reset) style = LogStyle.Unchanged;
             }
 
             var token = text[tokenStart..++tokenEnd];
