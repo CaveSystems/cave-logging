@@ -17,6 +17,9 @@ public interface ILogWriter
     /// <summary>Closes the writer.</summary>
     void Close();
 
+    /// <summary>Writes all buffered data to the sink.</summary>
+    void Flush();
+
     /// <summary>Writes all components of the log message to the backend</summary>
     /// <param name="message">The original message.</param>
     /// <param name="items">The formatted items to write.</param>
