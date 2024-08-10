@@ -7,6 +7,7 @@
             net6.0;net7.0;net8.0;
             netstandard2.0;netstandard2.1;
         </TargetFrameworks>
+        <TargetPlatformIdentifier>windows</TargetPlatformIdentifier>
         <!--project-->
         <RootNamespace>Cave.Logging</RootNamespace>
         <AssemblyOriginatorKeyFile>Cave.Logging.snk</AssemblyOriginatorKeyFile>
@@ -27,13 +28,13 @@
     <ItemGroup>
         <PackageReference Include="Cave.Extensions" Version="3.0.13" />
         <PackageReference Include="Cave.IO" Version="3.0.5" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+        <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.0" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-      <PackageReference Include="Microsoft.Extensions.Logging">
-        <Version>8.0.0</Version>
-      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
