@@ -185,10 +185,11 @@ public class LogMessageFormatter : ILogMessageFormatter
         }
         switch (argument)
         {
-            case IFormattable f: return $"<{message.Level.GetLogLevelColor()}>{f.ToString(null, FormatProvider)}<reset>";
-            case bool b: return (b == true ? $"<green>{b.ToString(FormatProvider)}<reset>" : $"<red>{b.ToString(FormatProvider)}<reset>");
-            case IConvertible c: return c.ToDouble(FormatProvider) > 0 ? $"<green>{c.ToString(FormatProvider)}<reset>" : $"<red>{c.ToString(FormatProvider)}<reset>";
             case null: return $"<inverse><{message.Level.GetLogLevelColor()}>null<reset>";
+            case string s: break;
+            case bool b: return (b == true ? $"<green>{b.ToString(FormatProvider)}<reset>" : $"<red>{b.ToString(FormatProvider)}<reset>");
+            case IFormattable f: return $"<{message.Level.GetLogLevelColor()}>{f.ToString(null, FormatProvider)}<reset>";
+            case IConvertible c: try { return c.ToDouble(FormatProvider) > 0 ? $"<green>{c.ToString(FormatProvider)}<reset>" : $"<red>{c.ToString(FormatProvider)}<reset>"; } catch { break; }
         }
         return $"<{message.Level.GetLogLevelColor()}>{argument}<reset>";
     }

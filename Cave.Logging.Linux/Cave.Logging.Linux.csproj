@@ -10,12 +10,13 @@
             net6.0;net7.0;net8.0;
             netstandard2.0;netstandard2.1;
         </TargetFrameworks>
+
         <!--project-->
         <RootNamespace>Cave.Logging</RootNamespace>
         <AssemblyOriginatorKeyFile>Cave.Logging.snk</AssemblyOriginatorKeyFile>
-        <Product>CaveSystems Logging Library</Product>
+        <Product>CaveSystems Logging Linux Library</Product>
         <PackageTags>CaveSystems Logging</PackageTags>
-        <Description>CaveSystems Logging Library is a high speed fully asynchonous logging facility.</Description>
+        <Description>This package contains classes for using the linux syslog.</Description>
         <PackageProjectUrl>https://github.com/CaveSystems/cave-logging</PackageProjectUrl>
         <RepositoryUrl>https://github.com/CaveSystems/cave-logging</RepositoryUrl>
         <!--settings-->
@@ -27,7 +28,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <ItemGroup>
+     <ItemGroup>
         <PackageReference Include="Cave.Extensions" Version="3.0.13" />
         <PackageReference Include="Cave.IO" Version="3.0.5" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
@@ -36,4 +37,7 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Cave.Logging\Cave.Logging.csproj" />
+    </ItemGroup>
 </Project>

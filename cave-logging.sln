@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogHtmlFileSample", "Sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cave.Logging.Microsoft", "Cave.Logging.Microsoft\Cave.Logging.Microsoft.csproj", "{2B60D36A-BD66-4BC7-A3BC-2F2F49FA3444}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cave.Logging.Linux", "Cave.Logging.Linux\Cave.Logging.Linux.csproj", "{AE105967-D7F1-4F82-8510-E36EC73E1ACD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{2B60D36A-BD66-4BC7-A3BC-2F2F49FA3444}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B60D36A-BD66-4BC7-A3BC-2F2F49FA3444}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B60D36A-BD66-4BC7-A3BC-2F2F49FA3444}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE105967-D7F1-4F82-8510-E36EC73E1ACD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE105967-D7F1-4F82-8510-E36EC73E1ACD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE105967-D7F1-4F82-8510-E36EC73E1ACD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE105967-D7F1-4F82-8510-E36EC73E1ACD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

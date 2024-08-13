@@ -281,13 +281,27 @@ public abstract class LogReceiver : IDisposable
     #region Public Methods
 
     /// <summary>Closes this instance.</summary>
-    public virtual void Close() => Dispose();
+    public virtual void Close()
+    {
+        Writer.Close();
+        Dispose();
+    }
 
     /// <inheritdoc/>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>Calls the <see cref="LogWriter.Flush"/> method until <see cref="Idle"/> is true.</summary>
+    public virtual void Flush()
+    {
+        while (!Idle)
+        {
+            Thread.Sleep(0);
+            Writer.Flush();
+        }
     }
 
     /// <summary>Starts the receiver.</summary>

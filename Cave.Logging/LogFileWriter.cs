@@ -34,6 +34,11 @@ class LogFileWriter : LogWriter, IDisposable
 
     public void Dispose() => Close();
 
+    public override void Flush()
+    {
+        writer?.Flush();
+    }
+
     public override void Write(LogMessage message, IEnumerable<ILogText> items)
     {
         foreach (var item in items)

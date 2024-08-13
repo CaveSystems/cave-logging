@@ -7,35 +7,7 @@ namespace Cave.Logging;
 /// <seealso cref="Cave.Logging.LogReceiver"/>
 public abstract class LogFileBase : LogReceiver
 {
-    #region Constructors
-
-    /// <summary>Initializes a new instance of the <see cref="LogFileBase"/> class.</summary>
-    /// <param name="fileName">Name of the file.</param>
-    protected LogFileBase(string fileName)
-    {
-        Log.Verbose($"Prepare logging to file {fileName}");
-        FileName = fileName;
-    }
-
-    #endregion Constructors
-
-    #region Properties
-
-    /// <summary>Gets the name of the file.</summary>
-    /// <value>The name of the file.</value>
-    public string FileName { get; }
-
-    #endregion Properties
-
-    #region Members
-
-    /// <summary>Returns the current size of the logfile.</summary>
-    /// <returns></returns>
-    public long GetSize() => new FileInfo(FileName).Length;
-
-    #endregion Members
-
-    #region default log files
+    #region Private Methods
 
     static string GetFileName(LogFileFlags flags)
     {
@@ -73,7 +45,7 @@ public abstract class LogFileBase : LogReceiver
         }
 
         var logger = new Logger(typeof(LogFileBase));
-        logger.Info("RotationStart");
+        logger.Info($"RotationStart");
         var fullFilePath = fileName;
         var fileCount = 0;
         for (var i = keepOldFilesCount - 1; i >= 0; i--)
@@ -100,6 +72,22 @@ public abstract class LogFileBase : LogReceiver
 
         logger.Info($"Rotation complete: {fileCount} files.");
     }
+
+    #endregion Private Methods
+
+    #region Protected Constructors
+
+    /// <summary>Initializes a new instance of the <see cref="LogFileBase"/> class.</summary>
+    /// <param name="fileName">Name of the file.</param>
+    protected LogFileBase(string fileName)
+    {
+        Log.Verbose($"Prepare logging to file {fileName}");
+        FileName = fileName;
+    }
+
+    #endregion Protected Constructors
+
+    #region Protected Methods
 
     /// <summary>Returns the log file name for the local machine.</summary>
     /// <returns>Returns a file name with full path without extension.</returns>
@@ -177,5 +165,21 @@ public abstract class LogFileBase : LogReceiver
         return filename;
     }
 
-    #endregion default log files
+    #endregion Protected Methods
+
+    #region Public Properties
+
+    /// <summary>Gets the name of the file.</summary>
+    /// <value>The name of the file.</value>
+    public string FileName { get; }
+
+    #endregion Public Properties
+
+    #region Public Methods
+
+    /// <summary>Returns the current size of the logfile.</summary>
+    /// <returns></returns>
+    public long GetSize() => new FileInfo(FileName).Length;
+
+    #endregion Public Methods
 }

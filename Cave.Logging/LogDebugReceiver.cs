@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -13,21 +14,31 @@ public sealed class LogDebugReceiver : LogReceiver
     {
         #region Public Methods
 
+        public override void Flush() { }
+
         public override void Write(LogMessage message, IEnumerable<ILogText> items)
         {
             StringBuilder buffer = new();
-            foreach (var item in items)
+            void Commit()
             {
-                if (item.Equals(LogText.NewLine))
+                if (buffer.Length > 0)
                 {
                     var msg = buffer.ToString();
                     LogHelper.DebugLine(msg);
                     LogHelper.TraceLine(msg);
                     buffer = new();
+                }
+            }
+            foreach (var item in items)
+            {
+                if (item.Equals(LogText.NewLine))
+                {
+                    Commit();
                     continue;
                 }
                 buffer.Append(item);
             }
+            Commit();
         }
 
         #endregion Public Methods
