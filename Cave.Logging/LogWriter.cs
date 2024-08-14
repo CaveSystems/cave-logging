@@ -37,7 +37,7 @@ public abstract class LogWriter : ILogWriter
     public virtual void Close() => IsClosed = true;
 
     /// <inheritdoc/>
-    public abstract void Flush();
+    public virtual void Flush() { }
 
     /// <inheritdoc/>
     public abstract void Write(LogMessage message, IEnumerable<ILogText> items);
