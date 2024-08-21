@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if NET5_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER || NET462_OR_GREATER
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,3 +29,5 @@ public class CaveLoggerFactory : Microsoft.Extensions.Logging.ILoggerFactory
 
     #endregion Public Methods
 }
+
+#endif

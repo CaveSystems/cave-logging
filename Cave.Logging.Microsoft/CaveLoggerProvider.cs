@@ -1,4 +1,6 @@
-﻿namespace Cave.Logging;
+﻿#if NET5_0_OR_GREATER || NETSTANDARD2_0_OR_GREATER || NET462_OR_GREATER
+
+namespace Cave.Logging;
 
 /// <summary>Provides logging for new core and via <see cref="Microsoft.Extensions.Logging.ILoggerProvider"/> interface.</summary>
 public class CaveLoggerProvider : Microsoft.Extensions.Logging.ILoggerProvider
@@ -15,3 +17,5 @@ public class CaveLoggerProvider : Microsoft.Extensions.Logging.ILoggerProvider
 
     #endregion Public Methods
 }
+
+#endif

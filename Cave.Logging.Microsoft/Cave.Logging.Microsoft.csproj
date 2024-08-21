@@ -1,7 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFrameworks>
-            net462;
+            net20;net35;
+            net40;
+            net45;net451;net452;
+            net46;net461;net462;
             net47;net471;net472;
             net48;net481;
             net6.0;net7.0;net8.0;
@@ -28,13 +31,24 @@
     <ItemGroup>
         <PackageReference Include="Cave.Extensions" Version="3.0.13" />
         <PackageReference Include="Cave.IO" Version="3.0.5" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-        <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.0" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Condition="
+        '$(TargetFramework)' == 'net5.0' or 
+        '$(TargetFramework)' == 'net6.0' or 
+        '$(TargetFramework)' == 'net7.0' or 
+        '$(TargetFramework)' == 'net8.0' or 
+        $(TargetFramework.StartsWith('netstandard2')) or 
+        $(TargetFramework.StartsWith('net462')) or 
+        $(TargetFramework.StartsWith('net47')) or 
+        $(TargetFramework.StartsWith('net48'))">
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+        <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>
