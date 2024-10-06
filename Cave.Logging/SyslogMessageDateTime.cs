@@ -9,15 +9,15 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
 {
     #region Static
 
-    static readonly string[] dateTimeFormats = new string[]
-    {
+    static readonly string[] dateTimeFormats =
+    [
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'sszzz",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffzzz",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'ffffff'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'ffffffzzz"
-    };
+    ];
 
     /// <summary>Allows implicit conversion from <see cref="DateTime"/>.</summary>
     /// <param name="dateTime">The DateTime value.</param>

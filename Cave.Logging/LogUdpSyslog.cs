@@ -4,9 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Cave.Logging;
+using Cave.Net.Dns;
 
-namespace Cave.Syslog;
+namespace Cave.Logging;
 
 /// <summary>Provides udp logging to a syslog server.</summary>
 public class LogUdpSyslog : LogReceiver
@@ -25,7 +25,8 @@ public class LogUdpSyslog : LogReceiver
 
     static IPAddress GetIPAddress(ConnectionString connection)
     {
-        var addresses = Dns.GetHostAddresses(connection.Server);
+        if (connection.Server is null) throw new InvalidOperationException("Connection.Server is unset!");
+        var addresses = DnsClient.Default.GetHostAddresses(connection.Server);
 
         // prefer IPv4
         foreach (var address in addresses.Where(a => a.AddressFamily == AddressFamily.InterNetwork))

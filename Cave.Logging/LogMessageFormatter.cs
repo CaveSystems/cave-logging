@@ -13,8 +13,14 @@ public class LogMessageFormatter : ILogMessageFormatter
     #region Private Classes
 
     [DebuggerDisplay("{Text}")]
-    class LogFormatItem
+    sealed class LogFormatItem
     {
+        #region Private Fields
+
+        static readonly char[] LogFormatSeparator = [':'];
+
+        #endregion Private Fields
+
         #region Public Constructors
 
         public LogFormatItem(string text) => Text = text;
@@ -22,7 +28,7 @@ public class LogMessageFormatter : ILogMessageFormatter
         public LogFormatItem(LogMessageFormatter formatter, string text)
         {
             Text = text;
-            var parts = text.Unbox('{', '}').Split(new[] { ':' }, 2);
+            var parts = text.Unbox('{', '}').Split(LogFormatSeparator, 2);
             Format = parts.Length > 1 ? parts[1] : null;
             Func = parts[0].ToLowerInvariant() switch
             {

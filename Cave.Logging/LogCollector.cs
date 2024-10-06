@@ -57,10 +57,7 @@ public class LogCollector : LogReceiver
 
     /// <summary>Calls the <see cref="MessagesRemoved"/> event.</summary>
     /// <param name="messages">The messages</param>
-    protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages)
-    {
-        MessagesRemoved?.Invoke(this, new(messages));
-    }
+    protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages) => MessagesRemoved?.Invoke(this, new(messages));
 
     #endregion Protected Methods
 

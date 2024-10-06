@@ -274,7 +274,7 @@ public static class LogExtensions
                 if (color != 0)
                 {
                     color = LogColor.Gray;
-                    target.Append($"<span style=\"color:{color.ToString().ToLower()}\">");
+                    target.Append($"<span style=\"color:{color.ToString().ToLowerInvariant()}\">");
                 }
             }
 

@@ -10,7 +10,7 @@ public abstract class LogReceiver : IDisposable
 {
     #region Private Classes
 
-    class MessageQueue : LinkedList<IList<LogMessage>> { }
+    sealed class MessageQueue : LinkedList<IList<LogMessage>> { }
 
     #endregion Private Classes
 

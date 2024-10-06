@@ -26,11 +26,7 @@ namespace Cave.Logging;
 /// </summary>
 public record LogText : ILogText, IEquatable<LogText>
 {
-    /// <summary>Provides an empty log message instance</summary>
-    public static LogText[] Empty { get; } = new LogText[0];
-
-    /// <summary>Provides a new line item.</summary>
-    public static readonly LogText NewLine = new("\n", style: LogStyle.Reset);
+    static readonly char[] TokenStartSeparator = ['\n', '<', '{'];
 
     /// <summary>Unboxes a token.</summary>
     /// <param name="token">Token to unbox.</param>
@@ -51,6 +47,23 @@ public record LogText : ILogText, IEquatable<LogText>
 
     /// <summary>Gets the last valid color.</summary>
     public const LogColor LastColor = LogColor.White;
+
+    /// <summary>Provides a new line item.</summary>
+    public static readonly LogText NewLine = new("\n", style: LogStyle.Reset);
+
+    /// <summary>Initializes a new instance of the <see cref="LogText"/> class.</summary>
+    /// <param name="color">Color of the text.</param>
+    /// <param name="style">The style.</param>
+    /// <param name="text">The text.</param>
+    public LogText(string text, LogColor color = 0, LogStyle style = 0)
+    {
+        Text = text;
+        Color = color;
+        Style = style;
+    }
+
+    /// <summary>Provides an empty log message instance</summary>
+    public static LogText[] Empty { get; } = new LogText[0];
 
     /// <summary>Gets all defined <see cref="Color"/> s.</summary>
     public static Color[] PaletteColors =>
@@ -81,6 +94,15 @@ public record LogText : ILogText, IEquatable<LogText>
             ConsoleColor.Yellow,
             ConsoleColor.White
         };
+
+    /// <inheritdoc/>
+    public LogColor Color { get; }
+
+    /// <inheritdoc/>
+    public LogStyle Style { get; }
+
+    /// <inheritdoc/>
+    public string Text { get; }
 
     /// <summary>Gets the <see cref="LogColor"/> for the specified string.</summary>
     /// <param name="color">The color name.</param>
@@ -135,88 +157,6 @@ public record LogText : ILogText, IEquatable<LogText>
         return string.Equals(unboxed, "default", StringComparison.OrdinalIgnoreCase) || unboxed.TryParse<LogStyle>(out var result);
     }
 
-    /// <summary>Converts the specified <see cref="LogColor"/> to a <see cref="Color"/>.</summary>
-    /// <exception cref="ArgumentOutOfRangeException">An Exception is thrown if an invalid color string is given.</exception>
-    /// <param name="color">The color.</param>
-    /// <returns>Returns the matching color code.</returns>
-    public static Color ToColor(LogColor color)
-    {
-        try
-        {
-            return PaletteColors[(int)color - (int)FirstColor];
-        }
-        catch (Exception e)
-        {
-            throw new ArgumentOutOfRangeException($"Invalid or unknown LogColor '{color}'!", e);
-        }
-    }
-
-    /// <summary>Converts the specified <see cref="LogColor"/> to a <see cref="ConsoleColor"/>.</summary>
-    /// <exception cref="ArgumentOutOfRangeException">An Exception is thrown if an invalid color is given.</exception>
-    /// <param name="color">The color.</param>
-    /// <returns>Returns the matching console color.</returns>
-    public static ConsoleColor ToConsoleColor(LogColor color)
-    {
-        try
-        {
-            return PaletteConsoleColors[(int)color - (int)FirstColor];
-        }
-        catch
-        {
-            throw new ArgumentOutOfRangeException($"Invalid or unknown LogColor '{color}'!");
-        }
-    }
-
-    /// <summary>Gets the string for a specified color.</summary>
-    /// <param name="color">The color.</param>
-    /// <returns>Returns the color token.</returns>
-    public static string ToString(LogColor color) => "<" + color + ">";
-
-    /// <summary>Gets the string for a specified style.</summary>
-    /// <param name="style">The style.</param>
-    /// <returns>Returns the style token.</returns>
-    public static string ToString(LogStyle style) => "<" + style + ">";
-
-    /// <summary>Initializes a new instance of the <see cref="LogText"/> class.</summary>
-    /// <param name="color">Color of the text.</param>
-    /// <param name="style">The style.</param>
-    /// <param name="text">The text.</param>
-    public LogText(string text, LogColor color = 0, LogStyle style = 0)
-    {
-        Text = text;
-        Color = color;
-        Style = style;
-    }
-
-    /// <inheritdoc/>
-    public string Text { get; }
-
-    /// <inheritdoc/>
-    public LogColor Color { get; }
-
-    /// <inheritdoc/>
-    public LogStyle Style { get; }
-
-    /// <inheritdoc/>
-    public virtual bool Equals(LogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
-
-    /// <inheritdoc/>
-    public virtual bool Equals(ILogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
-
-    /// <summary>Returns a hash code for this instance.</summary>
-    /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-    public override int GetHashCode() => DefaultHashingFunction.Combine(Text, Color, Style);
-
-    /// <summary>Gets the plain text without any style and color information using <see cref="ToString()"/> for <see cref="CultureInfo.CurrentCulture"/>.</summary>
-    public override string ToString()
-    {
-        StringBuilder sb = new();
-        if (Style != default) sb.Append(ToString(Style));
-        if (Color != default) sb.Append(ToString(Color));
-        sb.Append(Text);
-        return sb.ToString();
-    }
-
     /// <summary>Parses the specified text</summary>
     /// <param name="text">Text to parse.</param>
     /// <returns>Returns a list of <see cref="ILogText"/> items.</returns>
@@ -238,7 +178,7 @@ public record LogText : ILogText, IEquatable<LogText>
         while (true)
         {
             // find a complete token
-            var tokenStart = text.IndexOfAny(new[] { '\n', '<', '{' }, textStart);
+            var tokenStart = text.IndexOfAny(TokenStartSeparator, textStart);
             var tokenEnd = -1;
 
             // while we got a valid start
@@ -253,7 +193,7 @@ public record LogText : ILogText, IEquatable<LogText>
                 }
 
                 // check for another start in between
-                var nextTokenStart = text.IndexOfAny(new[] { '\n', '<', '{' }, tokenStart + 1);
+                var nextTokenStart = text.IndexOfAny(TokenStartSeparator, tokenStart + 1);
 
                 // no additional start ? -> exit loop
                 if (nextTokenStart < 0)
@@ -346,5 +286,67 @@ public record LogText : ILogText, IEquatable<LogText>
             }
         }
         return items;
+    }
+
+    /// <summary>Converts the specified <see cref="LogColor"/> to a <see cref="Color"/>.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">An Exception is thrown if an invalid color string is given.</exception>
+    /// <param name="color">The color.</param>
+    /// <returns>Returns the matching color code.</returns>
+    public static Color ToColor(LogColor color)
+    {
+        try
+        {
+            return PaletteColors[(int)color - (int)FirstColor];
+        }
+        catch (Exception e)
+        {
+            throw new ArgumentOutOfRangeException($"Invalid or unknown LogColor '{color}'!", e);
+        }
+    }
+
+    /// <summary>Converts the specified <see cref="LogColor"/> to a <see cref="ConsoleColor"/>.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">An Exception is thrown if an invalid color is given.</exception>
+    /// <param name="color">The color.</param>
+    /// <returns>Returns the matching console color.</returns>
+    public static ConsoleColor ToConsoleColor(LogColor color)
+    {
+        try
+        {
+            return PaletteConsoleColors[(int)color - (int)FirstColor];
+        }
+        catch
+        {
+            throw new ArgumentOutOfRangeException($"Invalid or unknown LogColor '{color}'!");
+        }
+    }
+
+    /// <summary>Gets the string for a specified color.</summary>
+    /// <param name="color">The color.</param>
+    /// <returns>Returns the color token.</returns>
+    public static string ToString(LogColor color) => "<" + color + ">";
+
+    /// <summary>Gets the string for a specified style.</summary>
+    /// <param name="style">The style.</param>
+    /// <returns>Returns the style token.</returns>
+    public static string ToString(LogStyle style) => "<" + style + ">";
+
+    /// <inheritdoc/>
+    public virtual bool Equals(LogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
+
+    /// <inheritdoc/>
+    public virtual bool Equals(ILogText? other) => Equals(Text, other?.Text) && Equals(Color, other.Color) && Equals(Style, other.Style);
+
+    /// <summary>Returns a hash code for this instance.</summary>
+    /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
+    public override int GetHashCode() => DefaultHashingFunction.Combine(Text, Color, Style);
+
+    /// <summary>Gets the plain text without any style and color information using <see cref="ToString()"/> for <see cref="CultureInfo.CurrentCulture"/>.</summary>
+    public override string ToString()
+    {
+        StringBuilder sb = new();
+        if (Style != default) sb.Append(ToString(Style));
+        if (Color != default) sb.Append(ToString(Color));
+        sb.Append(Text);
+        return sb.ToString();
     }
 }

@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cave.Collections.Generic;
 using Cave.IO;
+using Cave.Net;
 
 namespace Cave.Logging;
 
@@ -139,107 +140,6 @@ public class Logger
         }
     }
 
-    /// <summary>(1) Transmits a <see cref="LogLevel.Alert"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Alert(string? content, Exception exception, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Alert, $"{content}", exception, member, file, line));
-
-    /// <summary>(2) Transmits a <see cref="LogLevel.Critical"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Critical(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Critical, $"{content}", exception, member, file, line));
-
-    /// <summary>(7) Transmits a <see cref="LogLevel.Debug"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Debug(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Debug, $"{content}", exception, member, file, line));
-
-    /// <summary>(0) Transmits a <see cref="LogLevel.Emergency"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Emergency(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Emergency, $"{content}", exception, member, file, line));
-
-    /// <summary>(3) Transmits a <see cref="LogLevel.Error"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Error(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Error, $"{content}", exception, member, file, line));
-
-    /// <summary>(6) Transmits a <see cref="LogLevel.Information"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Info(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Information, $"{content}", exception, member, file, line));
-
-    /// <summary>(5) Transmits a <see cref="LogLevel.Notice"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Notice(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Notice, $"{content}", exception, member, file, line));
-
-    /// <summary>Transmits a message.</summary>
-    /// <param name="level">The level.</param>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Send(LogLevel level, string? content, Exception exception, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, level, $"{content}", exception, member, file, line));
-
-    /// <summary>(8) Transmits a <see cref="LogLevel.Verbose"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Verbose(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Verbose, $"{content}", exception, member, file, line));
-
-    /// <summary>(4) Transmits a <see cref="LogLevel.Warning"/> message.</summary>
-    /// <param name="exception">The exception.</param>
-    /// <param name="content">The message content.</param>
-    /// <param name="member">Optional: method or property name of the sender.</param>
-    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
-    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
-    [MethodImpl((MethodImplOptions)0x0100)]
-    void Warning(string? content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
-        => Send(new(SenderName, SenderType, LogLevel.Warning, $"{content}", exception, member, file, line));
-
     #endregion Private Methods
 
     #region Public Constructors
@@ -249,12 +149,12 @@ public class Logger
     {
         try
         {
-            HostName = Dns.GetHostName().ToLower();
+            HostName = NetTools.HostName.ToLowerInvariant();
         }
         catch
         {
             System.Diagnostics.Debug.WriteLine("Logger.cctor(): Could not get HostName!");
-            HostName = Environment.MachineName.ToLower();
+            HostName = Environment.MachineName.ToLowerInvariant();
         }
 
         try
