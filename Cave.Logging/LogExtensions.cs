@@ -73,19 +73,18 @@ public static class LogExtensions
             sb.Append(item.Text);
         }
         if (sb.Length > 0) lines.Add(sb.ToString());
-        return lines.ToArray();
+        return [.. lines];
     }
 
     /// <summary>Retrieves the <see cref="LogText"/> instance as HTML.</summary>
     /// <param name="items">The extended text.</param>
-    /// <param name="formatProvider"></param>
     /// <returns>Returns the html code.</returns>
-    public static string ToHtml(this IEnumerable<ILogText> items, IFormatProvider formatProvider)
+    public static string ToHtml(this IEnumerable<ILogText> items)
     {
         var target = new StringBuilder();
         target.Append("<html>");
         target.Append("<body>");
-        items.WriteHtml(target, formatProvider);
+        items.WriteHtml(target);
         target.Append("</body>");
         target.Append("</html>");
         return target.ToString();
@@ -252,8 +251,7 @@ public static class LogExtensions
     /// <summary>Writes the <see cref="LogText"/> instance as HTML to the specified <see cref="StringBuilder"/>.</summary>
     /// <param name="logTextItems">The log text items.</param>
     /// <param name="target">The target to write to.</param>
-    /// <param name="formatProvider"></param>
-    public static void WriteHtml(this IEnumerable<ILogText> logTextItems, StringBuilder target, IFormatProvider formatProvider)
+    public static void WriteHtml(this IEnumerable<ILogText> logTextItems, StringBuilder target)
     {
         var color = (LogColor)0;
         var style = LogStyle.Unchanged;
@@ -274,7 +272,7 @@ public static class LogExtensions
                 if (color != 0)
                 {
                     color = LogColor.Gray;
-                    target.Append($"<span style=\"color:{color.ToString().ToLower()}\">");
+                    target.Append($"<span style=\"color:{color.ToString().ToLowerInvariant()}\">");
                 }
             }
 

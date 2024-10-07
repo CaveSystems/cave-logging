@@ -17,7 +17,7 @@ public class LogCollector : LogReceiver
 
     #region Private Methods
 
-    IEnumerable<LogMessage>? CleanMaxItems()
+    LinkedList<LogMessage>? CleanMaxItems()
     {
         LinkedList<LogMessage>? list = null;
         if (maximumItemCount > 0)
@@ -57,10 +57,7 @@ public class LogCollector : LogReceiver
 
     /// <summary>Calls the <see cref="MessagesRemoved"/> event.</summary>
     /// <param name="messages">The messages</param>
-    protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages)
-    {
-        MessagesRemoved?.Invoke(this, new(messages));
-    }
+    protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages) => MessagesRemoved?.Invoke(this, new(messages));
 
     #endregion Protected Methods
 
@@ -131,7 +128,7 @@ public class LogCollector : LogReceiver
         LogMessage[] result;
         lock (items)
         {
-            result = items.ToArray();
+            result = [.. items];
             items.Clear();
         }
         return result;
@@ -142,7 +139,7 @@ public class LogCollector : LogReceiver
     {
         lock (items)
         {
-            return items.ToArray();
+            return [.. items];
         }
     }
 

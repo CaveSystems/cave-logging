@@ -10,7 +10,7 @@ public sealed class LogFile : LogFileBase
 {
     #region Private Fields
 
-    Stream? stream;
+    readonly Stream? stream;
 
     #endregion Private Fields
 

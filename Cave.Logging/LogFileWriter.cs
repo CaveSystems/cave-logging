@@ -1,27 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using Cave.IO;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Cave.Logging;
 
-class LogFileWriter : LogWriter, IDisposable
+sealed class LogFileWriter(DataWriter writer) : LogWriter, IDisposable
 {
     #region Private Fields
 
-    DataWriter? writer;
+    DataWriter? writer = writer;
 
     #endregion Private Fields
-
-    #region Public Constructors
-
-    public LogFileWriter(DataWriter writer)
-    {
-        this.writer = writer;
-    }
-
-    #endregion Public Constructors
 
     #region Public Methods
 
@@ -34,10 +23,7 @@ class LogFileWriter : LogWriter, IDisposable
 
     public void Dispose() => Close();
 
-    public override void Flush()
-    {
-        writer?.Flush();
-    }
+    public override void Flush() => writer?.Flush();
 
     public override void Write(LogMessage message, IEnumerable<ILogText> items)
     {

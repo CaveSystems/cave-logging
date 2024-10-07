@@ -10,7 +10,7 @@ public sealed class LogDebugReceiver : LogReceiver
 {
     #region Private Classes
 
-    class MyWriter : LogWriter
+    sealed class MyWriter : LogWriter
     {
         #region Public Methods
 

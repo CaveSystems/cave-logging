@@ -10,7 +10,7 @@ public abstract class LogReceiver : IDisposable
 {
     #region Private Classes
 
-    class MessageQueue : LinkedList<IList<LogMessage>> { }
+    sealed class MessageQueue : LinkedList<IList<LogMessage>> { }
 
     #endregion Private Classes
 
@@ -178,7 +178,7 @@ public abstract class LogReceiver : IDisposable
                 return list;
             }
         }
-        return new LogMessage[0];
+        return [];
     }
 
     #endregion Private Methods
@@ -237,7 +237,7 @@ public abstract class LogReceiver : IDisposable
     public bool Closed { get; set; }
 
     /// <summary>Gets the current delay.</summary>
-    public TimeSpan CurrentDelay => new TimeSpan(currentDelayMsec * TimeSpan.TicksPerMillisecond);
+    public TimeSpan CurrentDelay => new(currentDelayMsec * TimeSpan.TicksPerMillisecond);
 
     /// <summary>Gets a value indicating whether the receiver is idle or not.</summary>
     public bool Idle => (isIdle && (Fifo.Available == 0)) || !Started;

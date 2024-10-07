@@ -7,17 +7,103 @@ namespace Cave.Logging;
 /// <summary>Provides available syslog message versions.</summary>
 public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, IComparable<SyslogMessageDateTime>, IComparable
 {
-    #region Static
+    #region Private Fields
 
-    static readonly string[] dateTimeFormats = new string[]
-    {
+    static readonly string[] DateTimeFormats =
+    [
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'sszzz",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fffzzz",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'ffffff'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'ffffffzzz"
-    };
+    ];
+
+    #endregion Private Fields
+
+    #region Public Constructors
+
+    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
+    public SyslogMessageDateTime() => Value = DateTimeOffset.Now;
+
+    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
+    /// <param name="year">Year.</param>
+    /// <param name="month">Month.</param>
+    /// <param name="day">Day.</param>
+    /// <param name="hour">Hour.</param>
+    /// <param name="minute">Minute.</param>
+    /// <param name="second">Second.</param>
+    /// <param name="ms">Milliseconds.</param>
+    /// <param name="ns">Nanoseconds.</param>
+    public SyslogMessageDateTime(int year, int month, int day, int hour, int minute, int second, int ms, int ns)
+    {
+        if (ms is < 0 or > 999)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ms));
+        }
+
+        if (ns is < 0 or > 999)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ns));
+        }
+
+        Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + (ms * 1000L))));
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
+    /// <param name="year">Year.</param>
+    /// <param name="month">Month.</param>
+    /// <param name="day">Day.</param>
+    /// <param name="hour">Hour.</param>
+    /// <param name="minute">Minute.</param>
+    /// <param name="second">Second.</param>
+    /// <param name="ms">Milliseconds.</param>
+    /// <param name="ns">Nanoseconds.</param>
+    /// <param name="offset">DateTime offset of the timezone.</param>
+    public SyslogMessageDateTime(int year, int month, int day, int hour, int minute, int second, int ms, int ns, TimeSpan offset)
+    {
+        if (ms is < 0 or > 999)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ms));
+        }
+
+        if (ns is < 0 or > 999)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ns));
+        }
+
+        Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + (ms * 1000L))), offset);
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
+    /// <param name="localDateTime">The local datetime.</param>
+    public SyslogMessageDateTime(DateTime localDateTime) => Value = new DateTimeOffset(localDateTime);
+
+    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
+    /// <param name="dateTime">The date and time.</param>
+    /// <param name="offset">The offset.</param>
+    public SyslogMessageDateTime(DateTime dateTime, TimeSpan offset) => Value = new DateTimeOffset(dateTime, offset);
+
+    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
+    /// <param name="dateTime">The date, time and offset.</param>
+    public SyslogMessageDateTime(DateTimeOffset dateTime) => Value = dateTime;
+
+    #endregion Public Constructors
+
+    #region Public Properties
+
+    /// <summary>Gets the DateTime value of this instance converted to the local time.</summary>
+    public DateTime Local => Value.LocalDateTime;
+
+    /// <summary>Gets the DateTime value of this instance converted to the Universal Coordinated Time (Zulu).</summary>
+    public DateTime Utc => Value.UtcDateTime;
+
+    /// <summary>Gets the source value of this instance.</summary>
+    public DateTimeOffset Value { get; }
+
+    #endregion Public Properties
+
+    #region Public Methods
 
     /// <summary>Allows implicit conversion from <see cref="DateTime"/>.</summary>
     /// <param name="dateTime">The DateTime value.</param>
@@ -176,128 +262,30 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
             throw new ArgumentException("Invalid message encoding!", nameof(text));
         }
 
-        var value = DateTimeOffset.ParseExact(str, dateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+        var value = DateTimeOffset.ParseExact(str, DateTimeFormats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
         return new SyslogMessageDateTime(value);
     }
 
-    #endregion Static
-
-    #region Constructors
-
-    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
-    public SyslogMessageDateTime() => Value = DateTimeOffset.Now;
-
-    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
-    /// <param name="year">Year.</param>
-    /// <param name="month">Month.</param>
-    /// <param name="day">Day.</param>
-    /// <param name="hour">Hour.</param>
-    /// <param name="minute">Minute.</param>
-    /// <param name="second">Second.</param>
-    /// <param name="ms">Milliseconds.</param>
-    /// <param name="ns">Nanoseconds.</param>
-    public SyslogMessageDateTime(int year, int month, int day, int hour, int minute, int second, int ms, int ns)
-    {
-        if (ms is < 0 or > 999)
-        {
-            throw new ArgumentOutOfRangeException(nameof(ms));
-        }
-
-        if (ns is < 0 or > 999)
-        {
-            throw new ArgumentOutOfRangeException(nameof(ns));
-        }
-
-        Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + (ms * 1000L))));
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
-    /// <param name="year">Year.</param>
-    /// <param name="month">Month.</param>
-    /// <param name="day">Day.</param>
-    /// <param name="hour">Hour.</param>
-    /// <param name="minute">Minute.</param>
-    /// <param name="second">Second.</param>
-    /// <param name="ms">Milliseconds.</param>
-    /// <param name="ns">Nanoseconds.</param>
-    /// <param name="offset">DateTime offset of the timezone.</param>
-    public SyslogMessageDateTime(int year, int month, int day, int hour, int minute, int second, int ms, int ns, TimeSpan offset)
-    {
-        if (ms is < 0 or > 999)
-        {
-            throw new ArgumentOutOfRangeException(nameof(ms));
-        }
-
-        if (ns is < 0 or > 999)
-        {
-            throw new ArgumentOutOfRangeException(nameof(ns));
-        }
-
-        Value = new DateTimeOffset(new DateTime(year, month, day, hour, minute, second) + new TimeSpan(10L * (ns + (ms * 1000L))), offset);
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
-    /// <param name="localDateTime">The local datetime.</param>
-    public SyslogMessageDateTime(DateTime localDateTime) => Value = new DateTimeOffset(localDateTime);
-
-    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
-    /// <param name="dateTime">The date and time.</param>
-    /// <param name="offset">The offset.</param>
-    public SyslogMessageDateTime(DateTime dateTime, TimeSpan offset) => Value = new DateTimeOffset(dateTime, offset);
-
-    /// <summary>Initializes a new instance of the <see cref="SyslogMessageDateTime"/> class.</summary>
-    /// <param name="dateTime">The date, time and offset.</param>
-    public SyslogMessageDateTime(DateTimeOffset dateTime) => Value = dateTime;
-
-    #endregion Constructors
-
-    #region Properties
-
-    /// <summary>Gets the DateTime value of this instance converted to the local time.</summary>
-    public DateTime Local => Value.LocalDateTime;
-
-    /// <summary>Gets the DateTime value of this instance converted to the Universal Coordinated Time (Zulu).</summary>
-    public DateTime Utc => Value.UtcDateTime;
-
-    /// <summary>Gets the source value of this instance.</summary>
-    public DateTimeOffset Value { get; }
-
-    #endregion Properties
-
-    #region IComparable Members
-
     /// <summary>
-    /// Compares the current SyslogMessageDateTime object to a specified SyslogMessageDateTime object and indicates whether the current object is earlier
-    /// than, the same as, or later than the specified one.
+    /// Compares the current SyslogMessageDateTime object to a specified SyslogMessageDateTime object and indicates whether the current object is earlier than,
+    /// the same as, or later than the specified one.
     /// </summary>
     /// <param name="obj">An object to compare with the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
     public int CompareTo(object? obj) => CompareTo(obj as SyslogMessageDateTime);
 
-    #endregion IComparable Members
-
-    #region IComparable<SyslogMessageDateTime> Members
-
     /// <summary>
-    /// Compares the current SyslogMessageDateTime object to a specified SyslogMessageDateTime object and indicates whether the current object is earlier
-    /// than, the same as, or later than the specified one.
+    /// Compares the current SyslogMessageDateTime object to a specified SyslogMessageDateTime object and indicates whether the current object is earlier than,
+    /// the same as, or later than the specified one.
     /// </summary>
     /// <param name="other">An object to compare with the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
     public int CompareTo(SyslogMessageDateTime? other) => other is null ? 1 : Value.CompareTo(other.Value);
 
-    #endregion IComparable<SyslogMessageDateTime> Members
-
-    #region IEquatable<SyslogMessageDateTime> Members
-
     /// <summary>Determines whether a SyslogMessageDateTime object represents the same point in time as a specified object.</summary>
     /// <param name="other">The value to compare to the current SyslogMessageDateTime object.</param>
     /// <returns></returns>
     public bool Equals(SyslogMessageDateTime? other) => Equals(Value, other?.Value);
-
-    #endregion IEquatable<SyslogMessageDateTime> Members
-
-    #region Overrides
 
     /// <summary>Determines whether a SyslogMessageDateTime object represents the same point in time as a specified object.</summary>
     /// <param name="obj">The value to compare to the current SyslogMessageDateTime object.</param>
@@ -311,10 +299,6 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
     /// <summary>Gets the <see cref="ToStringRFC5424()"/> result.</summary>
     /// <returns></returns>
     public override string ToString() => ToStringRFC5424();
-
-    #endregion Overrides
-
-    #region Members
 
     /// <summary>Gets the RFC3164 string representation of this instance.</summary>
     /// <returns></returns>
@@ -359,5 +343,5 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
         return stringBuilder.ToString();
     }
 
-    #endregion Members
+    #endregion Public Methods
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -13,8 +14,14 @@ public class LogMessageFormatter : ILogMessageFormatter
     #region Private Classes
 
     [DebuggerDisplay("{Text}")]
-    class LogFormatItem
+    sealed class LogFormatItem
     {
+        #region Private Fields
+
+        static readonly char[] LogFormatSeparator = [':'];
+
+        #endregion Private Fields
+
         #region Public Constructors
 
         public LogFormatItem(string text) => Text = text;
@@ -22,26 +29,26 @@ public class LogMessageFormatter : ILogMessageFormatter
         public LogFormatItem(LogMessageFormatter formatter, string text)
         {
             Text = text;
-            var parts = text.Unbox('{', '}').Split(new[] { ':' }, 2);
+            var parts = text.Unbox('{', '}').Split(LogFormatSeparator, 2);
             Format = parts.Length > 1 ? parts[1] : null;
             Func = parts[0].ToLowerInvariant() switch
             {
-                "content" => formatter.Content,
-                "datetime" or "localdatetime" => formatter.LocalDateTime,
-                "date" or "localdate" => formatter.LocalDate,
-                "time" or "localtime" => formatter.LocalTime,
-                "utcdatetime" => formatter.UtcDateTime,
-                "utcdate" => formatter.UtcDate,
-                "utctime" => formatter.UtcTime,
-                "sender" or "sendername" => formatter.SenderName,
-                "sendertype" => formatter.SenderType,
-                "file" or "sourcefile" => formatter.SourceFile,
-                "line" or "sourceline" => formatter.SourceLine,
-                "member" or "sourcemember" => formatter.SourceMember,
-                "level" => formatter.Level,
-                "levelcolor" => formatter.LevelColor,
-                "shortlevel" => formatter.ShortLevel,
-                "levelnumber" => formatter.LevelNumber,
+                "content" => formatter.FormatContent,
+                "datetime" or "localdatetime" => formatter.FormatLocalDateTime,
+                "date" or "localdate" => formatter.FormatLocalDate,
+                "time" or "localtime" => formatter.FormatLocalTime,
+                "utcdatetime" => formatter.FormatUtcDateTime,
+                "utcdate" => formatter.FormatUtcDate,
+                "utctime" => formatter.FormatUtcTime,
+                "sender" or "sendername" => formatter.FormatSenderName,
+                "sendertype" => formatter.FormatSenderType,
+                "file" or "sourcefile" => formatter.FormatSourceFile,
+                "line" or "sourceline" => formatter.FormatSourceLine,
+                "member" or "sourcemember" => formatter.FormatSourceMember,
+                "level" => formatter.FormatLevel,
+                "levelcolor" => formatter.FormatLevelColor,
+                "shortlevel" => formatter.FormatShortLevel,
+                "levelnumber" => formatter.FormatLevelNumber,
                 _ => null,
             };
         }
@@ -75,37 +82,6 @@ public class LogMessageFormatter : ILogMessageFormatter
 
     #region Private Methods
 
-    void Content(List<ILogText> list, LogMessage message, string? format)
-    {
-        var content = message.Content;
-        if (content is FormattableString formattableString)
-        {
-            var updatedArgs = formattableString.GetArguments().Select(argument => OnFormatArgument(message, argument)).ToArray();
-            content = FormattableStringFactory.Create(formattableString.Format, updatedArgs);
-        }
-
-        if (content is IFormattable formattable)
-        {
-            list.AddRange(LogText.Parse(formattable.ToString(format, FormatProvider)));
-        }
-        else
-        {
-            list.AddRange(LogText.Parse("-"));
-        }
-    }
-
-    void Level(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{message.Level}"));
-
-    void LevelColor(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(string.Empty, message.Level.GetLogLevelColor()));
-
-    void LevelNumber(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{(int)message.Level}"));
-
-    void LocalDate(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToLocalTime().Date.ToString(format ?? DateTimeFormat, FormatProvider)));
-
-    void LocalDateTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToLocalTime().ToString(format ?? DateTimeFormat, FormatProvider)));
-
-    void LocalTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToLocalTime().TimeOfDay.ToString(format ?? DateTimeFormat, FormatProvider)));
-
     void ParseFormat(string value, out string format, out IList<LogFormatItem> items)
     {
         var result = new List<LogFormatItem>(value.Length);
@@ -138,36 +114,128 @@ public class LogMessageFormatter : ILogMessageFormatter
         format = value;
     }
 
-    void SenderName(IList<ILogText> list, LogMessage message, string? format)
-            => list.Add(new LogText(message.SenderName));
+    #endregion Private Methods
 
-    void SenderType(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(format switch
+    #region Protected Methods
+
+    /// <summary>Performs the {Content} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatContent(List<ILogText> list, LogMessage message, string? format)
+    {
+        var content = message.Content;
+        if (content is FormattableString formattableString)
+        {
+            var updatedArgs = formattableString.GetArguments().Select(argument => OnFormatArgument(message, argument)).ToArray();
+            content = FormattableStringFactory.Create(formattableString.Format, updatedArgs);
+        }
+
+        if (content is IFormattable formattable)
+        {
+            list.AddRange(LogText.Parse(formattable.ToString(format, FormatProvider)));
+        }
+        else
+        {
+            list.AddRange(LogText.Parse("-"));
+        }
+    }
+
+    /// <summary>Performs the {Level} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatLevel(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{message.Level}"));
+
+    /// <summary>Performs the {LevelColor} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatLevelColor(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(string.Empty, message.Level.GetLogLevelColor()));
+
+    /// <summary>Performs the {LevelNumber} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatLevelNumber(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText($"{(int)message.Level}"));
+
+    /// <summary>Performs the {LocalDate} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatLocalDate(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToLocalTime().Date.ToString(format ?? DateTimeFormat, FormatProvider)));
+
+    /// <summary>Performs the {LocalDateTime} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatLocalDateTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToLocalTime().ToString(format ?? DateTimeFormat, FormatProvider)));
+
+    /// <summary>Performs the {LocalTime} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatLocalTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToLocalTime().TimeOfDay.ToString(format ?? DateTimeFormat, FormatProvider)));
+
+    /// <summary>Performs the {SenderName} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatSenderName(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SenderName));
+
+    /// <summary>Performs the {SenderType} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatSenderType(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(format switch
     {
         "F" or "f" => message.SenderType?.FullName ?? string.Empty,
         "A" or "a" => message.SenderType?.AssemblyQualifiedName ?? string.Empty,
         null or "" or _ => message.SenderType?.Name ?? string.Empty,
     }));
 
-    void ShortLevel(IList<ILogText> list, LogMessage message, string? format)
-            => list.Add(new LogText(message.Level.ToString()[..1]));
+    /// <summary>Performs the {ShortLevel} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatShortLevel(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.Level.ToString()[..1]));
 
-    void SourceFile(IList<ILogText> list, LogMessage message, string? format)
-            => list.Add(new LogText(message.SourceFile ?? "-"));
+    /// <summary>Performs the {SourceFile} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatSourceFile(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SourceFile ?? "-"));
 
-    void SourceLine(IList<ILogText> list, LogMessage message, string? format)
-            => list.Add(new LogText(message.SourceLine.ToString()));
+    /// <summary>Performs the {SourceLine} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatSourceLine(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SourceLine.ToString()));
 
-    void SourceMember(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SourceMember ?? "-"));
+    /// <summary>Performs the {SourceMember} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
 
-    void UtcDate(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToUniversalTime().Date.ToString(format ?? DateTimeFormat, FormatProvider)));
+    protected virtual void FormatSourceMember(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SourceMember ?? "-"));
 
-    void UtcDateTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToUniversalTime().ToString(format ?? DateTimeFormat, FormatProvider)));
+    /// <summary>Performs the {UtcDate} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatUtcDate(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToUniversalTime().Date.ToString(format ?? DateTimeFormat, FormatProvider)));
 
-    void UtcTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToUniversalTime().TimeOfDay.ToString(format ?? DateTimeFormat)));
+    /// <summary>Performs the {UtcDateTime} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatUtcDateTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToUniversalTime().ToString(format ?? DateTimeFormat, FormatProvider)));
 
-    #endregion Private Methods
-
-    #region Protected Methods
+    /// <summary>Performs the {UtcTime} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatUtcTime(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.DateTime.ToUniversalTime().TimeOfDay.ToString(format ?? DateTimeFormat)));
 
     /// <summary>Calls the <see cref="FormatArgument"/> function to format each argument of a formattable string.</summary>
     /// <param name="message">Message to be formatted.</param>
@@ -186,8 +254,8 @@ public class LogMessageFormatter : ILogMessageFormatter
         switch (argument)
         {
             case null: return $"<inverse><{message.Level.GetLogLevelColor()}>null<reset>";
-            case string s: break;
-            case bool b: return (b == true ? $"<green>{b.ToString(FormatProvider)}<reset>" : $"<red>{b.ToString(FormatProvider)}<reset>");
+            case string: break;
+            case bool b: return (b ? $"<green>{b.ToString(FormatProvider)}<reset>" : $"<red>{b.ToString(FormatProvider)}<reset>");
             case IFormattable f: return $"<{message.Level.GetLogLevelColor()}>{f.ToString(null, FormatProvider)}<reset>";
             case IConvertible c: try { return c.ToDouble(FormatProvider) > 0 ? $"<green>{c.ToString(FormatProvider)}<reset>" : $"<red>{c.ToString(FormatProvider)}<reset>"; } catch { break; }
         }
