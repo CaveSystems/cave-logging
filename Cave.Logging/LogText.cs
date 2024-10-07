@@ -34,11 +34,19 @@ public record LogText : ILogText, IEquatable<LogText>
     static string Unbox(string token)
     {
         var text = token;
-        if (text.StartsWith("<") && text.EndsWith(">"))
+        if (text.Length >= 2)
         {
-            text = text[1..^1];
-        }
+            switch (text[0])
+            {
+                case '<':
+                    if (text[^1] == '>') text = text[1..^1];
+                    break;
 
+                case '{':
+                    if (text[^1] == '}') text = text[1..^1];
+                    break;
+            }
+        }
         return text;
     }
 
@@ -63,7 +71,7 @@ public record LogText : ILogText, IEquatable<LogText>
     }
 
     /// <summary>Provides an empty log message instance</summary>
-    public static LogText[] Empty { get; } = new LogText[0];
+    public static LogText[] Empty { get; } = [];
 
     /// <summary>Gets all defined <see cref="Color"/> s.</summary>
     public static Color[] PaletteColors =>
@@ -146,7 +154,7 @@ public record LogText : ILogText, IEquatable<LogText>
     /// <summary>Checks whether a specified string is a valid <see cref="LogColor"/>.</summary>
     /// <param name="color">Name of the color.</param>
     /// <returns>Returns true if the specified string is a valid color.</returns>
-    public static bool IsColor(string color) => Unbox(color).TryParse<LogColor>(out var result);
+    public static bool IsColor(string color) => Unbox(color).TryParse<LogColor>(out var _);
 
     /// <summary>Checks whether a specified string is a valid <see cref="LogStyle"/>.</summary>
     /// <param name="style">The style name.</param>
@@ -154,7 +162,7 @@ public record LogText : ILogText, IEquatable<LogText>
     public static bool IsStyle(string style)
     {
         var unboxed = Unbox(style);
-        return string.Equals(unboxed, "default", StringComparison.OrdinalIgnoreCase) || unboxed.TryParse<LogStyle>(out var result);
+        return string.Equals(unboxed, "default", StringComparison.OrdinalIgnoreCase) || unboxed.TryParse<LogStyle>(out var _);
     }
 
     /// <summary>Parses the specified text</summary>
@@ -169,7 +177,7 @@ public record LogText : ILogText, IEquatable<LogText>
         }
 
         var items = new List<ILogText>();
-        if (text.Contains("\r")) text = text.ReplaceNewLine("\n");
+        if (text.Contains('\r')) text = text.ReplaceNewLine("\n");
 
         var color = (LogColor)0;
         var style = LogStyle.Unchanged;

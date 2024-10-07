@@ -17,7 +17,7 @@ public class LogCollector : LogReceiver
 
     #region Private Methods
 
-    IEnumerable<LogMessage>? CleanMaxItems()
+    LinkedList<LogMessage>? CleanMaxItems()
     {
         LinkedList<LogMessage>? list = null;
         if (maximumItemCount > 0)
@@ -128,7 +128,7 @@ public class LogCollector : LogReceiver
         LogMessage[] result;
         lock (items)
         {
-            result = items.ToArray();
+            result = [.. items];
             items.Clear();
         }
         return result;
@@ -139,7 +139,7 @@ public class LogCollector : LogReceiver
     {
         lock (items)
         {
-            return items.ToArray();
+            return [.. items];
         }
     }
 

@@ -204,18 +204,18 @@ public struct SyslogMessage : IComparable
 
         // decode priority
         {
-            if (!data.StartsWith("<"))
+            if (!data.StartsWith('<'))
             {
                 throw new FormatException("Could not parse PRI part");
             }
 
-            var l_PriorityString = data.GetString(0, '<', '>');
-            if (!int.TryParse(l_PriorityString, out var l_Priority))
+            var priorityString = data.GetString(0, '<', '>');
+            if (!int.TryParse(priorityString, out var l_Priority))
             {
                 throw new FormatException("Invalid priority!");
             }
 
-            start += l_PriorityString.Length + 2;
+            start += priorityString.Length + 2;
             result.Severity = (SyslogSeverity)(l_Priority % 8);
             result.Facility = (SyslogFacility)(l_Priority / 8);
         }
@@ -521,6 +521,16 @@ public struct SyslogMessage : IComparable
         return result;
     }
 
+    /// <summary>
+    /// Compares the current instance with another object of the same type and returns an integer that indicates whether the current instance precedes, follows
+    /// or occurs in the same position in the sort order as the other object.
+    /// </summary>
+    public int CompareTo(object? obj) => obj is SyslogMessage msg ? Equals(msg) ? 0 : TimeStamp.CompareTo(msg.TimeStamp) : ToString().CompareTo(obj?.ToString());
+
+    /// <summary>Determines whether the specified Object is equal to the SyslogItem.</summary>
+    /// <param name="obj">Object to test for equality.</param>
+    public override bool Equals(object? obj) => obj is SyslogMessage msg && msg.ToString() == ToString();
+
     /// <summary>Obtains the hash code for this item.</summary>
     /// <returns>Returns a hash code.</returns>
     public override int GetHashCode() => ToString().GetHashCode();
@@ -778,22 +788,4 @@ public struct SyslogMessage : IComparable
     }
 
     #endregion Public Methods
-
-    #region IComparable Member
-
-    /// <summary>
-    /// Compares the current instance with another object of the same type and returns an integer that indicates whether the current instance precedes,
-    /// follows or occurs in the same position in the sort order as the other object.
-    /// </summary>
-    public int CompareTo(object? obj) => obj is SyslogMessage msg ? Equals(msg) ? 0 : TimeStamp.CompareTo(msg.TimeStamp) : ToString().CompareTo(obj?.ToString());
-
-    #endregion IComparable Member
-
-    #region IEquatable Member
-
-    /// <summary>Determines whether the specified Object is equal to the SyslogItem.</summary>
-    /// <param name="obj">Object to test for equality.</param>
-    public override bool Equals(object? obj) => obj is SyslogMessage msg && msg.ToString() == ToString();
-
-    #endregion IEquatable Member
 }

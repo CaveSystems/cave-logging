@@ -10,7 +10,7 @@ public class SyslogSender : IDisposable
 {
     #region Private Fields
 
-    static readonly byte[] empty = [];
+    static readonly byte[] Empty = [];
     bool disposed;
     ConnectionString target;
     TcpClient? tcpClient;
@@ -94,7 +94,7 @@ public class SyslogSender : IDisposable
             case ConnectionType.UDP:
                 udpClient = new UdpClient();
                 udpClient.Connect(connectionString.Server ?? "localhost", connectionString.GetPort(514));
-                udpClient.Send(empty, 0);
+                udpClient.Send(Empty, 0);
                 return;
 
             default:
