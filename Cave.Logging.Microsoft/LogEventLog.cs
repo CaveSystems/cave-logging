@@ -14,16 +14,16 @@ public sealed class LogEventLog : LogReceiver, IDisposable
 {
     #region Private Classes
 
-    class LogEventLogWriter : ILogWriter
+    sealed class LogEventLogWriter : ILogWriter
     {
         #region Private Fields
 
         readonly object flushLock = new();
+        readonly LogEventLog logEventLog;
         StringBuilder currentMessage = new();
         EventLogEntryType currentType = EventLogEntryType.Information;
         volatile bool flushWaiting;
         int lastWrite;
-        LogEventLog logEventLog;
 
         #endregion Private Fields
 
@@ -134,8 +134,8 @@ public sealed class LogEventLog : LogReceiver, IDisposable
 
     #region Private Fields
 
-    EventLog? eventLog = null;
-    LogLevel logLevel = LogLevel.Information;
+    readonly LogLevel logLevel = LogLevel.Information;
+    EventLog? eventLog;
 
     #endregion Private Fields
 

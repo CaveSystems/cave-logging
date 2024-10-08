@@ -6,15 +6,15 @@ class Program
 {
     #region Private Fields
 
-    static int MessagesSent = 0;
-    static int SendersReady = 0;
-    static ManualResetEventSlim StartEvent = new(false);
+    static readonly ManualResetEventSlim StartEvent = new(false);
+    static int messagesSent;
+    static int sendersReady;
 
     #endregion Private Fields
 
     #region Private Methods
 
-    static void Main(string[] args)
+    static void Main()
     {
         Console.WriteLine("Prepare logging...");
         var file1 = LogHtmlFile.StartLogFile("testlog.info.html");
@@ -32,7 +32,7 @@ class Program
         var task2 = Task.Factory.StartNew(() => SendMessages(sender2));
         var task3 = Task.Factory.StartNew(() => SendMessages(sender3));
         //wait until all threads are ready
-        while (SendersReady < 3) Thread.Sleep(1);
+        while (sendersReady < 3) Thread.Sleep(1);
 
         Console.WriteLine("Start threads...");
         //set start event for all threads
@@ -55,7 +55,7 @@ class Program
     {
         var logLevelCount = Enum.GetValues<LogLevel>().Length;
         //set ready signal and log message
-        Interlocked.Increment(ref SendersReady);
+        Interlocked.Increment(ref sendersReady);
         logger.Notice($"SendMessages to Logger {logger.SenderName} waiting for start signal...");
 
         //wait for start signal then log message
@@ -70,7 +70,7 @@ class Program
         }
 
         logger.Info($"<red>End SendMessages to Logger {logger.SenderName}");
-        Interlocked.Add(ref MessagesSent, 3 + 10000);
+        Interlocked.Add(ref messagesSent, 3 + 10000);
     }
 
     #endregion Private Methods

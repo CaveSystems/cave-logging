@@ -67,10 +67,14 @@ public class LogHtmlFile : LogFileBase
     public static string FileExtension { get; set; } = ".html";
 
     /// <summary>Gets or sets the document style</summary>
-    public string DocumentStyle { get; set; } = "<style>table.sortable thead{background-color:#eee;color:#333;font-weight:bold;cursor:pointer}table.sortable tr{background-color:#333;color:#eee;vertical-align:top}" +
-        "td.BgBlack{color:Gray;background-color:Black}td.BgGray{color:White;background-color:DarkGray}td.BgBlue{color:White;background-color:DarkBlue}td.BgGreen{color:White;background-color:DarkGreen}td.BgCyan{color:White;background-color:DarkCyan}td.BgRed{color:White;background-color:DarkRed}td.BgMagenta{color:White;background-color:DarkMagenta}td.BgYellow{color:White;background-color:Orange}td.BgWhite{color:White;background-color:Gray}" +
-        "span.Black{color:Black}span.Gray{color:LightGray}span.Blue{color:LightBlue}span.Green{color:LightGreen}span.Cyan{color:Cyan}span.Red{color:Red}span.Magenta{color:LightMagenta}span.Yellow{color:Yellow}span.White{color:White}" +
-        "table.sortable{border:1px solid black}</style>";
+    public string DocumentStyle { get; set; } = "<style>table.sortable th{background-color:#eee;color:#333;font-weight:bold;cursor:pointer}tr{background-color:#333;color:#eee;vertical-align:top}" +
+        //cells
+        "td.BgBlack{color:Gray;background-color:Black}td.BgGray{color:White;background-color:DarkGray}td.BgBlue{color:White;background-color:DarkBlue}td.BgGreen{color:White;background-color:DarkGreen}" +
+        "td.BgCyan{color:White;background-color:DarkCyan}td.BgRed{color:White;background-color:DarkRed}td.BgMagenta{color:White;background-color:DarkMagenta}td.BgYellow{color:White;background-color:Orange}" +
+        "td.BgWhite{color:White;background-color:Gray}" +
+        //spans
+        "span.Black{color:Black}span.Gray{color:LightGray}span.Blue{color:LightBlue}span.Green{color:LightGreen}span.Cyan{color:Cyan}span.Red{color:Red}span.Magenta{color:LightMagenta}span.Yellow{color:Yellow}" +
+        "span.White{color:White}table.sortable{border:1px solid #777}</style>";
 
     /// <summary>Gets the table header descriptions used.</summary>
     public TableHeaderDescriptions Header { get; } = new();
@@ -126,7 +130,7 @@ public class LogHtmlFile : LogFileBase
         writer.WriteLine(SortTableScript);
         writer.WriteLine(DocumentStyle);
         writer.WriteLine("</head>");
-        writer.WriteLine("<body style=\"font-family:monospace\"><table class=\"sortable\">");
+        writer.WriteLine("<body style=\"color:#eee;background-color:#555;font-family:monospace;\"><table class=\"sortable\">");
         writer.WriteLine($"<tr><th>{Header.DateTime}</th><th>{Header.Level}</th><th>{Header.Sender}</th><th>{Header.File}</th><th>{Header.Content}</th></tr>");
         writer.Flush();
         base.Start();

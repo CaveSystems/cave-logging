@@ -9,6 +9,9 @@ public interface ILogMessageFormatter
 {
     #region Public Properties
 
+    /// <summary>Gets or sets the date format</summary>
+    string DateFormat { get; set; }
+
     /// <summary>Gets or sets the date time format</summary>
     string DateTimeFormat { get; set; }
 
@@ -20,6 +23,9 @@ public interface ILogMessageFormatter
 
     /// <summary>Gets or sets the log message format</summary>
     string MessageFormat { get; set; }
+
+    /// <summary>Gets or sets the time format</summary>
+    string TimeFormat { get; set; }
 
     #endregion Public Properties
 

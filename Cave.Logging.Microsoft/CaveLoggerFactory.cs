@@ -12,7 +12,7 @@ public class CaveLoggerFactory : Microsoft.Extensions.Logging.ILoggerFactory
     #region Public Properties
 
     /// <summary>Gets all providers this factory uses.</summary>
-    public IEnumerable<Microsoft.Extensions.Logging.ILoggerProvider> Providers { get; } = new[] { new CaveLoggerProvider() };
+    public IEnumerable<Microsoft.Extensions.Logging.ILoggerProvider> Providers { get; } = [new CaveLoggerProvider()];
 
     #endregion Public Properties
 
@@ -25,7 +25,7 @@ public class CaveLoggerFactory : Microsoft.Extensions.Logging.ILoggerFactory
     public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName) => Providers.First().CreateLogger(categoryName);
 
     /// <inheritdoc/>
-    public void Dispose() { }
+    public void Dispose() => GC.SuppressFinalize(this);
 
     #endregion Public Methods
 }

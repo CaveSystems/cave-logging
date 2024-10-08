@@ -27,10 +27,7 @@ public class CaveLogger : Microsoft.Extensions.Logging.ILogger
     #region Public Methods
 
     /// <inheritdoc/>
-    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-    {
-        return null;
-    }
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
 
     /// <inheritdoc/>
     public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
