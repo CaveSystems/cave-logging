@@ -6,9 +6,9 @@ class Program
 {
     #region Private Fields
 
-    static int MessagesSent = 0;
-    static int SendersReady = 0;
-    static ManualResetEventSlim StartEvent = new(false);
+    static readonly ManualResetEventSlim StartEvent = new(false);
+    static int messagesSent;
+    static int sendersReady;
 
     #endregion Private Fields
 
@@ -26,7 +26,7 @@ class Program
         e.Handled = e.Message.SenderName == "FilteredSender";
     }
 
-    static void Main(string[] args)
+    static void Main()
     {
         var collector1 = LogCollector.StartNew();
         //define custom message received filter
@@ -38,14 +38,14 @@ class Program
         //keep all messages
         collector1.MaximumItemCount = int.MaxValue;
         //count collector start message
-        MessagesSent++;
+        messagesSent++;
 
         //no filter at second collector
         var collector2 = LogCollector.StartNew();
         collector2.Level = LogLevel.Verbose;
         collector2.MaximumItemCount = int.MaxValue;
         //count collector start message
-        MessagesSent++;
+        messagesSent++;
 
         //prepare 3 logger instances for the test
         var sender1 = new Logger("Sender1");
@@ -56,7 +56,7 @@ class Program
         var task2 = Task.Factory.StartNew(() => SendMessages(sender2));
         var task3 = Task.Factory.StartNew(() => SendMessages(senderF));
         //wait until all threads are ready
-        while (SendersReady < 3) Thread.Sleep(1);
+        while (sendersReady < 3) Thread.Sleep(1);
         //set start event for all threads
         StartEvent.Set();
         //wait until all threads are complete
@@ -66,7 +66,7 @@ class Program
         Logger.Flush();
 
         //look at collector
-        if (collector2.ItemCount != MessagesSent) throw new Exception("ItemCount does not match sent count!");
+        if (collector2.ItemCount != messagesSent) throw new Exception("ItemCount does not match sent count!");
         var expected = collector2.ToArray().Where(i => i.Level <= LogLevel.Warning && i.SenderName != "FilteredSender").ToList();
         if (!expected.SequenceEqual(collector1.ToArray())) throw new Exception("Collected items do not match!");
 
@@ -78,7 +78,7 @@ class Program
     {
         var logLevelCount = Enum.GetValues<LogLevel>().Length;
         //set ready signal and log message
-        Interlocked.Increment(ref SendersReady);
+        Interlocked.Increment(ref sendersReady);
         logger.Notice($"SendMessages to Logger {logger.SenderName} waiting for start signal...");
 
         //wait for start signal then log message
@@ -93,7 +93,7 @@ class Program
         }
 
         logger.Info($"<red>End SendMessages to Logger {logger.SenderName}");
-        Interlocked.Add(ref MessagesSent, 3 + 10000);
+        Interlocked.Add(ref messagesSent, 3 + 10000);
     }
 
     #endregion Private Methods

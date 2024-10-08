@@ -11,8 +11,8 @@ public sealed class LogSyslog : LogReceiver
 {
     #region Private Fields
 
+    static readonly object SyncRoot = new();
     static LogSyslog? instance;
-    static object syncRoot = new object();
 
     #endregion Private Fields
 
@@ -40,7 +40,7 @@ public sealed class LogSyslog : LogReceiver
     /// <exception cref="Exception">Only one instance allowed!.</exception>
     public static LogSyslog Create()
     {
-        lock (syncRoot)
+        lock (SyncRoot)
         {
             if (instance == null)
             {
@@ -61,7 +61,7 @@ public sealed class LogSyslog : LogReceiver
     public override void Close()
     {
         base.Close();
-        lock (syncRoot)
+        lock (SyncRoot)
         {
             instance?.Close();
             instance = null;

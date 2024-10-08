@@ -9,8 +9,8 @@ public static class Syslog
 {
     #region Private Fields
 
+    static readonly object SyncRoot = new();
     static IntPtr processNamePtr;
-    static object syncRoot = new object();
 
     #endregion Private Fields
 
@@ -19,7 +19,7 @@ public static class Syslog
     /// <summary>Closes the connection to the logging deamon.</summary>
     public static void Close()
     {
-        lock (syncRoot)
+        lock (SyncRoot)
         {
             if (processNamePtr != IntPtr.Zero)
             {
@@ -35,10 +35,7 @@ public static class Syslog
     }
 
     /// <summary>Starts logging to the logging deamon.</summary>
-    public static void Init()
-    {
-        Init(SyslogOption.Pid | SyslogOption.NoDelay, SyslogFacility.Local1);
-    }
+    public static void Init() => Init(SyslogOption.Pid | SyslogOption.NoDelay, SyslogFacility.Local1);
 
     /// <summary>Starts logging to the logging deamon.</summary>
     /// <param name="option">The syslog option.</param>
@@ -61,7 +58,7 @@ public static class Syslog
     /// <param name="msg">The message tring to log.</param>
     public static void Write(SyslogSeverity severity, SyslogFacility facility, string msg)
     {
-        lock (syncRoot)
+        lock (SyncRoot)
         {
             if (processNamePtr == IntPtr.Zero)
             {
