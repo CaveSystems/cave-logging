@@ -36,7 +36,7 @@ public sealed class LogDebugReceiver : LogReceiver
                     Commit();
                     continue;
                 }
-                buffer.Append(item);
+                buffer.Append(item.Text);
             }
             Commit();
         }

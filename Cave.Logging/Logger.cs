@@ -120,6 +120,7 @@ public class Logger
         if (value)
         {
             (DebugReceiver ??= new LogDebugReceiver()).LogToDebug = value;
+            if (!DebugReceiver.Started) DebugReceiver.Start();
         }
         else if (DebugReceiver is not null)
         {
@@ -132,6 +133,7 @@ public class Logger
         if (value)
         {
             (DebugReceiver ??= new LogDebugReceiver()).LogToTrace = value;
+            if (!DebugReceiver.Started) DebugReceiver.Start();
         }
         else if (DebugReceiver is not null)
         {
@@ -177,8 +179,8 @@ public class Logger
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param senderName="senderName">Name of the log source.</param>
     /// <remarks>
-    /// This method is the slowest when creating a logger. This should not be called thousands of times. Faster variants are: <see
-    /// cref="Logger.Create(object)"/> or new Logger(Type)
+    /// This method is the slowest when creating a logger. This should not be called thousands of times. Faster variants are:
+    /// <see cref="Logger.Create(object)"/> or new Logger(Type)
     /// </remarks>
     [MethodImpl(MethodImplOptions.NoInlining)]
     public Logger(string? senderName = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
