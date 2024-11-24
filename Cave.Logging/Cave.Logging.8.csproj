@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+
+		<Version>9.99-future</Version>
+		<AssemblyName>Cave.Logging</AssemblyName>
+
+		<!--project-->
+        <RootNamespace>Cave.Logging</RootNamespace>
+        <AssemblyOriginatorKeyFile>Cave.Logging.snk</AssemblyOriginatorKeyFile>
+        <Product>CaveSystems Logging Library</Product>
+        <PackageTags>CaveSystems Logging</PackageTags>
+        <Description>CaveSystems Logging Library is a high speed fully asynchonous logging facility.</Description>
+        <PackageProjectUrl>https://github.com/CaveSystems/cave-logging</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/CaveSystems/cave-logging</RepositoryUrl>
+        <!--settings-->
+        <PackageReleaseNotes />
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <SignAssembly>true</SignAssembly>
+        <NeutralLanguage />
+        <DelaySign>false</DelaySign>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\cave-extensions\Cave.Extensions\Cave.Extensions.8.csproj" />
+        <ProjectReference Include="..\..\cave-io\Cave.IO\Cave.IO.8.csproj" />
+        <ProjectReference Include="..\..\cave-net\Cave.Net\Cave.Net.8.csproj" />
+    </ItemGroup>
+
+</Project>
