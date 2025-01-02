@@ -34,7 +34,7 @@
         </PackageReference>
     </ItemGroup>
 
-    <ItemGroup Condition="&#xD;&#xA;        '$(TargetFramework)' == 'net5.0' or &#xD;&#xA;        '$(TargetFramework)' == 'net6.0' or &#xD;&#xA;        '$(TargetFramework)' == 'net7.0' or &#xD;&#xA;        '$(TargetFramework)' == 'net8.0' or &#xD;&#xA;        $(TargetFramework.StartsWith('netstandard2')) or &#xD;&#xA;        $(TargetFramework.StartsWith('net462')) or &#xD;&#xA;        $(TargetFramework.StartsWith('net47')) or &#xD;&#xA;        $(TargetFramework.StartsWith('net48'))">
+    <ItemGroup Condition="&#xD;&#xA;'$(TargetFramework)' == 'net5.0' or &#xD;&#xA;'$(TargetFramework)' == 'net6.0' or &#xD;&#xA;'$(TargetFramework)' == 'net8.0' or &#xD;&#xA;$(TargetFramework.StartsWith('netstandard2')) or &#xD;&#xA;$(TargetFramework.StartsWith('net462')) or &#xD;&#xA;$(TargetFramework.StartsWith('net47')) or &#xD;&#xA;$(TargetFramework.StartsWith('net48'))">
         <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
         <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.0" />
