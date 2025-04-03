@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Cave.Collections.Generic;
 using Cave.IO;
-using Cave.Net;
 
 namespace Cave.Logging;
 
@@ -64,6 +62,17 @@ public class Logger
     static volatile bool isIdle;
 
     #endregion Private Fields
+
+    #region Private Constructors
+
+    [Obsolete]
+    private Logger(Type senderType, string? senderName)
+    {
+        SenderName = senderName ?? senderType?.Name ?? throw new ArgumentNullException(nameof(senderType));
+        SenderType = senderType;
+    }
+
+    #endregion Private Constructors
 
     #region Private Methods
 
@@ -150,12 +159,12 @@ public class Logger
     {
         try
         {
-            HostName = NetTools.HostName.ToLowerInvariant();
+            HostName = Environment.MachineName.ToLowerInvariant();
         }
         catch
         {
             System.Diagnostics.Debug.WriteLine("Logger.cctor(): Could not get HostName!");
-            HostName = Environment.MachineName.ToLowerInvariant();
+            HostName = InstallationGuid.SystemGuid.ToString("D");
         }
 
         try
@@ -179,24 +188,33 @@ public class Logger
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param senderName="senderName">Name of the log source.</param>
     /// <remarks>
-    /// This method is the slowest when creating a logger. This should not be called thousands of times. Faster variants are:
-    /// <see cref="Logger.Create(object)"/> or new Logger(Type)
+    /// This method is the slowest when creating a logger. This should not be called thousands of times. Faster variants are: <see
+    /// cref="Logger.Create(object)"/> or new Logger(Type)
     /// </remarks>
     [MethodImpl(MethodImplOptions.NoInlining)]
     public Logger(string? senderName = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
-        SenderType = new StackFrame(1).GetMethod()?.DeclaringType;
-        SenderName = senderName ?? SenderType?.Name ?? $"Unknown:{member}:{file}:{line}";
+        var method = new StackFrame(1).GetMethod();
+        SenderType = method?.DeclaringType;
+        SenderName = senderName ?? SenderType?.Name ?? "unknown";
+        if (IncludeDebugInformation)
+        {
+            SenderName += $"({member}:{file}:{line})";
+        }
     }
 
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param senderType="senderType">Type of the log source.</param>
     /// <param senderName="senderName">(Optional) Name of the log source. Defaults to <paramref name="senderType"/>.Name</param>
     /// <remarks>This method is fast way to create a logger.</remarks>
-    public Logger(Type senderType, string? senderName = null)
+    public Logger(Type senderType, string? senderName = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
         SenderName = senderName ?? senderType?.Name ?? throw new ArgumentNullException(nameof(senderType));
         SenderType = senderType;
+        if (IncludeDebugInformation)
+        {
+            SenderName += $"({member}:{file}:{line})";
+        }
     }
 
     #endregion Public Constructors
@@ -208,6 +226,9 @@ public class Logger
 
     /// <summary>Gets or sets the host senderName of the local computer.</summary>
     public static string HostName { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether debug information ({member}:{file}:{line}) shall be part of the sender name or not.</summary>
+    public static bool IncludeDebugInformation { get; set; } = Debugger.IsAttached;
 
     /// <summary>Gets or sets a value indicating whether the logging system logs to <see cref="System.Diagnostics.Debug"/>.</summary>
     public static bool LogToDebug { get => DebugReceiver?.LogToDebug == false; set => SetLogToDebug(value); }
