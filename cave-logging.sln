@@ -30,7 +30,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "net_2.0-3.5", "Tests\net_2.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "net_4.x", "Tests\net_4.x.csproj", "{007F9428-C129-47CA-8CF6-8A0D59A7145A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "net_5+", "Tests\net_5+.csproj", "{56E030F0-D8C5-4801-A853-9E386939120D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "net_latest", "Tests\net_latest.csproj", "{56E030F0-D8C5-4801-A853-9E386939120D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogHtmlFileSample", "Samples\LogHtmlFileSample\LogHtmlFileSample.csproj", "{4B52709F-422F-4E28-BFF0-13ACD9FD2933}"
 EndProject
