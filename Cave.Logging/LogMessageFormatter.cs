@@ -41,6 +41,7 @@ public class LogMessageFormatter : ILogMessageFormatter
                 "utctime" => formatter.FormatUtcTime,
                 "sender" or "sendername" => formatter.FormatSenderName,
                 "sendertype" => formatter.FormatSenderType,
+                "sendersource" => formatter.FormatSenderSource,
                 "file" or "sourcefile" => formatter.FormatSourceFile,
                 "line" or "sourceline" => formatter.FormatSourceLine,
                 "member" or "sourcemember" => formatter.FormatSourceMember,
@@ -181,6 +182,12 @@ public class LogMessageFormatter : ILogMessageFormatter
     /// <param name="message">Message to be formatted</param>
     /// <param name="format">Format argument of the item to be formatted.</param>
     protected virtual void FormatSenderName(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SenderName));
+
+    /// <summary>Performs the {SenderName} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
+    /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
+    /// <param name="message">Message to be formatted</param>
+    /// <param name="format">Format argument of the item to be formatted.</param>
+    protected virtual void FormatSenderSource(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.SenderSource ?? "::"));
 
     /// <summary>Performs the {SenderType} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
     /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>

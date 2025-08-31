@@ -19,6 +19,10 @@ public sealed class LogDebugReceiver : LogReceiver
         public override void Write(LogMessage message, IEnumerable<ILogText> items)
         {
             StringBuilder buffer = new();
+            if (Logger.IncludeDebugInformation && message.SenderSource is not null)
+            {
+                buffer.Append($"SenderSource:{message.SenderSource} ");
+            }
             void Commit()
             {
                 if (buffer.Length > 0)

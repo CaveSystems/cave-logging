@@ -48,6 +48,28 @@ public sealed class LogMessage
     }
 
     /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
+    /// <param name="sender">Sender of the message.</param>
+    /// <param name="level">The level.</param>
+    /// <param name="exception">The exception.</param>
+    /// <param name="content">The message content.</param>
+    /// <param name="member">Optional: method or property name of the sender.</param>
+    /// <param name="file">Optional: file path at which the message was created at the time of compile.</param>
+    /// <param name="line">Optional: the line number in the source file at which the message was created.</param>
+    public LogMessage(Logger sender, LogLevel level, IFormattable content, Exception? exception = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
+    {
+        DateTime = MonotonicTime.Now;
+        SenderName = sender.SenderName;
+        SenderType = sender.SenderType;
+        SenderSource = sender.SenderSource;
+        Content = content;
+        Exception = exception;
+        Level = level;
+        SourceMember = member;
+        SourceFile = file;
+        SourceLine = line;
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="LogMessage"/> class.</summary>
     /// <param name="senderName">Sender name of the message.</param>
     /// <param name="senderType">Sender type of the message (optional).</param>
     /// <param name="level">The level.</param>
@@ -97,6 +119,10 @@ public sealed class LogMessage
 
     /// <summary>Gets the sender name.</summary>
     public string SenderName { get; init; }
+
+    /// <summary>Gets the sender source.</summary>
+    /// <remarks>This might be null when running obfuscated binaries.</remarks>
+    public string? SenderSource { get; init; }
 
     /// <summary>Gets the sender type.</summary>
     public Type? SenderType { get; init; }

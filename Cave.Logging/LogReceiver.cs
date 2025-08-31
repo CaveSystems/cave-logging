@@ -124,7 +124,7 @@ public abstract class LogReceiver : IDisposable
                 {
                     if (MonotonicTime.UtcNow > nextWarningUtc)
                     {
-                        Write(new LogMessage(Name, GetType(), LogLevel.Warning, $"LogReceiver {Name} discarded {discardedCount} late messages!"));
+                        Write(new(Name, GetType(), LogLevel.Warning, $"LogReceiver {Name} discarded {discardedCount} late messages!"));
                         discardedCount = 0;
                         nextWarningUtc = MonotonicTime.UtcNow + TimeBetweenWarnings;
                     }
