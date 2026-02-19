@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using Cave.Collections.Generic;
 using Cave.IO;
 
 namespace Cave.Logging;
@@ -8,12 +10,6 @@ namespace Cave.Logging;
 /// <summary>Provides a log receiver implementation with <see cref="ILogMessageFormatter"/> and <see cref="ILogWriter"/>.</summary>
 public abstract class LogReceiver : IDisposable
 {
-    #region Private Classes
-
-    sealed class MessageQueue : LinkedList<IList<LogMessage>> { }
-
-    #endregion Private Classes
-
     #region Private Fields
 
     volatile int currentDelayMsec;
@@ -44,17 +40,20 @@ public abstract class LogReceiver : IDisposable
         return currentDelayMsec > LateMessageMilliseconds;
     }
 
-    void MoveMessages(MessageQueue messageQueue)
+    IEnumerable<LogMessage> GetMessages()
     {
         if (Fifo.Available > 0)
         {
             isIdle = false;
+            IEnumerable<LogMessage> messages = [];
             while (Fifo.TryDequeue(out var list))
             {
                 messageQueueCount += list!.Count;
-                messageQueue.AddLast(list);
+                messages = messages.Concat(list);
             }
+            return messages;
         }
+        return [];
     }
 
     void ReceiverWorker()
@@ -63,16 +62,18 @@ public abstract class LogReceiver : IDisposable
         var nextWarningUtc = DateTime.MinValue;
         var discardedCount = 0;
         var errorCount = 0;
-        MessageQueue messageQueue = new();
 
         while (!Closed)
         {
+            var inProgress = 0;
             try
             {
-                var list = WaitForMessages(messageQueue);
+                var list = WaitForMessages().ToList();
+                inProgress = list.Count;
                 for (var i = 0; i < list.Count; i++)
                 {
-                    MoveMessages(messageQueue);
+                    messageQueueCount--;
+                    inProgress--;
                     if (list[i] is not LogMessage message) continue;
 
                     // is this message late ?
@@ -125,6 +126,7 @@ public abstract class LogReceiver : IDisposable
                     if (MonotonicTime.UtcNow > nextWarningUtc)
                     {
                         Write(new(Name, GetType(), LogLevel.Warning, $"LogReceiver {Name} discarded {discardedCount} late messages!"));
+                        DiscardedMessages += discardedCount;
                         discardedCount = 0;
                         nextWarningUtc = MonotonicTime.UtcNow + TimeBetweenWarnings;
                     }
@@ -133,18 +135,20 @@ public abstract class LogReceiver : IDisposable
             }
             catch (Exception ex)
             {
+                messageQueueCount -= inProgress;
+                DiscardedMessages += inProgress;
                 if (errorCount++ > 5)
                 {
                     Log.Emergency($"LogReceiver {Name} encountered a fatal exception and is removed!", ex);
                     Close();
                     return;
                 }
-                Log.Error($"LogReceiver {Name} encountered a exception (retry {errorCount})!", ex);
+                Log.Error($"LogReceiver {Name} encountered a exception and lost {inProgress} messages (retry {errorCount})!", ex);
             }
         }
     }
 
-    IList<LogMessage> WaitForMessages(MessageQueue messageQueue)
+    IList<LogMessage> WaitForMessages()
     {
         while (!Closed)
         {
@@ -166,17 +170,7 @@ public abstract class LogReceiver : IDisposable
                 continue;
             }
 
-            //pump
-            MoveMessages(messageQueue);
-
-            //handle
-            if (messageQueue.Count > 0)
-            {
-                var list = messageQueue.First!.Value;
-                messageQueue.RemoveFirst();
-                messageQueueCount -= list.Count;
-                return list;
-            }
+            return [.. GetMessages()];
         }
         return [];
     }
@@ -271,10 +265,13 @@ public abstract class LogReceiver : IDisposable
     public bool Started => receiverThread != null;
 
     /// <summary>Gets or sets the time between two warnings.</summary>
-    public TimeSpan TimeBetweenWarnings { get; set; }
+    public TimeSpan TimeBetweenWarnings { get; set; } = new TimeSpan(TimeSpan.TicksPerSecond * 10);
 
     /// <summary>Provides writing to the backend.</summary>
     public ILogWriter Writer { get; set; } = LogWriter.Empty;
+
+    /// <summary>Gets the number of messages discarded in <see cref="Mode"/> == <see cref="LogReceiverMode.Opportune"/>.</summary>
+    public int DiscardedMessages { get; private set; }
 
     #endregion Public Properties
 

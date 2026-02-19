@@ -622,5 +622,4 @@ public class Logger
         => Send(new(this, LogLevel.Warning, LogString.Empty, exception, member, file, line));
 
     #endregion Public Methods
-
 }
