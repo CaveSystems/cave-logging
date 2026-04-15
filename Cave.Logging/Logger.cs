@@ -35,8 +35,8 @@ public class Logger
             isIdle = true;
             while (isIdle && Fifo.Available == 0)
             {
-                //todo: check if there are still race conditions with isIdle, fifo.Available and messageTrigger
                 if (MessageTrigger.WaitOne(1000)) break;
+                if (Fifo.Available > 0) /* possible uncatched race condition seen at android */ Debugger.Break();
             }
             isIdle = false;
 
@@ -59,14 +59,15 @@ public class Logger
                 messages = list.AsReadOnly();
             }
 
-            //push to receivers
+            //push to receivers this is done so often we will not make a cached copy of the receivers, we will just lock and push to all receivers
+            //enqueueing is a very fast and simple fifo push
             lock (ReceiverSet)
             {
                 foreach (var receiver in ReceiverSet)
                 {
                     if (receiver.Started)
                     {
-                        receiver.Fifo.Enqueue(messages);
+                        receiver.Enqueue(messages);
                     }
                 }
             }
@@ -152,7 +153,7 @@ public class Logger
         SenderType = senderType;
         SenderName = senderName ?? SenderType?.Name ?? "unknown";
     }
-    
+
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param senderName="senderName">Name of the log source.</param>
     /// <remarks>
@@ -263,7 +264,10 @@ public class Logger
         var deadlockWatch = StopWatch.StartNew();
         while (true)
         {
-            Parallel.ForEach(Receivers, receiver => receiver.Flush());
+            foreach (var receiver in Receivers)
+            {
+                receiver.Flush();
+            }
 
             if (!isIdle)
             {

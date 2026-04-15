@@ -1,0 +1,10 @@
+{
+  "runtimeOptions": {
+    "configProperties": {
+      "System.GC.Server": true,
+      "System.GC.Concurrent": false,
+      "System.Runtime.TieredCompilation": false,
+      "System.Runtime.CompilerServices.RuntimeFeature.ReadyToRun": false
+    }
+  }
+}

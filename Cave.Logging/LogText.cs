@@ -176,11 +176,16 @@ public record LogText : ILogText, IEquatable<LogText>
             throw new Exception("Data is unset!");
         }
 
-        var items = new List<ILogText>();
         if (text.Contains('\r')) text = text.ReplaceNewLine("\n");
 
         var color = (LogColor)0;
         var style = LogStyle.Unchanged;
+        var items = new List<ILogText>();
+        if (text.IndexOfAny(TokenStartSeparator) < 0)
+        {
+            items.Add(new LogText(text, color, style));
+            return items;
+        }
 
         var textStart = 0;
         while (true)

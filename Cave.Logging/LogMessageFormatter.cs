@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 namespace Cave.Logging;
 
 /// <summary>Provides an implementation of the <see cref="ILogMessageFormatter"/> interface. This class allows to define the layout of the formatted messages.</summary>
+/// <remarks>Do not cache any LogMessage properties, since the receiver can decide to change location, formatting and timezone</remarks>
 public class LogMessageFormatter : ILogMessageFormatter
 {
     #region Private Classes
@@ -204,7 +205,19 @@ public class LogMessageFormatter : ILogMessageFormatter
     /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
     /// <param name="message">Message to be formatted</param>
     /// <param name="format">Format argument of the item to be formatted.</param>
-    protected virtual void FormatShortLevel(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.Level.ToString()[..1]));
+    protected virtual void FormatShortLevel(IList<ILogText> list, LogMessage message, string? format) => list.Add(new LogText(message.Level switch
+    {
+        LogLevel.Emergency => "!",
+        LogLevel.Alert => "A",
+        LogLevel.Critical => "C",
+        LogLevel.Error => "E",
+        LogLevel.Warning => "W",
+        LogLevel.Notice => "N",
+        LogLevel.Information => "I",
+        LogLevel.Debug => "D",
+        LogLevel.Verbose => "V",
+        _ => " "
+    }));
 
     /// <summary>Performs the {SourceFile} formatting and adds all needed <see cref="ILogText"/> items to the <paramref name="list"/>.</summary>
     /// <param name="list">Resulting items to be sent to the <see cref="LogReceiver"/> backend.</param>
@@ -336,7 +349,7 @@ public class LogMessageFormatter : ILogMessageFormatter
     /// <inheritdoc/>
     public virtual IList<ILogText> FormatMessage(LogMessage message)
     {
-        List<ILogText> result = new();
+        List<ILogText> result = new(items.Count * 10);
         foreach (var item in items)
         {
             if (item.Func != null)

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using Cave.Collections.Generic;
 using Cave.IO;
 
 namespace Cave.Logging;
@@ -22,6 +20,14 @@ public abstract class LogReceiver : IDisposable
 
     Thread? receiverThread;
 
+#if NET40_OR_GREATER
+    readonly ManualResetEventSlim trigger = new ManualResetEventSlim(false);
+#else
+    readonly ManualResetEvent trigger = new ManualResetEvent(false);
+#endif
+
+    readonly Fifo<IList<LogMessage>> Fifo = new();
+
     #endregion Private Fields
 
     #region Private Destructors
@@ -40,18 +46,26 @@ public abstract class LogReceiver : IDisposable
         return currentDelayMsec > LateMessageMilliseconds;
     }
 
-    IEnumerable<LogMessage> GetMessages()
+    int MessagesPerPacket { get; }
+
+    IList<LogMessage> GetMessages()
     {
         if (Fifo.Available > 0)
         {
             isIdle = false;
-            IEnumerable<LogMessage> messages = [];
-            while (Fifo.TryDequeue(out var list))
+            Fifo.TryDequeue(out var list);
+            messageQueueCount += list!.Count;
+            if (Fifo.Available == 0) return list;
+
+            var result = new List<LogMessage>(MessagesPerPacket * 2);
+            result.AddRange(list);
+            while (Fifo.TryDequeue(out list))
             {
                 messageQueueCount += list!.Count;
-                messages = messages.Concat(list);
+                result.AddRange(list);
+                if (result.Count > MessagesPerPacket) break;
             }
-            return messages;
+            return result;
         }
         return [];
     }
@@ -68,7 +82,7 @@ public abstract class LogReceiver : IDisposable
             var inProgress = 0;
             try
             {
-                var list = WaitForMessages().ToList();
+                var list = WaitForMessages();
                 inProgress = list.Count;
                 for (var i = 0; i < list.Count; i++)
                 {
@@ -166,11 +180,16 @@ public abstract class LogReceiver : IDisposable
                     }
                     isIdle = true;
                 }
-                Thread.Sleep(1);
+                trigger.Reset();
+#if NET40_OR_GREATER
+                trigger.Wait(1000);
+#else
+                trigger.WaitOne(1000);
+#endif
                 continue;
             }
 
-            return [.. GetMessages()];
+            return GetMessages();
         }
         return [];
     }
@@ -218,12 +237,6 @@ public abstract class LogReceiver : IDisposable
     }
 
     #endregion Protected Methods
-
-    #region Internal Properties
-
-    internal Fifo<IList<LogMessage>> Fifo { get; } = new Fifo<IList<LogMessage>>();
-
-    #endregion Internal Properties
 
     #region Public Properties
 
@@ -277,6 +290,16 @@ public abstract class LogReceiver : IDisposable
 
     #region Public Methods
 
+    /// <summary>Adds the specified log message to the queue for processing.</summary>
+    /// <remarks>If the queue is closed, the message is not enqueued and no action is taken.</remarks>
+    /// <param name="messages">The log messages to enqueue. Cannot be null.</param>
+    internal void Enqueue(IList<LogMessage> messages)
+    {
+        if (Closed) return;
+        Fifo.Enqueue(messages);
+        trigger.Set();
+    }
+
     /// <summary>Closes this instance.</summary>
     public virtual void Close()
     {
@@ -296,7 +319,7 @@ public abstract class LogReceiver : IDisposable
     {
         while (!Idle)
         {
-            Thread.Sleep(0);
+            Thread.Sleep(1);
             Writer.Flush();
         }
     }
