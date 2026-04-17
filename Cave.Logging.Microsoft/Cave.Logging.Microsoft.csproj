@@ -26,7 +26,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cave.Extensions" Version="4.0.4" />
+        <PackageReference Include="Cave.Extensions" Version="4.0.9" />
         <PackageReference Include="Cave.IO" Version="4.0.3" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
           <PrivateAssets>all</PrivateAssets>
@@ -35,12 +35,16 @@
     </ItemGroup>
 
     <ItemGroup Condition="&#xD;&#xA;'$(TargetFramework)' == 'net5.0' or &#xD;&#xA;'$(TargetFramework)' == 'net6.0' or &#xD;&#xA;'$(TargetFramework)' == 'net8.0' or &#xD;&#xA;$(TargetFramework.StartsWith('netstandard2')) or &#xD;&#xA;$(TargetFramework.StartsWith('net462')) or &#xD;&#xA;$(TargetFramework.StartsWith('net47')) or &#xD;&#xA;$(TargetFramework.StartsWith('net48'))">
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-        <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.6" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.6" />
+        <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.6" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Cave.Logging\Cave.Logging.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Update="Microsoft.SourceLink.GitHub" Version="10.0.202" />
     </ItemGroup>
 </Project>

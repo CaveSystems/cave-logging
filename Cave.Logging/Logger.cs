@@ -4,17 +4,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Cave.Collections.Generic;
 using Cave.IO;
 
 namespace Cave.Logging;
 
 /// <summary>
-/// This is a full featured asynchronous logging facility for general status monitoring and logging for end users in production products. Messages logged are
-/// queued and then distributed by a background thread to provide full speed even with slow loggers (file, database, network).
+/// Full-featured asynchronous logging facility for general status monitoring and end-user logging in production products.
+/// Messages logged are queued and distributed by a background thread to provide full throughput even when receivers
+/// (file, database, network) are slow.
 /// </summary>
-public class Logger
+public class Logger : ILogger
 {
     #region Private Fields
 
@@ -36,7 +36,7 @@ public class Logger
             while (isIdle && Fifo.Available == 0)
             {
                 if (MessageTrigger.WaitOne(1000)) break;
-                if (Fifo.Available > 0) /* possible uncatched race condition seen at android */ Debugger.Break();
+                if (Fifo.Available > 0) /* possible uncatched race condition seen at android - please report */ Debugger.Break();
             }
             isIdle = false;
 
@@ -139,10 +139,10 @@ public class Logger
     }
 
     /// <summary>
-    /// Constructor for backward compatibility - do not use, requires slow stacktrace
+    /// Constructor for backward compatibility - do not use, requires slow stacktrace.
     /// </summary>
-    /// <param senderType="senderType">Type of the log source.</param>
-    /// <param senderName="senderName">(Optional) Name of the log source. Defaults to <paramref name="senderType"/>.Name</param>
+    /// <param name="senderType">Type of the log source.</param>
+    /// <param name="senderName">(Optional) Name of the log source. Defaults to <paramref name="senderType"/>.Name</param>
     /// <exception cref="ArgumentNullException"></exception>
     [Obsolete("Slow constructor usage: Use one of the newer constructors if possible.")]
     public Logger(Type senderType, string? senderName)
@@ -155,7 +155,7 @@ public class Logger
     }
 
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
-    /// <param senderName="senderName">Name of the log source.</param>
+    /// <param name="senderName">Name of the log source.</param>
     /// <remarks>
     /// This method is the slowest option when creating a logger. This should not be called thousands of times. Faster variants are: <see
     /// cref="Logger.Create(object)"/> or new Logger(Type)
@@ -170,8 +170,8 @@ public class Logger
     }
 
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
-    /// <param senderType="senderType">Type of the log source.</param>
-    /// <param senderName="senderName">(Optional) Name of the log source. Defaults to <paramref name="senderType"/>.Name</param>
+    /// <param name="senderType">Type of the log source.</param>
+    /// <param name="senderName">(Optional) Name of the log source. Defaults to <paramref name="senderType"/>.Name</param>
     /// <remarks>This method is a fast way to create a logger.</remarks>
     public Logger(Type senderType, string? senderName = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
@@ -187,7 +187,7 @@ public class Logger
     /// <summary>Gets the <see cref="LogDebugReceiver"/> instance.</summary>
     public static LogDebugReceiver? DebugReceiver { get; set; }
 
-    /// <summary>Gets or sets the host senderName of the local computer.</summary>
+    /// <summary>Gets or sets the host name of the local computer.</summary>
     public static string HostName { get; set; }
 
     /// <summary>Gets or sets a value indicating whether debug information ({member}:{file}:{line}) shall be part of the sender name or not.</summary>
@@ -199,13 +199,13 @@ public class Logger
     /// <summary>Gets or sets a value indicating whether the logging system logs to <see cref="Trace"/>. This setting is false by default.</summary>
     public static bool LogToTrace { get => DebugReceiver?.LogToTrace == false; set => SetLogToTrace(value); }
 
-    /// <summary>Gets or sets my process.</summary>
+    /// <summary>Gets or sets the current process.</summary>
     public static Process? Process { get; set; }
 
-    /// <summary>Gets or sets the number of messages read by receivers.</summary>
+    /// <summary>Gets the number of messages read by receivers.</summary>
     public static long ReadCount => Fifo.ReadCount;
 
-    /// <summary>Gets all registered log receivers</summary>
+    /// <summary>Gets all registered log receivers.</summary>
     public static IEnumerable<LogReceiver> Receivers
     {
         get
@@ -217,15 +217,15 @@ public class Logger
         }
     }
 
-    /// <summary>Gets or sets the number of messages written to the ring buffer.</summary>
+    /// <summary>Gets the number of messages written to the ring buffer.</summary>
     public static long WriteCount => Fifo.WriteCount;
 
     /// <summary>Gets or sets the name of the log source.</summary>
     /// <value>The name of the log source.</value>
     public string SenderName { get; set; }
 
-    /// <summary>Gets or sets the sourcecode information of the log source.</summary>
-    /// <value>The sorucecode information of the log source.</value>
+    /// <summary>Gets or sets the source code information of the log source.</summary>
+    /// <value>The source code information of the log source.</value>
     public string? SenderSource { get; set; }
 
     /// <summary>Gets or sets the type of the log source.</summary>
@@ -236,7 +236,7 @@ public class Logger
 
     #region Public Methods
 
-    /// <summary>Closes all receivers, does not flush or wait.</summary>
+    /// <summary>Closes all receivers; does not flush or wait.</summary>
     public static void Close()
     {
         LogReceiver[] receivers;
@@ -291,7 +291,7 @@ public class Logger
     }
 
     /// <summary>Registers and starts an <see cref="LogReceiver"/>.</summary>
-    /// <param senderName="logReceiver">The <see cref="LogReceiver"/> to register.</param>
+    /// <param name="logReceiver">The <see cref="LogReceiver"/> to register.</param>
     public static void Register(LogReceiver logReceiver)
     {
         if (logReceiver == null)

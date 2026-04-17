@@ -2,27 +2,44 @@
 
 namespace Cave.Logging;
 
-/// <summary>Provides an interface for writing log data. The writer keeps the current state for style and color.</summary>
+/// <summary>
+/// Abstraction for writing log output to a backend sink. Maintains current state for style and color,
+/// and is responsible for formatting and emitting provided log components.
+/// </summary>
+/// <remarks>
+/// Used in <see cref="LogReceiver"/> to write formatted <see cref="LogMessage"/> instances
+/// after processing them through a <see cref="LogMessageFormatter"/>.
+/// </remarks>
 public interface ILogWriter
 {
     #region Public Properties
 
-    /// <summary>Gets a value indicating whether this instance is closed.</summary>
+    /// <summary>
+    /// Gets a value indicating whether this writer is closed.
+    /// When <c>true</c>, further writes should not be accepted.
+    /// </summary>
     bool IsClosed { get; }
 
     #endregion Public Properties
 
     #region Public Methods
 
-    /// <summary>Closes the writer.</summary>
+    /// <summary>
+    /// Closes the writer and releases associated resources.
+    /// Further calls to <see cref="Write"/> may be ignored or throw an exception.
+    /// </summary>
     void Close();
 
-    /// <summary>Writes all buffered data to the sink.</summary>
+    /// <summary>
+    /// Waits for pending writes to complete and flushes buffered data to the sink.
+    /// </summary>
     void Flush();
 
-    /// <summary>Writes all components of the log message to the backend</summary>
-    /// <param name="message">The original message.</param>
-    /// <param name="items">The formatted items to write.</param>
+    /// <summary>
+    /// Writes log message components to the backend sink.
+    /// </summary>
+    /// <param name="message">The original log message with metadata (level, timestamp, etc.).</param>
+    /// <param name="items">The formatted text components with style and color information.</param>
     void Write(LogMessage message, IEnumerable<ILogText> items);
 
     #endregion Public Methods

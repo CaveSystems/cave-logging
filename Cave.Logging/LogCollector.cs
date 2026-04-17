@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Cave.Logging;
 
@@ -17,6 +16,8 @@ public class LogCollector : LogReceiver
 
     #region Private Methods
 
+    /// <summary>Removes items from the queue when the count exceeds <see cref="MaximumItemCount"/>.</summary>
+    /// <returns>A linked list containing the removed items, or null if no items were removed.</returns>
     LinkedList<LogMessage>? CleanMaxItems()
     {
         LinkedList<LogMessage>? list = null;
@@ -38,8 +39,8 @@ public class LogCollector : LogReceiver
     /// <summary>
     /// Calls the <see cref="MessageReceived"/> event and adds the message to the internal queue if <see cref="LogMessageEventArgs.Handled"/> is not set at the event.
     /// </summary>
-    /// <param name="message">The log message</param>
-    /// <param name="handled">Indicates whether the message was handled or not.</param>
+    /// <param name="message">The log message.</param>
+    /// <param name="handled">Indicates whether the message was handled by the event.</param>
     protected virtual void OnMessageReceived(LogMessage message, out bool handled)
     {
         var func = MessageReceived;
@@ -56,7 +57,7 @@ public class LogCollector : LogReceiver
     }
 
     /// <summary>Calls the <see cref="MessagesRemoved"/> event.</summary>
-    /// <param name="messages">The messages</param>
+    /// <param name="messages">The messages that were removed.</param>
     protected virtual void OnMessagesRemoved(IEnumerable<LogMessage> messages) => MessagesRemoved?.Invoke(this, new(messages));
 
     #endregion Protected Methods
@@ -110,6 +111,7 @@ public class LogCollector : LogReceiver
     #region Public Methods
 
     /// <summary>Starts a new instance of the <see cref="LogCollector"/> class.</summary>
+    /// <returns>A new initialized <see cref="LogCollector"/> instance.</returns>
     public static LogCollector StartNew() => Start(new LogCollector());
 
     /// <summary>Clears the list of <see cref="LogMessage"/> items.</summary>
@@ -122,7 +124,7 @@ public class LogCollector : LogReceiver
     }
 
     /// <summary>Retrieves all present <see cref="LogMessage"/> items and clears the collector.</summary>
-    /// <returns></returns>
+    /// <returns>An array of all collected <see cref="LogMessage"/> items.</returns>
     public LogMessage[] Retrieve()
     {
         LogMessage[] result;
@@ -135,6 +137,7 @@ public class LogCollector : LogReceiver
     }
 
     /// <summary>Provides a list of <see cref="LogMessage"/> items.</summary>
+    /// <returns>An array of all currently collected <see cref="LogMessage"/> items.</returns>
     public LogMessage[] ToArray()
     {
         lock (items)
@@ -144,11 +147,12 @@ public class LogCollector : LogReceiver
     }
 
     /// <summary>Returns LogCollector[ItemCount,Level].</summary>
-    /// <returns></returns>
+    /// <returns>A string representation of the collector state.</returns>
     public override string ToString() => "LogCollector[" + ItemCount + "," + Level + "]";
 
-    /// <summary>Retrieves a <see cref="LogMessage"/> items from the collector.</summary>
-    /// <returns></returns>
+    /// <summary>Retrieves a <see cref="LogMessage"/> item from the collector.</summary>
+    /// <param name="msg">The retrieved message, or null if the collector is empty.</param>
+    /// <returns>True if a message was retrieved; otherwise, false.</returns>
     public bool TryGet(out LogMessage? msg)
     {
         lock (items)
@@ -165,7 +169,7 @@ public class LogCollector : LogReceiver
     }
 
     /// <summary>Provides the callback function used to transmit the logging notifications.</summary>
-    /// <param name="message">The message.</param>
+    /// <param name="message">The log message to process.</param>
     public override void Write(LogMessage message)
     {
         OnMessageReceived(message, out var handled);
