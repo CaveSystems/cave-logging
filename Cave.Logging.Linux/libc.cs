@@ -13,7 +13,7 @@ public static class libc
 {
     #region Private Fields
 
-    const CallingConvention CallingConvention = CallingConvention.Cdecl;
+    const CallingConvention CallingConv = CallingConvention.Cdecl;
 
     /// <summary>The native library name (linux libc.so.x, macos libc.dylib.</summary>
     const string Library = "libc";
@@ -31,7 +31,7 @@ public static class libc
         /// <summary>Closes the specified handle.</summary>
         /// <param name="handle">The handle.</param>
         /// <returns>0 on success, -1 in case of failure.</returns>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern int close(int handle);
 
         /// <summary>
@@ -39,7 +39,7 @@ public static class libc
         /// identification string for Syslog messages back to the default, if openlog was called with a non-NULL argument to ident. The default identification
         /// string is the program name taken from argv[0].
         /// </summary>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern void closelog();
 
         /// <summary>The ioctl function performs the generic I/O operation command on a given handle.</summary>
@@ -47,7 +47,7 @@ public static class libc
         /// <param name="cmd">The command.</param>
         /// <param name="data">The data.</param>
         /// <returns>0 on success, -1 in case of failure.</returns>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern int ioctl(int handle, int cmd, IntPtr data);
 
         /// <summary>
@@ -58,7 +58,7 @@ public static class libc
         /// <param name="src">The source.</param>
         /// <param name="num">The number.</param>
         /// <returns>Returns the given destination pointer.</returns>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern IntPtr memcpy(IntPtr dest, IntPtr src, int num);
 
         /// <summary>map files or devices into memory.</summary>
@@ -69,14 +69,14 @@ public static class libc
         /// <param name="fd">The handle.</param>
         /// <param name="offset">The offset.</param>
         /// <returns>Pointer to the data in memory.</returns>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern IntPtr mmap(IntPtr address, UIntPtr length, PROT prot, MAP flags, int fd, IntPtr offset);
 
         /// <summary>The open function creates and returns a new file descriptor for the file named by fileName.</summary>
         /// <param name="fileName">The fileName.</param>
         /// <param name="flags">The flags argument controls how the file is to be opened.</param>
         /// <returns>Returns a handle to the opened file.</returns>
-        [DllImport(Library, CallingConvention = CallingConvention, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        [DllImport(Library, CallingConvention = CallingConv, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         public static extern int open(string fileName, int flags);
 
         /// <summary>opens or reopens a connection to Syslog in preparation for submitting messages.</summary>
@@ -89,7 +89,7 @@ public static class libc
         /// </param>
         /// <param name="option">SyslogOption.</param>
         /// <param name="facility">SyslogFacility.</param>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern void openlog(IntPtr process, IntPtr option, IntPtr facility);
 
         /// <summary>
@@ -99,19 +99,19 @@ public static class libc
         /// <returns>
         /// If name is invalid, -1 is returned, and errno is set to EINVAL. Otherwise, the value returned is the value of the system resource and errno is not changed.
         /// </returns>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern long sysconf(SysConf parameter);
 
         /// <summary>submits a message to the Syslog facility. It does this by writing to the Unix domain socket /dev/log.</summary>
         /// <param name="priority">SyslogPriority.</param>
         /// <param name="msg">Message to submit.</param>
-        [DllImport(Library, CallingConvention = CallingConvention, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        [DllImport(Library, CallingConvention = CallingConv, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         public static extern void syslog(int priority, string msg);
 
         /// <summary>Gets the name of the unix distro.</summary>
         /// <param name="buf">Pointer to an arry to fill.</param>
         /// <returns>0 on success, -1 in case of failure.</returns>
-        [DllImport(Library, CallingConvention = CallingConvention)]
+        [DllImport(Library, CallingConvention = CallingConv)]
         public static extern int uname(IntPtr buf);
 
         #endregion Public Methods
