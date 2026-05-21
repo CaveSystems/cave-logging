@@ -9,7 +9,7 @@ public class SyslogMessageDateTime : IEquatable<SyslogMessageDateTime>, ICompara
 {
     #region Private Fields
 
-    static readonly string[] DateTimeFormats =
+    internal static readonly string[] DateTimeFormats =
     [
         "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",
         "yyyy'-'MM'-'dd'T'HH':'mm':'sszzz",

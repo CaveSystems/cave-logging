@@ -22,7 +22,7 @@ public static class LogExtensions
         LogLevel.Warning => LogColor.Yellow,
         LogLevel.Notice => LogColor.Green,
         LogLevel.Information => LogColor.Cyan,
-        LogLevel.Debug => LogColor.Gray,
+        //LogLevel.Debug, LogLevel.Verbose
         _ => LogColor.Blue,
     };
 

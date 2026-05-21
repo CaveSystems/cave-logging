@@ -9,7 +9,7 @@ public static class Syslog
 {
     #region Private Fields
 
-    static readonly object SyncRoot = new();
+    internal static readonly object SyncRoot = new();
     static IntPtr processNamePtr;
 
     #endregion Private Fields

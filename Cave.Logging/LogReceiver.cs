@@ -6,7 +6,7 @@ using Cave.IO;
 namespace Cave.Logging;
 
 /// <summary>Provides a log receiver implementation with <see cref="ILogMessageFormatter"/> and <see cref="ILogWriter"/>.</summary>
-public abstract class LogReceiver : IDisposable
+public abstract class LogReceiver : IDisposable, ILogReceiver
 {
     #region Private Fields
 
@@ -26,7 +26,7 @@ public abstract class LogReceiver : IDisposable
     readonly ManualResetEvent trigger = new ManualResetEvent(false);
 #endif
 
-    readonly Fifo<IList<LogMessage>> Fifo = new();
+    readonly Fifo<IList<LogMessage>> fifo = new();
 
     #endregion Private Fields
 
@@ -50,16 +50,16 @@ public abstract class LogReceiver : IDisposable
 
     IList<LogMessage> GetMessages()
     {
-        if (Fifo.Available > 0)
+        if (fifo.Available > 0)
         {
             isIdle = false;
-            Fifo.TryDequeue(out var list);
+            fifo.TryDequeue(out var list);
             messageQueueCount += list!.Count;
-            if (Fifo.Available == 0) return list;
+            if (fifo.Available == 0) return list;
 
             var result = new List<LogMessage>(MessagesPerPacket * 2);
             result.AddRange(list);
-            while (Fifo.TryDequeue(out list))
+            while (fifo.TryDequeue(out list))
             {
                 messageQueueCount += list!.Count;
                 result.AddRange(list);
@@ -167,7 +167,7 @@ public abstract class LogReceiver : IDisposable
         while (!Closed)
         {
             //idle mode
-            if (messageQueueCount == 0 && Fifo.Available == 0)
+            if (messageQueueCount == 0 && fifo.Available == 0)
             {
                 if (!isIdle)
                 {
@@ -247,7 +247,7 @@ public abstract class LogReceiver : IDisposable
     public TimeSpan CurrentDelay => new(currentDelayMsec * TimeSpan.TicksPerMillisecond);
 
     /// <summary>Gets a value indicating whether the receiver is idle or not.</summary>
-    public bool Idle => (isIdle && (Fifo.Available == 0)) || !Started;
+    public bool Idle => (isIdle && (fifo.Available == 0)) || !Started;
 
     /// <summary>Gets a value indicating whether the receiver is idle or not.</summary>
     public int LateMessageMilliseconds { get; set; } = 10000;
@@ -296,7 +296,7 @@ public abstract class LogReceiver : IDisposable
     internal void Enqueue(IList<LogMessage> messages)
     {
         if (Closed) return;
-        Fifo.Enqueue(messages);
+        fifo.Enqueue(messages);
         trigger.Set();
     }
 

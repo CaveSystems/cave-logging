@@ -10,7 +10,7 @@ public class SyslogSender : IDisposable
 {
     #region Private Fields
 
-    static readonly byte[] Empty = [];
+    internal static readonly byte[] Empty = [];
     bool disposed;
     ConnectionString target;
     TcpClient? tcpClient;

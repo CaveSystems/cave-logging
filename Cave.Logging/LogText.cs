@@ -26,7 +26,7 @@ namespace Cave.Logging;
 /// </summary>
 public record LogText : ILogText, IEquatable<LogText>
 {
-    static readonly char[] TokenStartSeparator = ['\n', '<', '{'];
+    internal static readonly char[] TokenStartSeparator = ['\n', '<', '{'];
 
     /// <summary>Unboxes a token.</summary>
     /// <param name="token">Token to unbox.</param>

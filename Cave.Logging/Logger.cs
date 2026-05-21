@@ -18,10 +18,10 @@ public class Logger : ILogger
 {
     #region Private Fields
 
-    static readonly Fifo<LogMessage> Fifo = new();
-    static readonly AutoResetEvent MessageTrigger = new(false);
-    static readonly Set<LogReceiver> ReceiverSet = new();
-    static readonly Thread Thread;
+    static readonly Fifo<LogMessage> fifo = new();
+    static readonly AutoResetEvent messageTrigger = new(false);
+    static readonly Set<LogReceiver> receiverSet = new();
+    static readonly Thread loggerThread;
     static volatile bool isIdle;
 
     #endregion Private Fields
@@ -33,10 +33,10 @@ public class Logger : ILogger
         while (true)
         {
             isIdle = true;
-            while (isIdle && Fifo.Available == 0)
+            while (isIdle && fifo.Available == 0)
             {
-                if (MessageTrigger.WaitOne(1000)) break;
-                if (Fifo.Available > 0) /* possible uncatched race condition seen at android - please report */ Debugger.Break();
+                if (messageTrigger.WaitOne(1000)) break;
+                if (fifo.Available > 0) /* possible uncatched race condition seen at android - please report */ Debugger.Break();
             }
             isIdle = false;
 
@@ -44,13 +44,13 @@ public class Logger : ILogger
             Thread.BeginCriticalRegion();
 
             //read from ringbuffer
-            var count = Fifo.Available;
+            var count = fifo.Available;
             IList<LogMessage> messages;
             {
                 List<LogMessage> list = new(count);
                 for (var i = 0; i < count; i++)
                 {
-                    if (Fifo.TryDequeue(out var message))
+                    if (fifo.TryDequeue(out var message))
                     {
                         list.Add(message!);
                     }
@@ -61,9 +61,9 @@ public class Logger : ILogger
 
             //push to receivers this is done so often we will not make a cached copy of the receivers, we will just lock and push to all receivers
             //enqueueing is a very fast and simple fifo push
-            lock (ReceiverSet)
+            lock (receiverSet)
             {
-                foreach (var receiver in ReceiverSet)
+                foreach (var receiver in receiverSet)
                 {
                     if (receiver.Started)
                     {
@@ -129,13 +129,13 @@ public class Logger : ILogger
             System.Diagnostics.Debug.WriteLine("Logger.cctor(): Could not get Process!");
         }
 
-        Thread = new Thread(MasterWorker)
+        loggerThread = new Thread(MasterWorker)
         {
             IsBackground = true,
             Name = "Logger.MasterWorker",
             Priority = ThreadPriority.Highest,
         };
-        Thread.Start();
+        loggerThread.Start();
     }
 
     /// <summary>
@@ -156,6 +156,9 @@ public class Logger : ILogger
 
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param name="senderName">Name of the log source.</param>
+    /// <param name="member">Name of the member. (Compilergenerated)</param>
+    /// <param name="file">Path of the source file. (Compilergenerated)</param>
+    /// <param name="line">Line number in the source file. (Compilergenerated)</param>
     /// <remarks>
     /// This method is the slowest option when creating a logger. This should not be called thousands of times. Faster variants are: <see
     /// cref="Logger.Create(object)"/> or new Logger(Type)
@@ -172,6 +175,9 @@ public class Logger : ILogger
     /// <summary>Initializes a new instance of the <see cref="Logger"/> class.</summary>
     /// <param name="senderType">Type of the log source.</param>
     /// <param name="senderName">(Optional) Name of the log source. Defaults to <paramref name="senderType"/>.Name</param>
+    /// <param name="member">Name of the member. (Compilergenerated)</param>
+    /// <param name="file">Path of the source file. (Compilergenerated)</param>
+    /// <param name="line">Line number in the source file. (Compilergenerated)</param>
     /// <remarks>This method is a fast way to create a logger.</remarks>
     public Logger(Type senderType, string? senderName = null, [CallerMemberName] string? member = null, [CallerFilePath] string? file = null, [CallerLineNumber] int line = 0)
     {
@@ -203,22 +209,22 @@ public class Logger : ILogger
     public static Process? Process { get; set; }
 
     /// <summary>Gets the number of messages read by receivers.</summary>
-    public static long ReadCount => Fifo.ReadCount;
+    public static long ReadCount => fifo.ReadCount;
 
     /// <summary>Gets all registered log receivers.</summary>
     public static IEnumerable<LogReceiver> Receivers
     {
         get
         {
-            lock (ReceiverSet)
+            lock (receiverSet)
             {
-                return ReceiverSet.ToArray();
+                return receiverSet.ToArray();
             }
         }
     }
 
     /// <summary>Gets the number of messages written to the ring buffer.</summary>
-    public static long WriteCount => Fifo.WriteCount;
+    public static long WriteCount => fifo.WriteCount;
 
     /// <summary>Gets or sets the name of the log source.</summary>
     /// <value>The name of the log source.</value>
@@ -240,10 +246,10 @@ public class Logger : ILogger
     public static void Close()
     {
         LogReceiver[] receivers;
-        lock (ReceiverSet)
+        lock (receiverSet)
         {
-            receivers = [.. ReceiverSet];
-            ReceiverSet.Clear();
+            receivers = [.. receiverSet];
+            receiverSet.Clear();
         }
 
         foreach (var worker in receivers)
@@ -275,7 +281,7 @@ public class Logger : ILogger
                 deadlockWatch.Reset();
             }
             // any receivers not idle means we need to wait
-            if ((Fifo.Available == 0) && ReceiverSet.All(w => w.Idle))
+            if ((fifo.Available == 0) && receiverSet.All(w => w.Idle))
             {
                 // all receivers idle
                 if (isIdle) return;
@@ -283,7 +289,7 @@ public class Logger : ILogger
 
             if (maxWaitMilliseconds > 0 && deadlockWatch.ElapsedMilliSeconds > maxWaitMilliseconds)
             {
-                Trace.WriteLine($"Waiting for receivers: {ReceiverSet.Where(r => !r.Idle).Join(',')}");
+                Trace.WriteLine($"Waiting for receivers: {receiverSet.Where(r => !r.Idle).Join(',')}");
                 if (throwTimeoutException) throw new TimeoutException();
                 deadlockWatch.Reset();
             }
@@ -304,14 +310,14 @@ public class Logger : ILogger
             throw new ArgumentException($"Receiver {logReceiver} was already closed!");
         }
 
-        lock (ReceiverSet)
+        lock (receiverSet)
         {
-            if (ReceiverSet.Contains(logReceiver))
+            if (receiverSet.Contains(logReceiver))
             {
                 throw new InvalidOperationException($"LogReceiver {logReceiver} is already registered!");
             }
 
-            ReceiverSet.Add(logReceiver);
+            receiverSet.Add(logReceiver);
         }
     }
 
@@ -320,11 +326,11 @@ public class Logger : ILogger
     [MethodImpl((MethodImplOptions)0x0100)]
     public static void Send(LogMessage message)
     {
-        Fifo.Enqueue(message);
+        fifo.Enqueue(message);
         if (isIdle)
         {
             isIdle = false;
-            MessageTrigger.Set();
+            messageTrigger.Set();
         }
     }
 
@@ -336,10 +342,10 @@ public class Logger : ILogger
             throw new ArgumentNullException(nameof(logReceiver));
         }
 
-        lock (ReceiverSet)
+        lock (receiverSet)
         {
             // remove if present
-            ReceiverSet.TryRemove(logReceiver);
+            receiverSet.TryRemove(logReceiver);
         }
     }
 

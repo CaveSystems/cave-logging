@@ -18,7 +18,7 @@ public class LogMessageFormatter : ILogMessageFormatter
     {
         #region Private Fields
 
-        static readonly char[] LogFormatSeparator = [':'];
+        internal static readonly char[] LogFormatSeparator = [':'];
 
         #endregion Private Fields
 
