@@ -6,7 +6,7 @@ class Program
 {
     #region Private Fields
 
-    static readonly ManualResetEventSlim StartEvent = new(false);
+    static readonly ManualResetEventSlim startEvent = new(false);
     static int messagesSent;
     static int sendersReady;
 
@@ -14,7 +14,7 @@ class Program
 
     #region Private Methods
 
-    static void Collector_MessageReceived(object? sender, LogMessageEventArgs e)
+    static void CollectorMessageReceived(object? sender, LogMessageEventArgs e)
     {
         //you can filter messages you want to collect by checking e.Message
         //and define whether the collector should store the message
@@ -30,7 +30,7 @@ class Program
     {
         var collector1 = LogCollector.StartNew();
         //define custom message received filter
-        collector1.MessageReceived += Collector_MessageReceived;
+        collector1.MessageReceived += CollectorMessageReceived;
         //set loglevel of collector or warnings and above
         collector1.Level = LogLevel.Warning;
         //this collector shall use continous logging
@@ -58,7 +58,7 @@ class Program
         //wait until all threads are ready
         while (sendersReady < 3) Thread.Sleep(1);
         //set start event for all threads
-        StartEvent.Set();
+        startEvent.Set();
         //wait until all threads are complete
         Task.WaitAll(task1, task2, task3);
 
@@ -82,7 +82,7 @@ class Program
         logger.Notice($"SendMessages to Logger {logger.SenderName} waiting for start signal...");
 
         //wait for start signal then log message
-        StartEvent.Wait();
+        startEvent.Wait();
         logger.Info($"<green>Begin SendMessages to Logger {logger.SenderName}");
 
         //send 10000 messages

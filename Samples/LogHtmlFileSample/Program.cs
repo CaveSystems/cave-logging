@@ -6,7 +6,7 @@ class Program
 {
     #region Private Fields
 
-    static readonly ManualResetEventSlim StartEvent = new(false);
+    static readonly ManualResetEventSlim startEvent = new(false);
     static int messagesSent;
     static int sendersReady;
 
@@ -36,7 +36,7 @@ class Program
 
         Console.WriteLine("Start threads...");
         //set start event for all threads
-        StartEvent.Set();
+        startEvent.Set();
 
         Console.WriteLine("Waiting for threads...");
         //wait until all threads are complete
@@ -59,7 +59,7 @@ class Program
         logger.Notice($"SendMessages to Logger {logger.SenderName} waiting for start signal...");
 
         //wait for start signal then log message
-        StartEvent.Wait();
+        startEvent.Wait();
         logger.Info($"<green>Begin SendMessages to Logger {logger.SenderName}");
 
         //send 10000 messages

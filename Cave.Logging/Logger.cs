@@ -18,13 +18,19 @@ public class Logger : ILogger
 {
     #region Private Fields
 
+#if NET20 || NET35
+    static readonly ManualResetEvent trigger = new(false);
+    static bool WaitTrigger() => trigger.WaitOne(100);
+#else
+    static readonly ManualResetEventSlim trigger = new();
+    static bool WaitTrigger() => trigger.Wait(100);
+#endif
     static readonly Fifo<LogMessage> fifo = new();
-    static readonly AutoResetEvent messageTrigger = new(false);
     static readonly Set<LogReceiver> receiverSet = new();
     static readonly Thread loggerThread;
     static volatile bool isIdle;
 
-    #endregion Private Fields
+#endregion Private Fields
 
     #region Private Methods
 
@@ -32,11 +38,10 @@ public class Logger : ILogger
     {
         while (true)
         {
+            trigger.Reset();
             isIdle = true;
-            while (isIdle && fifo.Available == 0)
+            while (isIdle && fifo.Available == 0 && !WaitTrigger())
             {
-                if (messageTrigger.WaitOne(1000)) break;
-                if (fifo.Available > 0) /* possible uncatched race condition seen at android - please report */ Debugger.Break();
             }
             isIdle = false;
 
@@ -79,6 +84,7 @@ public class Logger : ILogger
 
     static void SetLogToDebug(bool value)
     {
+        if (DebugReceiver?.Closed == true) DebugReceiver = null;
         if (value)
         {
             (DebugReceiver ??= new LogDebugReceiver()).LogToDebug = value;
@@ -92,6 +98,7 @@ public class Logger : ILogger
 
     static void SetLogToTrace(bool value)
     {
+        if (DebugReceiver?.Closed == true) DebugReceiver = null;
         if (value)
         {
             (DebugReceiver ??= new LogDebugReceiver()).LogToTrace = value;
@@ -200,10 +207,10 @@ public class Logger : ILogger
     public static bool IncludeDebugInformation { get; set; } = Debugger.IsAttached;
 
     /// <summary>Gets or sets a value indicating whether the logging system logs to <see cref="System.Diagnostics.Debug"/>.</summary>
-    public static bool LogToDebug { get => DebugReceiver?.LogToDebug == false; set => SetLogToDebug(value); }
+    public static bool LogToDebug { get => DebugReceiver is LogDebugReceiver r && !r.Closed && r.LogToDebug; set => SetLogToDebug(value); }
 
     /// <summary>Gets or sets a value indicating whether the logging system logs to <see cref="Trace"/>. This setting is false by default.</summary>
-    public static bool LogToTrace { get => DebugReceiver?.LogToTrace == false; set => SetLogToTrace(value); }
+    public static bool LogToTrace { get => DebugReceiver is LogDebugReceiver r && !r.Closed && r.LogToTrace; set => SetLogToTrace(value); }
 
     /// <summary>Gets or sets the current process.</summary>
     public static Process? Process { get; set; }
@@ -265,6 +272,7 @@ public class Logger : ILogger
     public static void Flush() => Flush(10000, false);
 
     /// <summary>Waits until all notifications are sent.</summary>
+    /// <remarks>Never call this from inside a Receiver Thread as it will never return (since the receiver is not idle)!</remarks>
     public static void Flush(int maxWaitMilliseconds = 10000, bool throwTimeoutException = false)
     {
         var deadlockWatch = StopWatch.StartNew();
@@ -281,10 +289,10 @@ public class Logger : ILogger
                 deadlockWatch.Reset();
             }
             // any receivers not idle means we need to wait
-            if ((fifo.Available == 0) && receiverSet.All(w => w.Idle))
+            if ((fifo.Available == 0) && Receivers.All(w => w.Idle))
             {
                 // all receivers idle
-                if (isIdle) return;
+                if (isIdle && fifo.Available == 0) return;
             }
 
             if (maxWaitMilliseconds > 0 && deadlockWatch.ElapsedMilliSeconds > maxWaitMilliseconds)
@@ -330,7 +338,7 @@ public class Logger : ILogger
         if (isIdle)
         {
             isIdle = false;
-            messageTrigger.Set();
+            trigger.Set();
         }
     }
 
