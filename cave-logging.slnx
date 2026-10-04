@@ -1,0 +1,30 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="azure-pipelines.yml" />
+    <File Path="build.bat" />
+    <File Path="cavesystems.pdn" />
+    <File Path="cavesystems.png" />
+    <File Path="clean.bat" />
+    <File Path="CodeMaid.config" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Samples/">
+    <Project Path="Samples/LogCollectorSample/LogCollectorSample.csproj" />
+    <Project Path="Samples/LogHtmlFileSample/LogHtmlFileSample.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/net_2.0-3.5.csproj" />
+    <Project Path="Tests/net_4.x.csproj" />
+    <Project Path="Tests/net_latest.csproj" />
+  </Folder>
+  <Project Path="Cave.Logging/Cave.Logging.csproj" />
+  <Project Path="Cave.Logging.Microsoft/Cave.Logging.Microsoft.csproj" />
+  <Project Path="Cave.Logging.Linux/Cave.Logging.Linux.csproj" />
+  <Project Path="Cave.Logging.Database/Cave.Logging.Database.csproj" />
+</Solution>

@@ -11,9 +11,9 @@
         <!--project-->
         <RootNamespace>Cave.Logging</RootNamespace>
         <AssemblyOriginatorKeyFile>Cave.Logging.snk</AssemblyOriginatorKeyFile>
-        <Product>CaveSystems Logging Linux Library</Product>
+        <Product>CaveSystems Logging Database Library</Product>
         <PackageTags>CaveSystems Logging</PackageTags>
-        <Description>This package contains classes for using the linux syslog.</Description>
+        <Description>This package contains classes for using the database logging.</Description>
         <PackageProjectUrl>https://github.com/CaveSystems/cave-logging</PackageProjectUrl>
         <RepositoryUrl>https://github.com/CaveSystems/cave-logging</RepositoryUrl>
         <!--settings-->
@@ -26,6 +26,7 @@
     </PropertyGroup>
 
      <ItemGroup>
+        <PackageReference Include="Cave.Data" Version="4.0.9" />
         <PackageReference Include="Cave.Extensions" Version="4.0.11" />
         <PackageReference Include="Cave.IO" Version="4.0.12" />
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3">
